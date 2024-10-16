@@ -33,24 +33,42 @@ warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
 warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 
 
-def run(theta, n_samples_m, ula_signal_m, espirit, sign_model_m, num_median, eta=0.0, i=0):
+def run(theta, n_samples, ula_signal, espirit, sign_model, num_median, eta=0.0, i=0):
 
     torch.set_num_threads(1)
     np.random.seed(i)
 
     median_theta = np.zeros(num_median, dtype=float)
     # for j in range(num_median):
-    for j, ula_signal in enumerate(ula_signal_m):
-        n_samples = n_samples_m[j]
-        sign_model = sign_model_m[j]
 
-        ula_signal.estimate_signal(n_samples, theta, eta)
-        X = torch.from_numpy(ula_signal.measurements).type(torch.float)
-        signs = -1 + 2 * (sign_model(X) > 0.5).float().numpy()
-        signs = [1.0] + list(signs)
-        signal = ula_signal.update_signal_signs(signs)
+    ula_signal.estimate_signal(n_samples, theta, eta)
+    X = torch.from_numpy(ula_signal.measurements).type(torch.float)
+    signs = -1 + 2 * (sign_model(X) > 0.5).float().numpy()
+    signs = [1.0] + list(signs)
+
+    for j in range(num_median):
+        # offset = np.random.uniform(0.0, 0.25 * np.pi)
+        offset = 0.0
+        # print(f'offset: {offset}')
+        # print(signs)
+        # offset_signal = ula_signal.add_signal_offset(ula_signal.signal, offset)
+        # signal_signs = ula_signal.update_signal_signs(offset_signal, signs)
+
+        noise_signal = ula_signal.add_signal_noise(ula_signal.signal, 0.0001)
+        signal_signs = ula_signal.update_signal_signs(noise_signal, signs)
+
+        signal = ula_signal.update_signal_signs(signal_signs, signs)
         R = ula_signal.get_cov_matrix_toeplitz(signal)
-        theta_found, _ = espirit.estimate_theta_toeplitz(R)
+        theta_found, eigs = espirit.estimate_theta_toeplitz(R)
+
+        # print(f'theta_est: {theta_found/ np.pi}')
+        # print(f'offset:    {offset / np.pi}')
+
+        # if -np.angle(eigs) < 0:
+        #     theta_found = theta_found - offset
+        # else:
+        #     theta_found= np.pi / 2.0 - theta_found - offset
+        # print(f'theta_est: {theta_found / np.pi}')
 
         p_o2 = np.cos((2 * ula_signal.depths + 1) * (theta_found / 2.0)) ** 2
         p_o4 = np.cos((2 * ula_signal.depths + 1) * (theta_found / 4.0)) ** 2
@@ -112,6 +130,7 @@ def run(theta, n_samples_m, ula_signal_m, espirit, sign_model_m, num_median, eta
 
         median_theta[j] = theta_found
 
+    # print(median_theta)
     theta_found = np.median(median_theta)
 
     error = np.abs(np.sin(theta) - np.sin(theta_found))
@@ -267,65 +286,47 @@ if __name__ == "__main__":
 
             espirit = ESPIRIT()
 
-            sign_model_m = []
-            ula_signal_m = []
-            n_samples_m  = []
+            narray = [2] * (2 * r + 2)
 
-            for m in range(args.num_median):
-                narray = [2] * (2 * r + 2)
+            ula_signal = TwoqULASignal(M=narray, C=args.C)
+            print(ula_signal.depths)
+            NUM_FEATURES = len(ula_signal.depths)
+            NUM_CLASSES = len(ula_signal.depths) - 1
 
-                if m==0:
-                    narray[0] = 3
-                elif m==1:
-                    narray[1] = 3
-                elif m==2 and len(narray) > 2:
-                    narray[2] = 3
+            sign_model = SignModel(input_features=NUM_FEATURES,
+                                   output_features=NUM_CLASSES,
+                                   hidden_units=16*NUM_FEATURES).to('cpu')
 
-                ula_signal = TwoqULASignal(M=narray, C=args.C)
-                ula_signal_m.append(ula_signal)
-                print(ula_signal.depths)
-                NUM_FEATURES = len(ula_signal.depths)
-                NUM_CLASSES = len(ula_signal.depths) - 1
+            file_subscript = ''
+            for x in narray:
+                file_subscript += f'{x}'
+            filename = f'ml_models/sign_model_{file_subscript}_C{args.C:0.2f}.pt'
+            sign_model.load_state_dict(torch.load(filename, weights_only=True))
+            sign_model.eval()
+            sign_model.share_memory()
 
-                sign_model = SignModel(input_features=NUM_FEATURES,
-                                       output_features=NUM_CLASSES,
-                                       hidden_units=16*NUM_FEATURES).to('cpu')
+            arrays.append(narray)
+            print(f'Array parameters: {narray}')
+            ula_signal = TwoqULASignal(M=narray, C=args.C)
 
-                file_subscript = ''
-                for x in narray:
-                    file_subscript += f'{x}'
-                filename = f'ml_models/sign_model_{file_subscript}_C{args.C:0.2f}.pt'
-                sign_model.load_state_dict(torch.load(filename, weights_only=True))
-                sign_model.eval()
-                # sign_model.share_memory()
-                sign_model_m.append(sign_model)
-
-                arrays.append(narray)
-                print(f'Array parameters: {narray}')
-                ula_signal = TwoqULASignal(M=narray, C=args.C)
-
-                if args.fixed_sample:
-                    n_samples = [args.fixed_sample] * len(ula_signal.n_samples)
-                else:
-                    n_samples = ula_signal.n_samples
-                print(f'Shots per depth: {n_samples}')
-                print(f'C parameter: {args.C:0.3f}')
-                n_samples_m.append(n_samples)
+            if args.fixed_sample:
+                n_samples = [args.fixed_sample] * len(ula_signal.n_samples)
+            else:
+                n_samples = ula_signal.n_samples
+            print(f'Shots per depth: {n_samples}')
+            print(f'C parameter: {args.C:0.3f}')
 
             # Compute the total number of queries. The additional count of ula_signal.n_samples[0] is to
             # account for the fact that the Grover oracle has two invocations of the unitary U, but is
             # preceded by a single invocation of U (see Eq. 2 in paper). This accounts for the shots required
             # for that single U operator, which costs half as much as the Grover oracle.
-            num_queries[r] = 0
-            for j, ula_signal in enumerate(ula_signal_m):
-                n_samples = n_samples_m[j]
-                num_queries[r] = num_queries[r] + np.sum(np.array(ula_signal.depths) * np.array(n_samples)) + n_samples[0]/2
-                max_single_query[r] = np.max([max_single_query[r], np.max(ula_signal.depths)])
+            num_queries[r] = np.sum(np.array(ula_signal.depths) * np.array(n_samples)) + n_samples[0]/2
+            max_single_query[r] = np.max(ula_signal.depths)
 
             pool = torch.multiprocessing.Pool(num_threads)
             start = time.time()
 
-            processes = [pool.apply_async(run, args=(theta, n_samples_m, ula_signal_m, espirit, sign_model_m, args.num_median, args.eta, i)) for i in
+            processes = [pool.apply_async(run, args=(theta, n_samples, ula_signal, espirit, sign_model, args.num_median, args.eta, i)) for i in
                          range(num_mc)]
             sims = [p.get() for p in processes]
             pool.terminate()

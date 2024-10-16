@@ -53,7 +53,7 @@ sign_model.eval()
 
 # Number of Monte Carlo trials used to estimate statistics. We tend to use 500 in the paper. Choose 100 here for speed.
 num_mc = 1
-num_median = 1
+num_median = 3
 thetas = np.zeros(num_mc, dtype=float)
 errors = np.zeros(num_mc, dtype=float)
 
@@ -64,21 +64,37 @@ for k in range(num_mc):
     print(f'Trial {k+1} of {num_mc}')
     # This estimates the covariance matrix of Eq. 8 using the approch given in DOI:10.1109/LSP.2015.2409153
     median_theta = np.zeros(num_median, dtype=float)
+    ula_signal.estimate_signal(n_samples=ula_signal.n_samples, theta=theta, eta=eta, offset=0.0)
+    X = torch.from_numpy(ula_signal.measurements).type(torch.float)
+    # signs = [-1+2*(sign_model(X) > 0.5).float().numpy()]
+    signs = -1 + 2 * (sign_model(X) > 0.5).float().numpy()
+    signs = [1.0] + list(signs)
+    print(signs)
+
     for j in range(num_median):
-        offset = 0
-        ula_signal.estimate_signal(n_samples=ula_signal.n_samples, theta=theta, eta=eta, offset=offset)
-        X = torch.from_numpy(ula_signal.measurements).type(torch.float)
-        # signs = [-1+2*(sign_model(X) > 0.5).float().numpy()]
-        signs = -1 + 2 * (sign_model(X) > 0.5).float().numpy()
-        signs = [1.0] + list(signs)
-        print(signs)
+        # offset = 0.1*np.pi # figure this out
+        offset = np.random.uniform(0.0, 0.25*np.pi)
+        offset = 0.0
+        # offset = 0.07957110621802466*np.pi
         # print(signs)
         # signal = ula_signal.estimate_signal(n_samples=ula_signal.n_samples, theta=theta, eta=eta, signs=signs)
-        signal = ula_signal.update_signal_signs(signs)
+        # offset_signal = ula_signal.add_signal_offset(ula_signal.signal, offset)
+        # signal = ula_signal.update_signal_signs(offset_signal, signs)
+        noise_signal = ula_signal.add_signal_noise(ula_signal.signal, 0.0001)
+        signal = ula_signal.update_signal_signs(noise_signal, signs)
+        # signal = ula_signal.add_signal_offset(signal, offset)
         R = ula_signal.get_cov_matrix_toeplitz(signal)
         # This estimates the angle using the ESPIRIT algorithm
-        theta_est, eigs = espirit.estimate_theta_toeplitz(R, s0=np.real(signal[0])**2)
-        # theta_est = theta_est-offset
+        theta_est, eigs = espirit.estimate_theta_toeplitz(R)
+        print(f'theta_est: {theta_est/np.pi}')
+        print(f'offset:    {offset/np.pi}')
+
+        # if offset < theta_est:
+        if -np.angle(eigs) < 0:
+            theta_est = theta_est - offset
+        else:
+            theta_est = np.pi / 2.0 - theta_est - offset
+        print(f'theta_est: {theta_est / np.pi}')
 
         if math.isclose(np.linalg.norm(np.array(ula_signal.signs_exact) - np.array(signs)), 0):
             print(f'     CORRECT ANSWER FOUND')
@@ -166,6 +182,7 @@ for k in range(num_mc):
 
         median_theta[j] = theta_est
 
+    print(median_theta)
     thetas[k] = np.median(median_theta)
     errors[k] = np.abs(np.abs(np.sin(theta)) - np.abs(np.sin(thetas[k])))
 
@@ -191,7 +208,7 @@ print(f'95% percentile constant: {np.percentile(errors, 95) * num_queries:f}')
 print(f'68% percentile constant: {np.percentile(errors, 68) * num_queries:f}')
 print()
 
-signal = ula_signal.update_signal_signs(ula_signal.signs_exact)
+signal = ula_signal.update_signal_signs(ula_signal.signal, ula_signal.signs_exact)
 ula_signal_exact = ula_signal.get_ula_signal(signal)
 # signal = ula_signal.update_signal_signs([1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0])
 # ula_signal_bad = ula_signal.get_ula_signal(signal)

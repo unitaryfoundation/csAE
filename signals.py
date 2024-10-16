@@ -161,20 +161,36 @@ class TwoqULASignal(ULASignal):
 
         return physLoc, n_samples
 
-    def update_signal_signs(self, signs):
-        if len(signs) != len(self.signal):
+    def update_signal_signs(self, signal, signs):
+        if len(signs) != len(signal):
             print(f'Error: sign array of length {len(signs)} must be of same length as signal array of length {len(self.signal)}')
             exit()
 
-        signed_signal = np.zeros(len(self.signal), dtype = np.complex128)
+        signed_signal = np.zeros(len(signal), dtype = np.complex128)
         
-        for i in range(len(self.signal)):
+        for i in range(len(signal)):
             if signs[i] < 0:
-                signed_signal[i] = np.conj(self.signal[i])
+                signed_signal[i] = np.conj(signal[i])
             else:
-                signed_signal[i] = self.signal[i]
+                signed_signal[i] = signal[i]
 
         return signed_signal
+
+    def add_signal_offset(self, signal, offset):
+        offset_signal = np.zeros(len(signal), dtype=np.complex128)
+
+        for i,n in enumerate(self.depths):
+            offset_signal[i] = signal[i]*np.exp(2.0j*(2*n+1)*offset)
+
+        return offset_signal
+
+    def add_signal_noise(self, signal, noise = 0.0001):
+        noise_signal = np.zeros(len(signal), dtype=np.complex128)
+
+        for i, n in enumerate(self.depths):
+            noise_signal[i] = signal[i] + noise*np.random.normal() + 1.0j*noise*np.random.normal()
+
+        return noise_signal
     
     def estimate_signal(self, n_samples, theta, eta=0.0, signs=None, offset=0.0):
         depths = self.depths
@@ -228,7 +244,7 @@ class TwoqULASignal(ULASignal):
             #     self.p0mp1 = p0_estimate - p1_estimate
 
             # Compute f(n) - Eq. 3
-            fi_estimate = np.exp(1.0j*theta_estimated + 2.0j*(2*n+1)*offset)
+            fi_estimate = np.exp(1.0j*theta_estimated)
             self.signal[i] = fi_estimate
 
         return self.signal 
