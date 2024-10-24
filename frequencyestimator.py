@@ -173,7 +173,7 @@ class ESPIRIT(EstimateFrequency):
         eigs, _ = np.linalg.eig(Phi)
 
         angle = -np.angle(eigs)
-        self.w = np.array([angle[0]/4])
+        self.w = np.array([angle[0]/2])
         
         # Fix the quadrant
         if self.w[0] < 0.0:

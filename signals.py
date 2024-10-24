@@ -9,6 +9,11 @@ P1 = lambda n, theta: np.sin((2*n+1)*theta)**2
 P0x = lambda n, theta: (1.0 + np.sin(2*(2*n+1)*theta))/2.0
 P1x = lambda n, theta: (1.0 - np.sin(2*(2*n+1)*theta))/2.0
 
+P00 = lambda n, theta: 0.25*(np.cos(theta) + np.cos((2*n+1)*theta))**2
+P10 = lambda n, theta: 0.25*(np.cos(theta) - np.cos((2*n+1)*theta))**2
+P11 = lambda n, theta: 0.25*(np.sin(theta) - np.sin((2*n+1)*theta))**2
+P01 = lambda n, theta: 0.25*(np.sin(theta) + np.sin((2*n+1)*theta))**2
+
 @njit
 def get_ula_signal(q, idx, signal):
     p = np.outer(signal, np.conj(signal)).T.ravel()  # Compute outer product
@@ -149,7 +154,8 @@ class TwoqULASignal(ULASignal):
         physLoc = np.sort(list(set(physLoc)))
 
         for i in range(len(physLoc)):
-            x = int((np.ceil(C*(len(physLoc)-i)))) # sims_99
+            # x = int((np.ceil(C*(len(physLoc)-i)))) # sims_99
+            x = int((np.ceil(C*(len(physLoc)-i/2)))) # sims_99
             n_samples.append(x if x!=0 else 1)
 
         return physLoc, n_samples
@@ -162,6 +168,11 @@ class TwoqULASignal(ULASignal):
             p0 = P0(n, theta)
             p1 = P1(n, theta)
 
+            p00 = P00(n, theta)
+            p01 = P01(n, theta)
+            p10 = P10(n, theta)
+            p11 = P11(n, theta)
+
             p0x = P0x(n,theta)
             p1x = P1x(n,theta)
 
@@ -171,16 +182,91 @@ class TwoqULASignal(ULASignal):
             p1_estimate = 1.0 - p0_estimate
             p0x_estimate = np.random.binomial(n_samples[i], eta_n*p0x + (1.0-eta_n)*0.5)/n_samples[i]
             p1x_estimate = 1.0 - p0x_estimate
+
+            # Save the first measurement
+            # if i==0:
+            #     p0_estimate_n0 = p0_estimate
+
+            p00_estimate = np.random.binomial(n_samples[i], eta_n*p00 + (1.0-eta_n)*0.5)/n_samples[i]
+            p01_estimate = np.random.binomial(n_samples[i], eta_n*p01 + (1.0-eta_n)*0.5)/n_samples[i]
+            p10_estimate = np.random.binomial(n_samples[i], eta_n*p10 + (1.0-eta_n)*0.5)/n_samples[i]
+            p11_estimate = 1.0-p10_estimate-p01_estimate-p00_estimate
+            # p11_estimate = np.random.binomial(n_samples[i], eta_n*p11 + (1.0-eta_n)*0.5)/n_samples[i]
+
+            # Save the first measurement
+            if i==0:
+                p00_estimate_n0 = p00_estimate # cos^2 at n=0
+                p01_estimate_n0 = p01_estimate # sin^2 at n=0
+                cos_estimated = np.sqrt(p00_estimate)
+                sin_estimated = np.sqrt(p01_estimate)
+            else:
+                # cos_estimated = 2*np.sqrt(p00_estimate) - np.sqrt(p00_estimate_n0)
+                # sin_estimated = 2*np.sqrt(p00_estimate) - np.sqrt(p00_estimate_n0)
+
+                # or
+                # print(p00_estimate)
+                # print(p10_estimate)
+                # print(p01_estimate)
+                # print(p11_estimate)
+                # print(2*(p00_estimate + p10_estimate) - p00_estimate_n0)
+                # print(2*(p01_estimate + p11_estimate) - p01_estimate_n0)
+                # print()
+                csq = 2*(p00_estimate + p10_estimate) - p00_estimate_n0
+                ssq = 2*(p01_estimate + p11_estimate) - p01_estimate_n0
+
+                if csq < 0:
+                    csq = 0
+                    ssq = 1
+                elif ssq < 0:
+                    ssq = 0
+                    csq = 1
+                # cos_estimated = np.sqrt(2*(p00_estimate + p10_estimate) - p00_estimate_n0)
+                # sin_estimated = np.sqrt(2*(p01_estimate + p11_estimate) - p01_estimate_n0)
+                cos_estimated = np.sqrt(csq)
+                sin_estimated = np.sqrt(ssq)
+
+                # cos_estimated = (p00_estimate - p10_estimate)
+
+            # print(cos_estimated)
+            # print(np.sqrt(p0_estimate))
+            # print()
+            # cos_estimated = np.sqrt(p0_estimate)
+            # sin_estimated = np.sqrt(p1_estimate)
+
+            cos_sign = 1
+            sin_sign = 1
+
+            if p11_estimate > p01_estimate:
+                sin_sign = -1
+            if p10_estimate > p00_estimate:
+                cos_sign = -1
+
             
-            # Estimate theta
-            theta_estimated = np.arctan2(p0x_estimate - p1x_estimate, p0_estimate - p1_estimate)
+            theta_cos = np.arccos(np.sqrt(p0_estimate))
+            theta_estimated = theta_cos
+            # Determine which quadrant to place theta estimated in
+            theta_old = np.arctan2(p0x_estimate - p1x_estimate, p0_estimate - p1_estimate)
+            # signs_exact = np.sign(np.imag(np.exp(1j * theta_old)))
+            signs_exact = np.sign(np.imag(np.exp(1j * (2*n+1)*theta)))
+            if signs_exact < 0: 
+                theta_estimated = -theta_cos
+                # sin_estimated = -sin_estimated
+            
             
             # Store this to determine angle at theta = 0 or pi/2
             if i==0:
                 self.p0mp1 = p0_estimate - p1_estimate
 
             # Compute f(n) - Eq. 3
-            fi_estimate = np.exp(1.0j*theta_estimated)
-            signals[i] = fi_estimate
-        
+            # fi_estimate = np.exp(1.0j*theta_estimated)
+            # signals[i] = fi_estimate
+            signals[i] = cos_estimated*cos_sign + 1.0j*sin_estimated*sin_sign
+            # print(n)
+            # print(np.sign(np.sin((2*n+1)*theta)))
+            # print(np.sign(np.cos((2*n+1)*theta)))
+            # print(np.angle(signals[i])/np.pi)
+            # # signals[i] = np.exp(1.0j*(2*n+1)*theta) + np.random.normal(0.00001)
+            # print(np.angle(np.exp(1.0j*(2*n+1)*theta))/np.pi)
+            # print(theta_cos)
+            # print()
         return signals    
