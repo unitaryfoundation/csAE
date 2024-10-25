@@ -118,6 +118,8 @@ if __name__ == "__main__":
 
             
             print(f'Number of queries: {num_queries[r]}')
+            print(f'Depths: {ula_signal.depths}')
+            print(f'Samples: {ula_signal.n_samples}')
             print(f'Max Single Query: {max_single_query[r]}')
             print(f'99% percentile: {np.percentile(errors[r], 99):e}')
             print(f'95% percentile: {np.percentile(errors[r], 95):e}')
