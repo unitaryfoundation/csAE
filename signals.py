@@ -154,8 +154,8 @@ class TwoqULASignal(ULASignal):
         physLoc = np.sort(list(set(physLoc)))
 
         for i in range(len(physLoc)):
-            # x = int((np.ceil(C*(len(physLoc)-i)))) # sims_99
-            x = int((np.ceil(C*(len(physLoc)-i/2)))) # sims_99
+            x = int((np.ceil(C*(len(physLoc)-i)))) # sims_99
+            # x = int((np.ceil(C*(len(physLoc)-i/2)))) # sims_99
             n_samples.append(x if x!=0 else 1)
 
         return physLoc, n_samples
@@ -163,6 +163,8 @@ class TwoqULASignal(ULASignal):
     def estimate_signal(self, n_samples, theta, eta=0.0):
         depths = self.depths
         signals = np.zeros(len(depths), dtype = np.complex128)
+        self.measurements = np.zeros(len(depths), dtype = np.float64)
+        self.signs = {'sin_est':[], 'cos_est':[], 'sin_exact':[], 'cos_exact':[]}
         for i,n in enumerate(depths):
             # Get the exact measuremnt probabilities
             p0 = P0(n, theta)
@@ -187,10 +189,18 @@ class TwoqULASignal(ULASignal):
             # if i==0:
             #     p0_estimate_n0 = p0_estimate
 
-            p00_estimate = np.random.binomial(n_samples[i], eta_n*p00 + (1.0-eta_n)*0.5)/n_samples[i]
-            p01_estimate = np.random.binomial(n_samples[i], eta_n*p01 + (1.0-eta_n)*0.5)/n_samples[i]
-            p10_estimate = np.random.binomial(n_samples[i], eta_n*p10 + (1.0-eta_n)*0.5)/n_samples[i]
-            p11_estimate = 1.0-p10_estimate-p01_estimate-p00_estimate
+            rng = np.random.default_rng(seed=9)
+            p00_n = eta_n*p00 + (1.0-eta_n)*0.5
+            p01_n = eta_n*p01 + (1.0-eta_n)*0.5
+            p10_n = eta_n*p10 + (1.0-eta_n)*0.5
+            p11_n = eta_n*p11 + (1.0-eta_n)*0.5
+            p00_estimate, p01_estimate, p10_estimate, p11_estimate = \
+                rng.multinomial(n_samples[i], [p00_n, p01_n, p10_n, p11_n])
+            
+            # p00_estimate = np.random.binomial(n_samples[i], eta_n*p00 + (1.0-eta_n)*0.5)/n_samples[i]
+            # p01_estimate = np.random.binomial(n_samples[i], eta_n*p01 + (1.0-eta_n)*0.5)/n_samples[i]
+            # p10_estimate = np.random.binomial(n_samples[i], eta_n*p10 + (1.0-eta_n)*0.5)/n_samples[i]
+            # p11_estimate = 1.0-p10_estimate-p01_estimate-p00_estimate
             # p11_estimate = np.random.binomial(n_samples[i], eta_n*p11 + (1.0-eta_n)*0.5)/n_samples[i]
 
             # Save the first measurement
@@ -199,6 +209,7 @@ class TwoqULASignal(ULASignal):
                 p01_estimate_n0 = p01_estimate # sin^2 at n=0
                 cos_estimated = np.sqrt(p00_estimate)
                 sin_estimated = np.sqrt(p01_estimate)
+                self.measurements[i] = p00_estimate
             else:
                 # cos_estimated = 2*np.sqrt(p00_estimate) - np.sqrt(p00_estimate_n0)
                 # sin_estimated = 2*np.sqrt(p00_estimate) - np.sqrt(p00_estimate_n0)
@@ -225,13 +236,16 @@ class TwoqULASignal(ULASignal):
                 cos_estimated = np.sqrt(csq)
                 sin_estimated = np.sqrt(ssq)
 
+                self.measurements[i] = csq
+
                 # cos_estimated = (p00_estimate - p10_estimate)
 
             # print(cos_estimated)
             # print(np.sqrt(p0_estimate))
             # print()
-            # cos_estimated = np.sqrt(p0_estimate)
-            # sin_estimated = np.sqrt(p1_estimate)
+            cos_estimated = np.sqrt(p0_estimate)
+            sin_estimated = np.sqrt(p1_estimate)
+            self.measurements[i] = p0_estimate
 
             cos_sign = 1
             sin_sign = 1
@@ -240,17 +254,18 @@ class TwoqULASignal(ULASignal):
                 sin_sign = -1
             if p10_estimate > p00_estimate:
                 cos_sign = -1
-
+            self.signs['sin_est'].append(sin_sign)
+            self.signs['cos_est'].append(cos_sign)
             
             theta_cos = np.arccos(np.sqrt(p0_estimate))
             theta_estimated = theta_cos
             # Determine which quadrant to place theta estimated in
             theta_old = np.arctan2(p0x_estimate - p1x_estimate, p0_estimate - p1_estimate)
             # signs_exact = np.sign(np.imag(np.exp(1j * theta_old)))
-            signs_exact = np.sign(np.imag(np.exp(1j * (2*n+1)*theta)))
-            if signs_exact < 0: 
-                theta_estimated = -theta_cos
-                # sin_estimated = -sin_estimated
+            self.signs['sin_exact'].append(int(np.sign(np.imag(np.exp(1j * (2*n+1)*theta)))))
+            self.signs['cos_exact'].append(int(np.sign(np.real(np.exp(1j * (2*n+1)*theta)))))
+
+            # sin_sign = np.sign(np.imag(np.exp(1j * (2*n+1)*theta)))
             
             
             # Store this to determine angle at theta = 0 or pi/2
