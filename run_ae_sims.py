@@ -17,6 +17,7 @@ import multiprocessing
 import pickle
 import argparse
 import pathlib
+from scipy.stats import binom
 
 from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning
 import warnings
@@ -24,11 +25,74 @@ import warnings
 warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
 warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 
+def adjust_angle(depths, n_samples, measurements, theta_found):
+
+    p_o2 = np.cos((2 * depths + 1) * (theta_found / 2.0)) ** 2
+    p_o4 = np.cos((2 * depths + 1) * (theta_found / 4.0)) ** 2
+    p_same = np.cos((2 * depths + 1) * (theta_found)) ** 2
+    p_s2 = np.cos((2 * depths + 1) * (np.pi / 2 - theta_found)) ** 2
+    p_s4 = np.cos((2 * depths + 1) * (np.pi / 4 - theta_found)) ** 2
+    p_s2_o2 = np.cos((2 * depths + 1) * (np.pi / 2 - theta_found / 2)) ** 2
+    p_s4_o2 = np.cos((2 * depths + 1) * (np.pi / 4 - theta_found/ 2)) ** 2
+
+    l_o2 = np.sum(
+        np.log(
+            [1e-75+binom.pmf(n_samples[kk] * measurements[kk], n_samples[kk], p_o2[kk]) for
+             kk in
+             range(len(n_samples))]))
+    l_o4 = np.sum(
+        np.log(
+            [1e-75+binom.pmf(n_samples[kk] * measurements[kk], n_samples[kk], p_o4[kk]) for
+             kk in
+             range(len(n_samples))]))
+    l_same = np.sum(
+        np.log(
+            [1e-75+binom.pmf(n_samples[kk] * measurements[kk], n_samples[kk], p_same[kk]) for
+             kk in
+             range(len(n_samples))]))
+    l_s2 = np.sum(
+        np.log(
+            [1e-75+binom.pmf(n_samples[kk] * measurements[kk], n_samples[kk], p_s2[kk]) for
+             kk in
+             range(len(n_samples))]))
+    l_s4 = np.sum(
+        np.log(
+            [1e-75+binom.pmf(n_samples[kk] * measurements[kk], n_samples[kk], p_s4[kk]) for
+             kk in
+             range(len(n_samples))]))
+    l_s2_o2 = np.sum(
+        np.log([1e-75+binom.pmf(n_samples[kk] * measurements[kk], n_samples[kk], p_s2_o2[kk])
+                for kk in
+                range(len(n_samples))]))
+    l_s4_o2 = np.sum(
+        np.log([1e-75+binom.pmf(n_samples[kk] * measurements[kk], n_samples[kk], p_s4_o2[kk])
+                for kk in
+                range(len(n_samples))]))
+
+
+    # which_correction = np.argmin([obj_same, obj_s2, obj_s4, obj_o2, obj_s2_o2, obj_s4_o2])
+    which_correction = np.argmax([l_same, l_s2, l_s4, l_o2, l_o4, l_s2_o2, l_s4_o2])
+    if which_correction == 1:
+        theta_found = np.pi / 2.0 - theta_found
+    elif which_correction == 2:
+        theta_found = np.pi / 4.0 - theta_found
+    elif which_correction == 3:
+        theta_found =  0.5 * theta_found
+    elif which_correction == 4:
+        theta_found =  0.25 * theta_found
+    elif which_correction == 5:
+        theta_found = np.pi / 2.0 - 0.5 * theta_found
+    elif which_correction == 6:
+        theta_found = np.pi / 4.0 - 0.5 * theta_found
+
+    return np.abs(theta_found)
+
 
 def run(theta, n_samples, ula_signal, espirit, n=2, eta=0.0):
     signal = ula_signal.estimate_signal(n_samples, theta, eta)
     R = ula_signal.get_cov_matrix_toeplitz(signal)
     theta_est, _ = espirit.estimate_theta_toeplitz(R, n=n)
+    theta_est = adjust_angle(ula_signal.depths, n_samples, ula_signal.measurements, theta_est)
     error = np.abs(np.sin(theta)-np.sin(theta_est)) 
     theta = theta_est
     
