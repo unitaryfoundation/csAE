@@ -168,7 +168,8 @@ if __name__ == "__main__":
             # account for the fact that the Grover oracle has two invocations of the unitary U, but is 
             # preceded by a single invocation of U (see Eq. 2 in paper). This accounts for the shots required
             # for that single U operator, which costs half as much as the Grover oracle.
-            num_queries[r] = 2*np.sum(np.array(ula_signal.depths)*np.array(n_samples)) + n_samples[0]
+            # num_queries[r] = 2*np.sum(np.array(ula_signal.depths)*np.array(n_samples)) + n_samples[0]
+            num_queries[r] = np.sum(np.array(ula_signal.depths)*np.array(n_samples)) + n_samples[0]/2
             max_single_query[r] = np.max(ula_signal.depths)
 
             pool = multiprocessing.Pool(num_threads)
