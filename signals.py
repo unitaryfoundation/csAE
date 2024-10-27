@@ -244,9 +244,9 @@ class TwoqULASignal(ULASignal):
             # print(cos_estimated)
             # print(np.sqrt(p0_estimate))
             # print()
-            cos_estimated = np.sqrt(p0_estimate)
-            sin_estimated = np.sqrt(p1_estimate)
-            self.measurements[i] = p0_estimate
+            # cos_estimated = np.sqrt(p0_estimate)
+            # sin_estimated = np.sqrt(p1_estimate)
+            # self.measurements[i] = p0_estimate
 
             cos_sign = 1
             sin_sign = 1
