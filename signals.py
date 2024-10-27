@@ -160,7 +160,7 @@ class TwoqULASignal(ULASignal):
 
         return physLoc, n_samples
     
-    def estimate_signal(self, n_samples, theta, eta=0.0):
+    def estimate_signal(self, n_samples, theta, seed=0, eta=0.0):
         depths = self.depths
         signals = np.zeros(len(depths), dtype = np.complex128)
         self.measurements = np.zeros(len(depths), dtype = np.float64)
@@ -190,7 +190,7 @@ class TwoqULASignal(ULASignal):
             # if i==0:
             #     p0_estimate_n0 = p0_estimate
 
-            rng = np.random.default_rng(seed=9)
+            rng = np.random.default_rng(seed=seed)
             p00_n = eta_n*p00 + (1.0-eta_n)*0.5
             p01_n = eta_n*p01 + (1.0-eta_n)*0.5
             p10_n = eta_n*p10 + (1.0-eta_n)*0.5
@@ -244,9 +244,9 @@ class TwoqULASignal(ULASignal):
             # print(cos_estimated)
             # print(np.sqrt(p0_estimate))
             # print()
-            # cos_estimated = np.sqrt(p0_estimate)
-            # sin_estimated = np.sqrt(p1_estimate)
-            # self.measurements[i] = p0_estimate
+            cos_estimated = np.sqrt(p0_estimate)
+            sin_estimated = np.sqrt(p1_estimate)
+            self.measurements[i] = p0_estimate
 
             cos_sign = 1
             sin_sign = 1
@@ -280,12 +280,6 @@ class TwoqULASignal(ULASignal):
             # fi_estimate = np.exp(1.0j*theta_estimated)
             # signals[i] = fi_estimate
             signals[i] = cos_estimated*cos_sign + 1.0j*sin_estimated*sin_sign
-            # print(n)
-            # print(np.sign(np.sin((2*n+1)*theta)))
-            # print(np.sign(np.cos((2*n+1)*theta)))
-            # print(np.angle(signals[i])/np.pi)
-            # # signals[i] = np.exp(1.0j*(2*n+1)*theta) + np.random.normal(0.00001)
-            # print(np.angle(np.exp(1.0j*(2*n+1)*theta))/np.pi)
-            # print(theta_cos)
-            # print()
+
+        self.signal = signals
         return signals    

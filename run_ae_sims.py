@@ -88,8 +88,9 @@ def adjust_angle(depths, n_samples, measurements, theta_found):
     return np.abs(theta_found)
 
 
-def run(theta, n_samples, ula_signal, espirit, n=2, eta=0.0):
-    signal = ula_signal.estimate_signal(n_samples, theta, eta)
+def run(theta, n_samples, ula_signal, espirit, seed, eta):
+    n=2
+    signal = ula_signal.estimate_signal(n_samples, theta, seed, eta)
     R = ula_signal.get_cov_matrix_toeplitz(signal)
     theta_est, _ = espirit.estimate_theta_toeplitz(R, n=n)
     theta_est = adjust_angle(ula_signal.depths, n_samples, ula_signal.measurements, theta_est)
@@ -116,8 +117,9 @@ if __name__ == "__main__":
     print(args)
     
     pathlib.Path(args.dir).mkdir(parents=True, exist_ok=True) 
-    
-    np.random.seed(7)
+
+    seed = 7
+    np.random.seed(seed)
 
 
     # In paper, we use 8, but it takes about four hours to run this in total on a 4 core laptop using 4 threads. If you want to just test this out, set num_lenghts to 6 and it should finish within minutes.
@@ -174,7 +176,7 @@ if __name__ == "__main__":
 
             pool = multiprocessing.Pool(num_threads)
             start = time.time()
-            processes = [pool.apply_async(run, args=(theta, n_samples, ula_signal, espirit, 2, args.eta)) for _ in range(num_mc)]
+            processes = [pool.apply_async(run, args=(theta, n_samples, ula_signal, espirit, seed+mci, args.eta)) for mci in range(num_mc)]
             sims = [p.get() for p in processes]
             for k in range(num_mc):
                 errors[r,k], thetas[r,k] = sims[k]
