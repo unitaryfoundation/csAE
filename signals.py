@@ -151,7 +151,7 @@ class TwoqULASignal(ULASignal):
         for i in range(len(physLoc)):
             x = int((np.ceil(C*(len(physLoc)-i)))) # sims_99
             n_samples.append(x if x!=0 else 1)
-
+        n_samples[0] = n_samples[0] * 2
         return physLoc, n_samples
     
     def estimate_signal(self, n_samples, theta, eta=0.0):
