@@ -157,6 +157,7 @@ class TwoqULASignal(ULASignal):
     def estimate_signal(self, n_samples, theta, eta=0.0):
         depths = self.depths
         signals = np.zeros(len(depths), dtype = np.complex128)
+        self.measurements = np.zeros(len(depths), dtype=np.double)
         for i,n in enumerate(depths):
             # Get the exact measuremnt probabilities
             p0 = P0(n, theta)
@@ -171,6 +172,8 @@ class TwoqULASignal(ULASignal):
             p1_estimate = 1.0 - p0_estimate
             p0x_estimate = np.random.binomial(n_samples[i], eta_n*p0x + (1.0-eta_n)*0.5)/n_samples[i]
             p1x_estimate = 1.0 - p0x_estimate
+
+            self.measurements[i] = p0_estimate
             
             # Estimate theta
             theta_estimated = np.arctan2(p0x_estimate - p1x_estimate, p0_estimate - p1_estimate)
