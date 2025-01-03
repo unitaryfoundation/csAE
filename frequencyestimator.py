@@ -165,11 +165,11 @@ class ESPIRIT(EstimateFrequency):
         else:
             m = np.shape(self.R)[0]
         
-        # S1 = np.matrix(self.S[0:-1, :], dtype=np.complex128)
-        # S2 = np.matrix(self.S[1:, :], dtype=np.complex128)
+        S1 = np.matrix(self.S[0:-1, :], dtype=np.complex128)
+        S2 = np.matrix(self.S[1:, :], dtype=np.complex128)
 
-        S1 = np.matrix(self.S[0:-1, 0], dtype=np.complex128)
-        S2 = np.matrix(self.S[1:, 0], dtype=np.complex128)
+        # S1 = np.matrix(self.S[0:-1, 0], dtype=np.complex128)
+        # S2 = np.matrix(self.S[1:, 0], dtype=np.complex128)
 
         # print(S1)
         # print(S2)

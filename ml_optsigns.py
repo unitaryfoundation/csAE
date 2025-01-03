@@ -70,9 +70,9 @@ if __name__ == "__main__":
     eta = 0
     # Set array parameters
     narray = [3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
-    narray = [2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+    narray = [2]*12
     # Set sampling rate
-    C = 5.0
+    C = 3.0
 
     # generate training data
     # num_train = 500000 #93.97%
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     # epochs = 5000
 
     num_train = 50000
-    epochs = 15
+    epochs = 10
 
     # Use for length
     # This sets up the simulation that simulates the measured amplitudes at the various physical locations.
@@ -186,7 +186,7 @@ if __name__ == "__main__":
         file_subscript += f'{x}'
 
     filename = f'ml_models/sign_model_{file_subscript}_C{C:0.2f}.pt'
-    torch.save(sign_model.state_dict(), filename)
+    torch.save(sign_model.state_dict(), filename, pickle_protocol=4)
     # torch.save(sign_model, "ml_models/sign_model_dropout_less_222223.pt")
     # print(measurements)
     # print(exact_signs)
