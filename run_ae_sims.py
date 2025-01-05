@@ -12,6 +12,8 @@ os.environ['MKL_NUM_THREADS']='1'
 import numpy as np
 from signals import *
 from frequencyestimator import *
+from csae import *
+from util import *
 import time
 import multiprocessing
 import pickle
@@ -25,17 +27,23 @@ warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
 warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 
 
-def run(theta, n_samples, ula_signal, espirit, n=2, eta=0.0):
-    signal = ula_signal.estimate_signal(n_samples, theta, eta)
-    R = ula_signal.get_cov_matrix_toeplitz(signal)
-    theta_est, _ = espirit.estimate_theta_toeplitz(R, n=n)
-    error = np.abs(np.sin(theta)-np.sin(theta_est)) 
-    theta = theta_est
+def run(theta, n_samples, ula_signal, espirit, heavy_signs, eta=0.0):
+    csignal, measurements = simulate_signal(ula_signal.depths, n_samples, theta)
+    ula_signal.set_measurements(measurements)
+    res = csae_with_local_minimization(ula_signal, espirit, heavy_signs, sample=True, correction=True, optimize=True,
+                                       disp=False)
+
+    theta_est = res['theta_est']
+    error = np.abs(np.sin(theta) - np.sin(theta_est))
+
+    cR = ula_signal.get_cov_matrix_toeplitz(csignal)
+    theta_est_exact_signs, _ = espirit.estimate_theta_toeplitz(cR)
+    error_exact_signs = np.abs(np.sin(theta) - np.sin(theta_est_exact_signs))
     
-    return error, theta
+    return error, theta_est, error_exact_signs, theta_est_exact_signs
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog='Run ULA Simulation',
+    parser = argparse.ArgumentParser(prog='Run compressed sensing amplitude estimation simulation',
                                     description="This program creates the simulation files. Running this program will generate all data files needed by plots.ipynb which will generate the figures in the paper. \n\n Use the following commands from the command line to run the correct simulations and store the output:\n python run_ae_sims.py --save --dir sims --nthreads=4 --num_mc=500 --num_lengths=8 --eta=0.0 \n python run_ae_sims.py --save --dir sims_eta0.01 --nthreads=4 --num_mc=500 --num_lengths=8 --eta=0.01 --C=1.5\n python run_ae_sims.py --save --dir sims_eta0.05 --nthreads=4 --num_mc=500 --num_lengths=8 --eta=0.05")
     parser.add_argument('--save', action='store_true', help="Set to true if you want to save output files (default: False).")
     parser.add_argument('--dir', type=str, help="Directory to save output files (default: sims/).", default="sims/")
@@ -43,7 +51,6 @@ if __name__ == "__main__":
     parser.add_argument('--num_mc', type=int, help="Number of Monte Carlo trials (default: 500)", default=500)
     parser.add_argument('--num_lengths', type=int, help="Maximum length array to use (default: 8)", default=5)
     parser.add_argument('--eta', type=float, help="Add a bias term to the estimated output probabilities. This biases the output towards a 50/50 mixture assuming noise in the circuit causes depolarization (default=0.0)", default=0.0)
-    parser.add_argument('--aval', type=float, help="If set, this defines the amplitude to be estimated. If not set, the range [0.1, 0.2, ..., 0.9] is used instead (default=None)", default=None)
     parser.add_argument('--fixed_sample', type=int, help="If set, this sets the sampling strategy to do a fixed number of samples at each depth, rather than one that samples more at lower depth and less and longer depth (default=None)", default=None)
     parser.add_argument('--C', type=float, help="This is a free parameter that determines how many shots to take at each step. (default=1.5)", default=1.5)
     args = parser.parse_args()
@@ -64,72 +71,72 @@ if __name__ == "__main__":
     max_single_query = np.zeros(num_lengths, dtype=int)
     errors = np.zeros((num_lengths, num_mc), dtype = float)
     thetas = np.zeros((num_lengths, num_mc), dtype = float)
-    
+    avals  = np.zeros((num_lengths, num_mc), dtype = float)
+
+    errors_exact_signs = np.zeros((num_lengths, num_mc), dtype=float)
+    thetas_exact_signs = np.zeros((num_lengths, num_mc), dtype=float)
     
     num_threads = args.nthreads
 
     arrays = []
 
-    if args.aval:
-        avals = [args.aval]
-    else:
-        avals = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    avals = [np.random.uniform(0.1, 0.9) for _ in range(num_mc)]
+    thetas_mc = np.arcsin(np.array(avals))
 
-    for a in avals:
-        theta = np.arcsin(a)
-        print(f'a = {a}')
-        print(f'theta = {theta}')
-        print(f'theta*4/pi = {theta*4/np.pi}')
+    filename = args.dir+f'/csae_C{args.C:0.3f}_mc{num_mc:04d}.pkl'
 
-        filename = args.dir+f'/a{a:0.3f}_mc{num_mc:04d}.pkl'
+    for r in range(num_lengths):
 
-        for r in range(num_lengths):
+        print(f'Trial {r+1} of {num_lengths}')
 
-            print(f'Trial {r+1} of {num_lengths}')
+        espirit = ESPIRIT()
+        narray = [2]*(2*r+2)
+        arrays.append(narray)
 
-            espirit = ESPIRIT()
-            narray = [2]*(2*r+2)
-            arrays.append(narray)
-            print(f'Array parameters: {narray}')
-            ula_signal = TwoqULASignal(M=narray, C=args.C)
+        ula_signal = TwoqULASignal(M=narray, C=args.C)
+        heavy_signs = get_heavy_signs(ula_signal.depths, ula_signal.n_samples, len(narray) ** 2)
 
-            if args.fixed_sample:
-                n_samples = [args.fixed_sample]*len(ula_signal.n_samples)
-            else:
-                n_samples = ula_signal.n_samples
-            print(f'Shots per depth: {n_samples}')
-            print(f'C parameter: {args.C:0.3f}')
+        if args.fixed_sample:
+            n_samples = [args.fixed_sample]*len(ula_signal.n_samples)
+        else:
+            n_samples = ula_signal.n_samples
 
-            # Compute the total number of queries. The additional count of ula_signal.n_samples[0] is to 
-            # account for the fact that the Grover oracle has two invocations of the unitary U, but is 
-            # preceded by a single invocation of U (see Eq. 2 in paper). This accounts for the shots required
-            # for that single U operator, which costs half as much as the Grover oracle.
-            num_queries[r] = 2*np.sum(np.array(ula_signal.depths)*np.array(n_samples)) + n_samples[0]
-            max_single_query[r] = np.max(ula_signal.depths)
+        # Compute the total number of queries. The additional count of ula_signal.n_samples[0] is to
+        # account for the fact that the Grover oracle has two invocations of the unitary U, but is
+        # preceded by a single invocation of U (see Eq. 2 in paper). This accounts for the shots required
+        # for that single U operator. Most papers negect this cost
+        num_queries[r] = np.sum(np.array(ula_signal.depths)*np.array(n_samples)) + n_samples[0]
+        max_single_query[r] = np.max(ula_signal.depths)
 
-            pool = multiprocessing.Pool(num_threads)
-            start = time.time()
-            processes = [pool.apply_async(run, args=(theta, n_samples, ula_signal, espirit, 2, args.eta)) for _ in range(num_mc)]
-            sims = [p.get() for p in processes]
-            for k in range(num_mc):
-                errors[r,k], thetas[r,k] = sims[k]
-            end = time.time()
-            print(f'Time for trial {r+1}: {end-start} (s)')
+        pool = multiprocessing.Pool(num_threads)
+        start = time.time()
+        processes = [pool.apply_async(run, args=(theta, n_samples, ula_signal, espirit, heavy_signs, args.eta)) for theta in thetas_mc]
+        sims = [p.get() for p in processes]
+        for k in range(num_mc):
+            errors[r,k], thetas[r,k], errors_exact_signs[r,k], thetas_exact_signs[r,k] = sims[k]
+        end = time.time()
+        print(f'Time for trial {r+1}: {end-start} (s)')
 
-            
-            print(f'Number of queries: {num_queries[r]}')
-            print(f'Max Single Query: {max_single_query[r]}')
-            print(f'99% percentile: {np.percentile(errors[r], 99):e}')
-            print(f'95% percentile: {np.percentile(errors[r], 95):e}')
-            print(f'99% Constant: {num_queries[r] * np.percentile(errors[r], 99):e}')
-            print(f'95% Constant: {num_queries[r] * np.percentile(errors[r], 95):e}')
-            print(f'99% Max Constant: {max_single_query[r] * np.percentile(errors[r], 99):e}')
-            print(f'95% Max Constant: {max_single_query[r] * np.percentile(errors[r], 95):e}')
-            print(f'Error per oracle: {args.eta:e}')
-            print(f'Maximum Error: {1.0 - (1.0-args.eta)**(max_single_query[r]+1):e}')
-            print()
-        
-        if args.save:
-            with open(filename, 'wb') as handle:
-                pickle.dump((errors, thetas, num_queries, max_single_query, arrays, num_lengths, num_mc), 
-                            handle, protocol=pickle.HIGHEST_PROTOCOL)    
+        print(f'Array parameters: {narray}')
+        print(f'Query Depths: {ula_signal.depths}')
+        print(f'Number of Samples per query: {n_samples}')
+        print(f'Number of queries: {num_queries[r]}')
+        print(f'Max Single Query: {max_single_query[r]}')
+        print(f'99% percentile: {np.percentile(errors[r], 99):e}')
+        print(f'95% percentile: {np.percentile(errors[r], 95):e}')
+        print(f'68% percentile: {np.percentile(errors[r], 68):e}')
+        print(f'99% Constant: {num_queries[r] * np.percentile(errors[r], 99):e}')
+        print(f'95% Constant: {num_queries[r] * np.percentile(errors[r], 95):e}')
+        print(f'68% Constant: {num_queries[r] * np.percentile(errors[r], 68):e}')
+        print(f'99% Max Constant: {max_single_query[r] * np.percentile(errors[r], 99):e}')
+        print(f'95% Max Constant: {max_single_query[r] * np.percentile(errors[r], 95):e}')
+        print(f'68% Max Constant: {max_single_query[r] * np.percentile(errors[r], 68):e}')
+        print(f'Error per oracle: {args.eta:e}')
+        print(f'Maximum Error: {1.0 - (1.0-args.eta)**(max_single_query[r]+1):e}')
+        print(f'C parameter: {args.C:0.3f}')
+        print()
+
+    if args.save:
+        with open(filename, 'wb') as handle:
+            pickle.dump((errors, thetas, errors_exact_signs, thetas_exact_signs, num_queries, max_single_query, arrays, num_lengths, num_mc, avals),
+                        handle, protocol=pickle.HIGHEST_PROTOCOL)
