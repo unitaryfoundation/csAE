@@ -1,10 +1,9 @@
 import numpy as np
-
 from frequencyestimator import *
 from util import *
 import ast
 
-def estimate_amplitude(ula_signal, heavy_signs):
+def estimate_amplitude(ula_signal, heavy_signs, adjacency=2):
     """
     Estimates the amplitude, a, of a state |psi> = a|0,x> + sqrt{1-a^2}|1,x'>
     given a set of measurements, depths (number of queries), and number of samples taken.
@@ -13,13 +12,13 @@ def estimate_amplitude(ula_signal, heavy_signs):
     Inputs:
         ula_signal: object of type signal that contains the measurements, depths, and number of samples along with other array parameters
         heavy_signs: Simulated sign distribution obtained by calling the function get_heavy_signs
+        adjacency (int, optional): The maximum Hamming distance to consider for the sign variations. Defaults to 2.
     Returns:
         amplitude: float containing the estimate of the amplitude of state |0,x>
     """
 
     espirit = ESPIRIT()
-    results = csae_with_local_minimization(ula_signal, espirit, heavy_signs, sample=True, correction=True, optimize=True,
-                                           disp=False)
+    results = csae_with_local_minimization(ula_signal, espirit, heavy_signs, sample=True, correction=True, optimize=True, disp=False, adjacency=adjacency)
 
     a = np.sin(results['theta_est'])
     return a
@@ -97,6 +96,7 @@ def get_signs(sign_distribution):
     return cumulative_dict
 
 # Taking a random sample based on the normalized probabilities
+
 def sample_from_normalized(data, sample_size=1):
     keys = list(map(str, list(data.keys())))
     probabilities = list(data.values())
@@ -188,7 +188,6 @@ def all_signs_to_try(avals_to_use, signs_to_try, adjacency=2):
 
     return all_signs
 
-
 def minimize_obj(all_signs, cos_signal, abs_sin, ula_signal, esprit, disp):
     """
     Find the sign variation that minimizes the objective function.
@@ -220,7 +219,7 @@ def minimize_obj(all_signs, cos_signal, abs_sin, ula_signal, esprit, disp):
 
 
 def csae_with_local_minimization(ula_signal, esprit, heavy_signs, sample=False, correction=False, optimize=False,
-                                 disp=False):
+                                 disp=False, adjacency=2):
     """
     Perform CSAE (Compressive Sensing Angle Estimation) with local minimization.
 
@@ -237,6 +236,7 @@ def csae_with_local_minimization(ula_signal, esprit, heavy_signs, sample=False, 
         optimize (bool, optional): If True, uses a sliding window approach to find the best sign variation.
                                   If False, uses the learned sign distribution directly. Defaults to False.
         disp (bool, optional): If True, prints additional information during the process. Defaults to False.
+        adjacency (int, optional): The maximum Hamming distance to consider for the sign variations. Defaults to 2.
 
     Returns:
         dict: A dictionary containing the estimated angles, errors, number of queries, maximum depth,
@@ -274,7 +274,7 @@ def csae_with_local_minimization(ula_signal, esprit, heavy_signs, sample=False, 
                 print(f'avals to use: {avals_to_use}')
 
             # step 3: now vary the signs in a sliding window of size "adjacency"
-            all_signs = all_signs_to_try(avals_to_use, signs_to_try, adjacency=2)
+            all_signs = all_signs_to_try(avals_to_use, signs_to_try, adjacency=adjacency)
 
             if disp:
                 print(f'number of signs Hamming distance two: {len(all_signs)}')
