@@ -27,11 +27,10 @@ warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
 warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 
 
-def run(theta, n_samples, ula_signal, espirit, heavy_signs, eta=0.0):
+def run(theta, n_samples, ula_signal, espirit, heavy_signs, eta=0.0, adjacency=2):
     csignal, measurements = simulate_signal(ula_signal.depths, n_samples, theta)
     ula_signal.set_measurements(measurements)
-    res = csae_with_local_minimization(ula_signal, espirit, heavy_signs, sample=True, correction=True, optimize=True,
-                                       disp=False)
+    res = csae_with_local_minimization(ula_signal, espirit, heavy_signs, sample=True, correction=True, optimize=True, disp=False, adjacency=adjacency)
 
     theta_est = res['theta_est']
     error = np.abs(np.sin(theta) - np.sin(theta_est))
@@ -53,6 +52,7 @@ if __name__ == "__main__":
     parser.add_argument('--eta', type=float, help="Add a bias term to the estimated output probabilities. This biases the output towards a 50/50 mixture assuming noise in the circuit causes depolarization (default=0.0)", default=0.0)
     parser.add_argument('--fixed_sample', type=int, help="If set, this sets the sampling strategy to do a fixed number of samples at each depth, rather than one that samples more at lower depth and less and longer depth (default=None)", default=None)
     parser.add_argument('--C', type=float, help="This is a free parameter that determines how many shots to take at each step. (default=1.5)", default=1.5)
+    parser.add_argument('--adjacency', type=int, help="The maximum Hamming distance to consider for the sign variations. (default=2)", default=2)
     args = parser.parse_args()
 
     print('Command Line Arguments')
@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
         pool = multiprocessing.Pool(num_threads)
         start = time.time()
-        processes = [pool.apply_async(run, args=(theta, n_samples, ula_signal, espirit, heavy_signs, args.eta)) for theta in thetas_mc]
+        processes = [pool.apply_async(run, args=(theta, n_samples, ula_signal, espirit, heavy_signs, args.eta, args.adjacency)) for theta in thetas_mc]
         sims = [p.get() for p in processes]
         for k in range(num_mc):
             errors[r,k], thetas[r,k], errors_exact_signs[r,k], thetas_exact_signs[r,k] = sims[k]
