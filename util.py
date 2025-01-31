@@ -154,6 +154,9 @@ def generate_adjacent_sign_variations(signs_array: np.ndarray, size: int) -> np.
     # Total length of the array
     n = len(signs_array)
 
+    # For small arrays adjacency cannot be too large
+    size = min(n-1, size)
+
     # Will store all variations
     all_variations = []
 
