@@ -1,0 +1,122 @@
+Command Line Arguments
+Namespace(save=True, dir='sims_opt/', nthreads=6, num_mc=500, num_lengths=6, eta=0.0, fixed_sample=None, C=5.0, adjacency=4)
+Trial 1 of 6
+Time for trial 1: 3.090850830078125 (s)
+Array parameters: [2, 2]
+Query Depths: [0 1 2]
+Number of Samples per query: [30, 10, 5]
+Number of queries: 50
+Max Single Query: 2
+99% percentile: 2.774824e-01
+95% percentile: 1.494742e-01
+68% percentile: 5.705579e-02
+99% Constant: 1.387412e+01
+95% Constant: 7.473708e+00
+68% Constant: 2.852790e+00
+99% Max Constant: 5.549648e-01
+95% Max Constant: 2.989483e-01
+68% Max Constant: 1.141116e-01
+Error per oracle: 0.000000e+00
+Maximum Error: 0.000000e+00
+C parameter: 5.000
+
+Trial 2 of 6
+Time for trial 2: 9.132145404815674 (s)
+Array parameters: [2, 2, 2, 2]
+Query Depths: [0 1 2 4 8]
+Number of Samples per query: [50, 20, 15, 10, 5]
+Number of queries: 180
+Max Single Query: 8
+99% percentile: 4.645602e-02
+95% percentile: 2.474109e-02
+68% percentile: 1.039456e-02
+99% Constant: 8.362083e+00
+95% Constant: 4.453397e+00
+68% Constant: 1.871021e+00
+99% Max Constant: 3.716481e-01
+95% Max Constant: 1.979287e-01
+68% Max Constant: 8.315651e-02
+Error per oracle: 0.000000e+00
+Maximum Error: 0.000000e+00
+C parameter: 5.000
+
+Trial 3 of 6
+Time for trial 3: 69.03829026222229 (s)
+Array parameters: [2, 2, 2, 2, 2, 2]
+Query Depths: [ 0  1  2  4  8 16 32]
+Number of Samples per query: [70, 30, 25, 20, 15, 10, 5]
+Number of queries: 670
+Max Single Query: 32
+99% percentile: 1.243757e-02
+95% percentile: 6.657129e-03
+68% percentile: 2.554069e-03
+99% Constant: 8.333169e+00
+95% Constant: 4.460276e+00
+68% Constant: 1.711227e+00
+99% Max Constant: 3.980021e-01
+95% Max Constant: 2.130281e-01
+68% Max Constant: 8.173022e-02
+Error per oracle: 0.000000e+00
+Maximum Error: 0.000000e+00
+C parameter: 5.000
+
+Trial 4 of 6
+Time for trial 4: 224.67856001853943 (s)
+Array parameters: [2, 2, 2, 2, 2, 2, 2, 2]
+Query Depths: [  0   1   2   4   8  16  32  64 128]
+Number of Samples per query: [90, 40, 35, 30, 25, 20, 15, 10, 5]
+Number of queries: 2600
+Max Single Query: 128
+99% percentile: 4.845062e-03
+95% percentile: 1.840989e-03
+68% percentile: 7.170749e-04
+99% Constant: 1.259716e+01
+95% Constant: 4.786571e+00
+68% Constant: 1.864395e+00
+99% Max Constant: 6.201680e-01
+95% Max Constant: 2.356466e-01
+68% Max Constant: 9.178558e-02
+Error per oracle: 0.000000e+00
+Maximum Error: 0.000000e+00
+C parameter: 5.000
+
+Trial 5 of 6
+Time for trial 5: 1411.318107843399 (s)
+Array parameters: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+Query Depths: [  0   1   2   4   8  16  32  64 128 256 512]
+Number of Samples per query: [110, 50, 45, 40, 35, 30, 25, 20, 15, 10, 5]
+Number of queries: 10290
+Max Single Query: 512
+99% percentile: 1.167689e-03
+95% percentile: 5.516776e-04
+68% percentile: 1.832680e-04
+99% Constant: 1.201552e+01
+95% Constant: 5.676763e+00
+68% Constant: 1.885828e+00
+99% Max Constant: 5.978568e-01
+95% Max Constant: 2.824589e-01
+68% Max Constant: 9.383321e-02
+Error per oracle: 0.000000e+00
+Maximum Error: 0.000000e+00
+C parameter: 5.000
+
+Trial 6 of 6
+Time for trial 6: 33094.054662942886 (s)
+Array parameters: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+Query Depths: [   0    1    2    4    8   16   32   64  128  256  512 1024 2048]
+Number of Samples per query: [130, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15, 10, 5]
+Number of queries: 41020
+Max Single Query: 2048
+99% percentile: 2.804984e-04
+95% percentile: 1.228400e-04
+68% percentile: 4.267164e-05
+99% Constant: 1.150604e+01
+95% Constant: 5.038897e+00
+68% Constant: 1.750391e+00
+99% Max Constant: 5.744606e-01
+95% Max Constant: 2.515764e-01
+68% Max Constant: 8.739152e-02
+Error per oracle: 0.000000e+00
+Maximum Error: 0.000000e+00
+C parameter: 5.000
+
