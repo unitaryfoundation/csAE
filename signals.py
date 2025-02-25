@@ -152,7 +152,7 @@ class TwoqULASignal(ULASignal):
         return physLoc, n_samples
 
     @classmethod
-    def get_depths_and_samples(cls, narray, C=1.2):
+    def get_depths_and_samples(cls, narray, C=3.5):
         return cls._get_depths(cls, narray, C=C)
 
     def set_measurements(self, measurements):
