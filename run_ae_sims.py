@@ -27,7 +27,10 @@ warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
 warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 
 
-def run(theta, n_samples, ula_signal, espirit, heavy_signs, eta=0.0, adjacency=2):
+def run(theta, n_samples, ula_signal, espirit, heavy_signs, seed, eta=0.0, adjacency=2):
+
+    np.random.seed(seed)
+
     csignal, measurements = simulate_signal(ula_signal.depths, n_samples, theta)
     ula_signal.set_measurements(measurements)
     res = csae_with_local_minimization(ula_signal, espirit, heavy_signs, sample=True, correction=True, optimize=True, disp=False, adjacency=adjacency)
@@ -58,10 +61,9 @@ if __name__ == "__main__":
     print('Command Line Arguments')
     print(args)
     
-    pathlib.Path(args.dir).mkdir(parents=True, exist_ok=True) 
-    
     np.random.seed(7)
-
+    
+    pathlib.Path(args.dir).mkdir(parents=True, exist_ok=True) 
 
     # In paper, we use 8, but it takes about four hours to run this in total on a 4 core laptop using 4 threads. If you want to just test this out, set num_lenghts to 6 and it should finish within minutes.
     num_lengths = args.num_lengths
@@ -110,7 +112,7 @@ if __name__ == "__main__":
 
         pool = multiprocessing.Pool(num_threads)
         start = time.time()
-        processes = [pool.apply_async(run, args=(theta, n_samples, ula_signal, espirit, heavy_signs, args.eta, args.adjacency)) for theta in thetas_mc]
+        processes = [pool.apply_async(run, args=(theta, n_samples, ula_signal, espirit, heavy_signs, seed, args.eta, args.adjacency)) for seed, theta in enumerate(thetas_mc)]
         sims = [p.get() for p in processes]
         for k in range(num_mc):
             errors[r,k], thetas[r,k], errors_exact_signs[r,k], thetas_exact_signs[r,k] = sims[k]
