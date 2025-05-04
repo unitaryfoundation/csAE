@@ -1,9 +1,7 @@
-# Used to generate data for figures. Run the following commands. Warning this takes about 4 hours for a single command to run on a 4 core laptop.
-# python run_ae_sims.py --save --dir sims_C1.5_final --nthreads=4 --num_mc=500 --num_lengths=8 --C=1.5
-# python run_ae_sims.py --save --dir sims_C1.8_final --nthreads=4 --num_mc=500 --num_lengths=8 --C=1.8
-# python run_ae_sims.py --save --dir sims_C1.5_eta1e-4_final --nthreads=4 --num_mc=500 --num_lengths=8 --C=1.5 --eta=1e-4
-# python run_ae_sims.py --save --dir sims_C1.5_eta1e-5_final --nthreads=4 --num_mc=500 --num_lengths=8 --C=1.5 --eta=1e-5
-# python run_ae_sims.py --save --dir sims_C1.5_eta1e-5_final --nthreads=4 --num_mc=500 --num_lengths=8 --C=1.5 --eta=1e-6
+# Used to generate data for figures. Run the following commands. Each run takes about 7 hours for a single command to run with 12 threads on a server.
+# python run_ae_sims.py --save --dir=sims/ --nthreads=12 --num_lengths=6 --C=4 --adjacency=5 --num_mc=500
+# python run_ae_sims.py --save --dir=sims/ --nthreads=12 --num_lengths=6 --C=8 --adjacency=5 --num_mc=500
+
 
 import os
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
