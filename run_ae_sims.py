@@ -59,7 +59,8 @@ if __name__ == "__main__":
     print('Command Line Arguments')
     print(args)
     
-    np.random.seed(7)
+    base_seed=8
+    np.random.seed(base_seed)
     
     pathlib.Path(args.dir).mkdir(parents=True, exist_ok=True) 
 
@@ -110,7 +111,7 @@ if __name__ == "__main__":
 
         pool = multiprocessing.Pool(num_threads)
         start = time.time()
-        processes = [pool.apply_async(run, args=(theta, n_samples, ula_signal, espirit, heavy_signs, seed, args.eta, args.adjacency)) for seed, theta in enumerate(thetas_mc)]
+        processes = [pool.apply_async(run, args=(theta, n_samples, ula_signal, espirit, heavy_signs, base_seed+seed+1, args.eta, args.adjacency)) for seed, theta in enumerate(thetas_mc)]
         sims = [p.get() for p in processes]
         for k in range(num_mc):
             errors[r,k], thetas[r,k], errors_exact_signs[r,k], thetas_exact_signs[r,k] = sims[k]
