@@ -4,11 +4,6 @@ import pickle
 from scipy.linalg import toeplitz
 from numba import njit
 
-P0 = lambda n, theta: np.cos((2*n+1)*theta)**2
-P1 = lambda n, theta: np.sin((2*n+1)*theta)**2
-P0x = lambda n, theta: (1.0 + np.sin(2*(2*n+1)*theta))/2.0
-P1x = lambda n, theta: (1.0 - np.sin(2*(2*n+1)*theta))/2.0
-
 @njit
 def get_ula_signal(q, idx, signal):
     p = np.outer(signal, np.conj(signal)).T.ravel()  # Compute outer product
@@ -31,7 +26,7 @@ class ULASignal(metaclass = ABCMeta):
     
 class TwoqULASignal(ULASignal):
 
-    def __init__(self, M=None, ula=None, seed=None, C=1.2):
+    def __init__(self, M, ula=None, seed=None, C=1.2):
         '''
         Constructor for wrapper class around signal.
             ULA_signal_dict: either a dictionary containing the signal or path to a pickle file to load with the signal
@@ -45,16 +40,18 @@ class TwoqULASignal(ULASignal):
             self.n_samples = n_samples
             self.q = len(self.M)//2 if len(self.M) % 2 == 0 else len(self.M)//2 + 1
             self.idx = self.get_idx()
+            self.C = C
+            self.measurements = None
         elif isinstance(ula, str):
             with open(ula, 'rb') as handle:
-                self.idx, self.depths, self.n_samples, self.M = pickle.load(handle)
+                self.idx, self.depths, self.n_samples, self.M, self.C = pickle.load(handle)
             self.q = len(self.M)//2 if len(self.M) % 2 == 0 else len(self.M)//2 + 1
         else:
             raise TypeError("Input ULA must by array of indices or path to pickle file")
 
     def save_ula(self, filename='ula.pkl'):
         with open(filename, 'wb') as handle:
-            pickle.dump((self.idx, self.depths, self.n_samples, self.M), handle, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump((self.idx, self.depths, self.n_samples, self.M, self.C), handle, protocol=pickle.HIGHEST_PROTOCOL)
         
     
     def get_cov_matrix(self, signal):
@@ -151,36 +148,50 @@ class TwoqULASignal(ULASignal):
         for i in range(len(physLoc)):
             x = int((np.ceil(C*(len(physLoc)-i)))) # sims_99
             n_samples.append(x if x!=0 else 1)
-
+        n_samples[0] = n_samples[0] * 2
         return physLoc, n_samples
+
+    @classmethod
+    def get_depths_and_samples(cls, narray, C=3.5):
+        return cls._get_depths(cls, narray, C=C)
+
+    def set_measurements(self, measurements):
+        assert(len(measurements) == len(self.depths)), "Length of measurements does not match length of depths"
+        self.measurements = np.array(measurements)
+
+    def get_complex_signal(self, signs):
+        if self.measurements is not None:
+            theta_cos = 2 * np.arccos(np.sqrt(np.array(self.measurements)))
+            csignal = np.cos(theta_cos) + 1.0j * np.array(signs) * np.sin(theta_cos)
+            return csignal
+        else:
+            print("No measurements. Must set measurement values using set_measurements function before using this method.")
+            return None
     
-    def estimate_signal(self, n_samples, theta, eta=0.0):
-        depths = self.depths
-        signals = np.zeros(len(depths), dtype = np.complex128)
-        for i,n in enumerate(depths):
-            # Get the exact measuremnt probabilities
-            p0 = P0(n, theta)
-            p1 = P1(n, theta)
+    # def estimate_signal(self, n_samples, theta, eta=0.0):
+    #     depths = self.depths
+    #     signals = np.zeros(len(depths), dtype = np.complex128)
+    #     measurements = np.zeros(len(depths))
+    #     for i,n in enumerate(depths):
+    #         # Get the exact measurement probabilities (assuming access to both z and x basis measurements, which we don't have)
+    #         # The x basis measurements are only used for simulation purposes and not for reconstruction
+    #         p0 = P0(n, theta)
+    #         p0x = P0x(n,theta)
+    #
+    #         # Get the "noisy" probabilities by sampling and adding a bias term that pushes towards 50/50 mixture
+    #         eta_n = (1.0-eta)**(n+1) # The error at depth n increases as more queries are implemented
+    #         p0_estimate = np.random.binomial(n_samples[i], eta_n*p0 + (1.0-eta_n)*0.5)/n_samples[i]
+    #         p1_estimate = 1.0 - p0_estimate
+    #         p0x_estimate = np.random.binomial(n_samples[i], eta_n*p0x + (1.0-eta_n)*0.5)/n_samples[i]
+    #         p1x_estimate = 1.0 - p0x_estimate
+    #
+    #         # Estimate theta
+    #         theta_estimated = np.arctan2(p0x_estimate - p1x_estimate, p0_estimate - p1_estimate)
+    #
+    #         # Compute f(n) - Eq. 3
+    #         fi_estimate = np.exp(1.0j*theta_estimated)
+    #         signals[i] = fi_estimate
+    #         measurements[i] = p0_estimate
+    #
+    #     return signals, measurements
 
-            p0x = P0x(n,theta)
-            p1x = P1x(n,theta)
-
-            # Get the "noisy" probabilities by sampling and adding a bias term that pushes towards 50/50 mixture
-            eta_n = (1.0-eta)**(n+1) # The error at depth n increases as more queries are implemented
-            p0_estimate = np.random.binomial(n_samples[i], eta_n*p0 + (1.0-eta_n)*0.5)/n_samples[i]
-            p1_estimate = 1.0 - p0_estimate
-            p0x_estimate = np.random.binomial(n_samples[i], eta_n*p0x + (1.0-eta_n)*0.5)/n_samples[i]
-            p1x_estimate = 1.0 - p0x_estimate
-            
-            # Estimate theta
-            theta_estimated = np.arctan2(p0x_estimate - p1x_estimate, p0_estimate - p1_estimate)
-            
-            # Store this to determine angle at theta = 0 or pi/2
-            if i==0:
-                self.p0mp1 = p0_estimate - p1_estimate
-
-            # Compute f(n) - Eq. 3
-            fi_estimate = np.exp(1.0j*theta_estimated)
-            signals[i] = fi_estimate
-        
-        return signals    
