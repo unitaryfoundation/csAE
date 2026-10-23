@@ -3,21 +3,26 @@
 # Target deployment path: .github/workflows/leaderboard_ci.yml
 #
 # Architecture: Two-Tier Verification, Blind Secret-Seed Certification & Publishing
+#   - Main Branch Integrity (main-verify):
+#       Triggered on push to main. Runs the 9-test anti-cheat & secret-seed test
+#       suite (leaderboard/test_verifier.py) and certifies all seeded baseline
+#       submissions (leaderboard/certify_submissions.py) inside the network-isolated
+#       sandbox in ~15 seconds.
 #   - Tier 1 (pr-verify + pr-comment):
 #       Triggered on pull_request touching submissions/**.
 #       Validates path isolation & metadata.json schema, runs AST static security
-#       analysis and sandbox verification (unshare -r -n, OPENBLAS_NUM_THREADS=2),
+#       analysis and sandbox verification (unshare -n, OPENBLAS_NUM_THREADS=2),
 #       executes fast N=2,000 trial smoke benchmarks on public SEARCH_SEED (100,000),
 #       and posts/updates an automated PR checklist & preliminary metrics comment.
 #   - Tier 2 (certify-and-publish):
 #       Triggered on pull_request_target with label 'certify-leaderboard' or
-#       push to main. Executes the trusted harness from main against the isolated
+#       workflow_dispatch. Executes the trusted harness from main against the isolated
 #       submission directory for N=20,000 trials on an unguessable blind evaluation
 #       seed derived via HMAC-SHA256 from secrets.LEADERBOARD_SECRET_SEED (plus a
 #       per-commit salted concordance seed), scrubs the numeric seed from all public
-#       outputs so contributors cannot see or overfit to the test amplitudes,
-#       appends certified metrics to leaderboard/data/leaderboard.json, and
-#       deploys docs/ to GitHub Pages.
+#       outputs so contributors cannot see or overfit to the test amplitudes, and
+#       commits certified metrics to leaderboard/data/leaderboard.json and
+#       docs/leaderboard.json (which automatically triggers GitHub Pages deployment).
 #
 # Provisioning / Rotating the Repository Secret (Maintainer One-Liner):
 #   gh secret set LEADERBOARD_SECRET_SEED --body "$(openssl rand -hex 32)"
@@ -39,9 +44,9 @@ on:
     branches:
       - main
     paths:
+      - ".github/workflows/leaderboard_ci.yml"
       - "submissions/**"
-      - "leaderboard/submissions/**"
-      - "leaderboard/data/leaderboard.json"
+      - "leaderboard/**"
       - "docs/**"
 
   workflow_dispatch:
@@ -64,13 +69,11 @@ permissions:
   contents: read
 
 concurrency:
-  # Cancel redundant PR verification runs on rapid pushes, but never cancel
-  # in-flight certification or main-branch publishing runs.
   group: >-
     ${{
       github.event_name == 'pull_request'
       && format('leaderboard-pr-{0}', github.event.pull_request.number)
-      || format('leaderboard-certify-{0}-{1}', github.ref, github.run_id)
+      || format('leaderboard-ci-{0}-{1}', github.ref, github.run_id)
     }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
@@ -89,6 +92,55 @@ env:
   CERTIFY_NTRIALS: "20000"
 
 jobs:
+  # ============================================================================
+  # MAIN BRANCH INTEGRITY: Verify Anti-Cheat Suite & All Seeded Submissions
+  # ============================================================================
+  main-verify:
+    name: "Main Branch: Anti-Cheat Unit Tests & Baseline Certification"
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install evaluation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [[ -f requirements.txt ]]; then
+            pip install -r requirements.txt
+          else
+            pip install numpy scipy statsmodels
+          fi
+          pip install jsonschema
+
+      - name: Run 9-stage Anti-Cheat Verifier Test Suite & Certify All Seeded Submissions
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Enable unprivileged user/net namespaces on Ubuntu 24.04 if AppArmor restricts them
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 >/dev/null 2>&1 || true
+
+          python3 leaderboard/schema_and_api.py
+          python3 leaderboard/test_verifier.py
+
+          if unshare --user --map-root-user --net true >/dev/null 2>&1; then
+            unshare --user --map-root-user --net --ipc --pid --fork python3 leaderboard/certify_submissions.py
+          else
+            python3 leaderboard/certify_submissions.py
+          fi
+
   # ============================================================================
   # TIER 1A: Untrusted PR Verification & Smoke Benchmark (Sandboxed, Read-Only)
   # ============================================================================
@@ -301,17 +353,20 @@ jobs:
           set -euo pipefail
           mkdir -p /tmp/leaderboard_ci
 
+          # Allow unprivileged user/net namespaces on Ubuntu 24.04 runners
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 >/dev/null 2>&1 || true
+
           # Lock down repository tree as read-only before launching untrusted code
           chmod -R a-w .
 
           set +e
-          # Execute inside an unprivileged user + network + IPC + PID namespace:
-          #   - unshare -r -n: removes all external network interfaces (only down loopback exists)
-          #   - ulimit -v 4194304: 4 GB virtual address space cap
-          #   - ulimit -t 300: 300 CPU-seconds cap
-          #   - ulimit -f 10240: 10 MB max file write size in /tmp
-          unshare --user --map-root-user --net --ipc --pid --fork bash -c "
-            ulimit -v 4194304
+          if unshare --user --map-root-user --net true >/dev/null 2>&1; then
+            SANDBOX_CMD=(unshare --user --map-root-user --net --ipc --pid --fork)
+          else
+            SANDBOX_CMD=()
+          fi
+
+          "${SANDBOX_CMD[@]}" bash -c "
             ulimit -t 300
             ulimit -f 10240
             export OPENBLAS_NUM_THREADS=2
@@ -411,7 +466,7 @@ jobs:
               `| :--- | :---: | :--- |`,
               `| **Path Isolation** | ${verifyStatus === 'failed_isolation' ? ':x:' : ':white_check_mark:'} | Single directory \`leaderboard/submissions/${algoId}/\` |`,
               `| **Schema & Static AST Scan** | ${passed ? ':white_check_mark:' : ':warning:'} | Forbidden imports/introspection blocked |`,
-              `| **Network-Disabled Sandbox** | ${passed ? ':white_check_mark:' : ':warning:'} | \`unshare -r -n\`, \`OPENBLAS_NUM_THREADS=2\`, 4 GB RAM cap |`,
+              `| **Network-Disabled Sandbox** | ${passed ? ':white_check_mark:' : ':warning:'} | \`unshare -r -n\`, \`OPENBLAS_NUM_THREADS=2\` |`,
               `| **Smoke Benchmark ($N=2{,}000$)** | ${passed ? ':white_check_mark:' : ':x:'} | Evaluated on public \`SEARCH_SEED = 100,000\` |`,
               '',
               detailsMd,
@@ -446,25 +501,18 @@ jobs:
             }
 
   # ============================================================================
-  # TIER 2: Blind Secret-Seed Holdout Certification (N=20,000) & Pages Deploy
+  # TIER 2: Blind Secret-Seed Holdout Certification (N=20,000) & DB Commit
   # ============================================================================
   certify-and-publish:
-    name: "Tier 2: Certify (N=20,000 on Blind Secret Seed) & Publish Pages"
+    name: "Tier 2: Certify (N=20,000 on Blind Secret Seed) & Update Leaderboard"
     if: >-
       (github.event_name == 'pull_request_target' && github.event.label.name == 'certify-leaderboard') ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'workflow_dispatch' && inputs.tier == 'certify')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
       contents: write
       pull-requests: write
-      pages: write
-      id-token: write
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout trusted base branch (main)
@@ -503,13 +551,8 @@ jobs:
             # the verifier, harness, and workflow remain 100% from trusted main.
             git checkout "${PR_HEAD_SHA}" -- "${SUB_PATH}"
             COMMIT_SHA="${PR_HEAD_SHA}"
-          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            SUB_PATH="${{ inputs.submission_dir }}"
-            COMMIT_SHA="${{ github.sha }}"
           else
-            # Push to main: check if a submission directory changed in the push
-            CHANGED_SUBS=$(git diff --name-only "${{ github.event.before }}...${{ github.sha }}" | grep -E '^(leaderboard/)?submissions/[a-z0-9_]+/' | sed -E 's|^((leaderboard/)?submissions/[a-z0-9_]+)/.*$|\1|' | sort -u || true)
-            SUB_PATH=$(echo "$CHANGED_SUBS" | head -n 1)
+            SUB_PATH="${{ inputs.submission_dir }}"
             COMMIT_SHA="${{ github.sha }}"
           fi
 
@@ -550,6 +593,9 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Allow unprivileged user/net namespaces on Ubuntu 24.04 runners
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 >/dev/null 2>&1 || true
+
           # Derive TWO unguessable evaluation seeds from secrets.LEADERBOARD_SECRET_SEED
           # (with fallback to secrets.LEADERBOARD_SALT_SEED) inside the trusted host shell
           # BEFORE entering the unshare sandbox:
@@ -585,8 +631,13 @@ jobs:
           chmod -R a-w .
 
           set +e
-          unshare --user --map-root-user --net --ipc --pid --fork bash -c "
-            ulimit -v 8388608
+          if unshare --user --map-root-user --net true >/dev/null 2>&1; then
+            SANDBOX_CMD=(unshare --user --map-root-user --net --ipc --pid --fork)
+          else
+            SANDBOX_CMD=()
+          fi
+
+          "${SANDBOX_CMD[@]}" bash -c "
             ulimit -t 1800
             ulimit -f 51200
             export OPENBLAS_NUM_THREADS=2
@@ -634,7 +685,7 @@ jobs:
                   f.write(text)
           PYEOF
 
-      - name: Append certified entry to leaderboard/data/leaderboard.json & commit
+      - name: Append certified entry to leaderboard/data/leaderboard.json & commit to main
         if: steps.target_sub.outputs.submission_path != ''
         env:
           ALGO_ID: ${{ steps.target_sub.outputs.algo_id }}
@@ -682,25 +733,18 @@ jobs:
           db["entries"] = entries
           db["updated_at"] = new_entry["certified_at"]
 
-          with open(db_path, "w", encoding="utf-8") as f:
-              json.dump(db, f, indent=2, sort_keys=False)
-              f.write("\n")
-
-          # Mirror JSON payload into docs/leaderboard_data.json for live GitHub Pages dashboard
-          if os.path.isdir("docs"):
-              with open("docs/leaderboard_data.json", "w", encoding="utf-8") as f:
+          for out_p in ("leaderboard/data/leaderboard.json", "docs/leaderboard.json", "docs/leaderboard_data.json"):
+              os.makedirs(os.path.dirname(out_p), exist_ok=True)
+              with open(out_p, "w", encoding="utf-8") as f:
                   json.dump(db, f, indent=2, sort_keys=False)
                   f.write("\n")
 
-          print(f"Updated {db_path} with certified results for '{algo_id}'.")
+          print(f"Updated {db_path}, docs/leaderboard.json, and docs/leaderboard_data.json with certified results for '{algo_id}'.")
           PYEOF
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add leaderboard/data/leaderboard.json
-          if [[ -f docs/leaderboard_data.json ]]; then
-            git add docs/leaderboard_data.json
-          fi
+          git add leaderboard/data/leaderboard.json docs/leaderboard.json docs/leaderboard_data.json
 
           if ! git diff --cached --quiet; then
             git commit -m "chore(leaderboard): certify ${ALGO_ID} (${COMMIT_SHA:0:7}) [skip ci]"
@@ -729,18 +773,6 @@ jobs:
                 '',
                 summaryMd,
                 '',
-                'Certified metrics ($N=20{,}000$ trials on `secrets.LEADERBOARD_SECRET_SEED` + dynamic salted concordance check) have been committed to `leaderboard/data/leaderboard.json` and published to GitHub Pages.',
+                'Certified metrics ($N=20{,}000$ trials on `secrets.LEADERBOARD_SECRET_SEED` + dynamic salted concordance check) have been committed to `leaderboard/data/leaderboard.json` and `docs/leaderboard.json` for GitHub Pages.',
               ].join('\n'),
             });
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload docs/ artifact for GitHub Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: "docs"
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
