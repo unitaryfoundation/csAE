@@ -1,11 +1,11 @@
 {
   "algo_id": "mlae_pow2_suzuki",
-  "algorithm_name": "MLAE (Pow2, Suzuki et al. 2020)",
-  "name": "MLAE (Pow2, Suzuki et al. 2020)",
+  "algorithm_name": "MLAE-EIS (Suzuki et al. 2020)",
+  "name": "MLAE-EIS (Suzuki et al. 2020)",
   "track": "non-adaptive",
   "authors": [
     "Yohichi Suzuki",
-    " Shumpei Uno",
+    "Shumpei Uno",
     "Rudy Raymond",
     "Tomoki Tanaka",
     "Tamiya Onodera",
@@ -15,7 +15,7 @@
   "affiliation": "Keio University / IBM Quantum",
   "paper_url": "https://arxiv.org/abs/1904.10246",
   "pr_number": 1,
-  "description": "Exponential (power-of-two) Grover depth schedule n_k = 2^(k-1) up to n_max with uniform shots per rung (N_shot=12) and exact global maximum-likelihood estimation (Suzuki et al. 2020, Quantum Inf. Process. 19, 75).",
+  "description": "Suzuki et al. 2020 (Quantum Inf. Process. 19, 75) run exactly as in the paper: exponentially incremental sequence m_0 = 0, m_k = 2^(k-1) for k = 1..M, N_shot = 100 shots per circuit, exact global maximum-likelihood estimate. The benchmark scale fixes only M, via the deepest circuit 2^(M-1) <= n_max.",
   "date": "2026-10-23",
   "entrypoint": "submission.py:MLAEPow2SuzukiSubmission"
 }

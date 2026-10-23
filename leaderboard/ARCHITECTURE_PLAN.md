@@ -225,8 +225,8 @@ Across all tracks, the target parameter is the amplitude $a = \sin\theta \in (0.
 | `mlqae_flagship_labib` | Dense-Ladder MLQAE Flagship ($r=1.45$ + cap rung at $n_{\max}/1.3$) | [arXiv:2609.02715](https://arxiv.org/abs/2609.02715) | `non-adaptive` |
 | `mlqae_plain_labib` | Plain Geometric-Ladder MLQAE ($r=1.45$) | [arXiv:2609.02715](https://arxiv.org/abs/2609.02715) | `non-adaptive` |
 | `csae_esprit_labib` | Compressed Sensing AE (csAE + ESPRIT) | [arXiv:2405.14697](https://arxiv.org/abs/2405.14697) | `non-adaptive` |
-| `mlae_pow2_suzuki` | Exponential-Schedule Maximum-Likelihood AE (MLAE Pow2) | [Suzuki et al. (2020)](https://doi.org/10.1007/s11128-019-2565-2) | `non-adaptive` |
-| `mlae_linear_suzuki` | Linear-Schedule Maximum-Likelihood AE (MLAE Linear) | [Suzuki et al. (2020)](https://doi.org/10.1007/s11128-019-2565-2) | `non-adaptive` |
+| `mlae_pow2_suzuki` | Maximum-Likelihood AE, exponentially incremental sequence (MLAE-EIS, $N_{\mathrm{shot}}=100$) | [Suzuki et al. (2020)](https://doi.org/10.1007/s11128-019-2565-2) | `non-adaptive` |
+| `mlae_linear_suzuki` | Maximum-Likelihood AE, linearly incremental sequence (MLAE-LIS, $N_{\mathrm{shot}}=100$) | [Suzuki et al. (2020)](https://doi.org/10.1007/s11128-019-2565-2) | `non-adaptive` |
 | `chebae_rall_fuller` | Chebyshev Amplitude Estimation (chebAE) | [Rall & Fuller (2023)](https://quantum-journal.org/papers/q-2023-03-02-937/) | `adaptive-variable` |
 | `iqae_grinko` | Iterative Quantum Amplitude Estimation (IQAE) | [Grinko et al. (2021)](https://www.nature.com/articles/s41534-021-00379-1) | `adaptive-variable` |
 | `fae_nakaji` | Faster Amplitude Estimation (FAE) | [Nakaji (2020)](https://arxiv.org/abs/2003.02417) | `adaptive-variable` |

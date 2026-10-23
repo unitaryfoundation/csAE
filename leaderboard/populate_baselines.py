@@ -739,12 +739,15 @@ def eval_track_non_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[d
     print("\n[1/3] Evaluating Non-Adaptive Literature Baselines on HOLDOUT_SEED = 900,000 ...")
     entries: list[dict[str, Any]] = []
 
-    # 1A. MLAE-Linear (Suzuki et al. 2020) - Linear depth schedule n_k = k, uniform shots, ML estimator
+    # 1A. MLAE-LIS (Suzuki et al. 2020), exactly as specified in the paper (Sec. 3.2-3.3):
+    #     linearly incremental sequence m_k = k for k = 0..M, N_k = N_shot = 100 for all k,
+    #     exact global maximum-likelihood estimate. The benchmark scale fixes only M,
+    #     via the deepest circuit m_M = M = n_max.
+    MLAE_NSHOT = 100
     mlae_lin_scales: dict[str, dict[str, Any]] = {}
-    lin_mmax = {60: 12, 125: 18, 260: 22, 540: 32}
     for nmax in SCALES:
-        lad = list(range(lin_mmax[nmax] + 1))
-        shots = [10] * len(lad)
+        lad = list(range(int(nmax) + 1))
+        shots = [MLAE_NSHOT] * len(lad)
         r = evaluate_schedule(
             lad, shots, ntrials, seed=HOLDOUT_SEED + nmax,
             return_errors=True, return_extra=True,
@@ -761,7 +764,7 @@ def eval_track_non_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[d
     entries.append(
         _build_entry(
             algo_id="mlae_linear",
-            algorithm_name="MLAE-Linear (Suzuki et al. 2020)",
+            algorithm_name="MLAE-LIS (Suzuki et al. 2020)",
             category="literature",
             track="non-adaptive",
             badge="Literature (2020)",
@@ -771,10 +774,13 @@ def eval_track_non_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[d
             paper_url="https://arxiv.org/abs/1904.10246",
             pr_number=None,
             description=(
-                "Linear-schedule Maximum-Likelihood Amplitude Estimation (Suzuki et al. 2020, "
-                "Quantum Inf. Process. 19, 75; arXiv:1904.10246): linear Grover depth ladder "
-                "n_k = k with uniform shots per level and global ML post-processing. Exhibits "
-                "O(eps^{-4/3}) query complexity (C95 grows as Q^{1/4} across scales)."
+                "Maximum-Likelihood Amplitude Estimation with the linearly incremental sequence "
+                "(LIS) of Suzuki et al. 2020 (Quantum Inf. Process. 19, 75; arXiv:1904.10246), "
+                "run exactly as in the paper: m_k = k for k = 0..M, N_shot = 100 shots per circuit, "
+                "exact global maximum-likelihood estimate. The benchmark scale fixes only M = n_max. "
+                "Queries and errors follow the benchmark conventions (cost n per shot at depth n >= 1, "
+                "error in a = sin theta); the paper's own N_q = sum N_k (2 m_k + 1) and RMSE in sin^2 theta "
+                "differ by fixed factors."
             ),
             scales_dict=mlae_lin_scales,
             deterministic_budget=True,
@@ -783,12 +789,14 @@ def eval_track_non_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[d
         )
     )
 
-    # 1B. MLAE-Pow2 (Suzuki et al. 2020) - Exponential depth schedule n_k = 2^{k-1}, uniform shots, ML
+    # 1B. MLAE-EIS (Suzuki et al. 2020), exactly as specified in the paper:
+    #     exponentially incremental sequence m_0 = 0, m_k = 2^(k-1) for k = 1..M,
+    #     N_k = N_shot = 100 for all k, exact global ML. The benchmark scale fixes only M,
+    #     via the deepest circuit m_M = 2^(M-1) <= n_max (largest power of two not above n_max).
     mlae_pow2_scales: dict[str, dict[str, Any]] = {}
-    pow2_kmax = {60: 6, 125: 7, 260: 8, 540: 9}
     for nmax in SCALES:
-        lad = [0] + [2**k for k in range(pow2_kmax[nmax])]
-        shots = [100] * len(lad)
+        lad = [0] + [2**k for k in range(int(math.floor(math.log2(int(nmax)))) + 1)]
+        shots = [MLAE_NSHOT] * len(lad)
         r = evaluate_schedule(
             lad, shots, ntrials, seed=HOLDOUT_SEED + nmax,
             return_errors=True, return_extra=True,
@@ -805,7 +813,7 @@ def eval_track_non_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[d
     entries.append(
         _build_entry(
             algo_id="mlae_pow2",
-            algorithm_name="MLAE-Pow2 (Suzuki et al. 2020)",
+            algorithm_name="MLAE-EIS (Suzuki et al. 2020)",
             category="literature",
             track="non-adaptive",
             badge="Literature (2020)",
@@ -815,9 +823,12 @@ def eval_track_non_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[d
             paper_url="https://arxiv.org/abs/1904.10246",
             pr_number=None,
             description=(
-                "Exponential-schedule Maximum-Likelihood Amplitude Estimation (Suzuki et al. 2020, "
-                "Quantum Inf. Process. 19, 75; arXiv:1904.10246): power-of-two Grover depth ladder "
-                "n_k = 2^{k-1} with uniform 100 shots per rung and exact global ML estimation."
+                "Maximum-Likelihood Amplitude Estimation with the exponentially incremental sequence "
+                "(EIS) of Suzuki et al. 2020 (Quantum Inf. Process. 19, 75; arXiv:1904.10246), "
+                "run exactly as in the paper: m_0 = 0, m_k = 2^(k-1) for k = 1..M, N_shot = 100 shots "
+                "per circuit, exact global maximum-likelihood estimate. The benchmark scale fixes only M, "
+                "through the deepest circuit 2^(M-1) <= n_max. Queries and errors follow the benchmark "
+                "conventions (cost n per shot at depth n >= 1, error in a = sin theta)."
             ),
             scales_dict=mlae_pow2_scales,
             deterministic_budget=True,

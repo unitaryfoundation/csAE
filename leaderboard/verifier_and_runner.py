@@ -1126,10 +1126,14 @@ def verify_submission(
                 f"Failed quantum depth scaling at nmax={nmax_large}: "
                 f"eps95 * nmax = {c95_par_2:.2f} > 8.0 (eps95={eps2:.4e} is too large for scale {nmax_large})"
             )
-        if not (c95_2 < min(14.0, 0.50 * c95_d0)):
+        # Relative criterion only: the submission must beat depth-0 classical sampling at
+        # the same query budget by at least 2x. No absolute cap on C95, because published
+        # sub-Heisenberg baselines run as specified (e.g. Suzuki et al.'s LIS, O(Q^-3/4))
+        # legitimately have large constants at these scales while still being quantum.
+        if not (c95_2 < 0.50 * c95_d0):
             scaling_errors.append(
                 f"C95_ave({nmax_large})={c95_2:.3f} failed to beat trivial/depth-0 baseline "
-                f"(depth-0 C95={c95_d0:.2f}, max allowed C95=14.0)"
+                f"(depth-0 C95={c95_d0:.2f} at the same query budget; need < {0.5 * c95_d0:.2f})"
             )
 
         if scaling_errors:

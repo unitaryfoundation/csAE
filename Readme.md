@@ -30,19 +30,21 @@ Can you design a **non-adaptive** or **adaptive** amplitude estimation schedule/
 
 ### Seeded Literature Baselines (`11/11` Certified in [`leaderboard/submissions/`](leaderboard/submissions/))
 
+Literature baselines are run exactly as specified in their papers; the benchmark scale fixes only the sequence length. The two Suzuki et al. MLAE entries use $N_{\mathrm{shot}} = 100$ per circuit with the paper's LIS ($m_k = k$) and EIS ($m_k = 2^{k-1}$) sequences, so the LIS constant grows with scale as its $O(N_q^{-3/4})$ error law implies. The live page shows the per-scale values and the $C_{68}/C_{95}/C_{99}$ frontiers.
+
 | Rank | Algorithm | Track | Rounds | $C_{68}^{\mathrm{ave}}$ | $C_{95}^{\mathrm{ave}}$ `[95% CI]` | $C_{95}^{\max}$ | $C_{99}^{\mathrm{ave}}$ | $C_{95}^{\mathrm{seq}}$ | Reference |
 | ---: | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **1** | **`mlqae-plain`** | `non-adaptive` | $1.0$ | $1.199$ | **2.818** `[2.76, 2.89]` | **2.818** | $6.45$ | $0.284$ | [arXiv:2609.02715](https://arxiv.org/abs/2609.02715) |
-| **2** | **`mlqae-flagship`** | `non-adaptive` | $1.0$ | $1.275$ | **2.883** `[2.82, 2.94]` | $2.883$ | **5.50** | **0.212** | [arXiv:2609.02715](https://arxiv.org/abs/2609.02715) |
-| **3** | **`BAE-Adaptive`** | `adaptive-fixed-budget` | $21.1$ | **1.068** | **3.034** `[2.91, 3.16]` | $3.034$ | $10.97$ | $3.013$ | [arXiv:2401.15072](https://arxiv.org/abs/2401.15072) |
+| **1** | **`mlqae-plain`** | `non-adaptive` | $1.0$ | $1.199$ | **2.818** `[2.76, 2.89]` | $2.818$ | $6.45$ | $0.284$ | [arXiv:2609.02715](https://arxiv.org/abs/2609.02715) |
+| **2** | **`mlqae-flagship`** | `non-adaptive` | $1.0$ | $1.275$ | **2.883** `[2.82, 2.94]` | $2.883$ | $5.50$ | $0.212$ | [arXiv:2609.02715](https://arxiv.org/abs/2609.02715) |
+| **3** | **`BAE-Adaptive`** | `adaptive-fixed-budget` | $21.1$ | $1.068$ | **3.034** `[2.91, 3.16]` | $3.034$ | $10.97$ | $3.013$ | [arXiv:2401.15072](https://arxiv.org/abs/2401.15072) |
 | **4** | **`chebAE`** | `adaptive-variable` | $15.0$ | $1.391$ | **3.141** `[2.93, 3.42]` | $4.833$ | $9.97$ | $2.905$ | [arXiv:2207.08628](https://arxiv.org/abs/2207.08628) |
 | **5** | **`BIQAE (Beta-Posterior)`** | `adaptive-variable` | $10.0$ | $1.990$ | **4.691** `[4.61, 4.79]` | $9.513$ | $8.65$ | $4.691$ | Bayesian Beta-IQAE |
 | **6** | **`csAE (ESPRIT)`** | `non-adaptive` | $1.0$ | $1.760$ | **4.815** `[4.16, 6.11]` | $4.815$ | $15.64$ | $0.296$ | [arXiv:2405.14697](https://arxiv.org/abs/2405.14697) |
-| **7** | **`MLAE-Linear`** | `non-adaptive` | $1.0$ | $2.521$ | **5.320** `[5.24, 5.40]` | $5.320$ | $7.45$ | $0.051$ | [arXiv:1904.10246](https://arxiv.org/abs/1904.10246) |
-| **8** | **`IQAE-CP`** | `adaptive-variable` | $5.2$ | $2.735$ | **6.838** `[6.68, 6.98]` | $14.626$ | $19.40$ | $6.838$ | [arXiv:1912.05559](https://arxiv.org/abs/1912.05559) |
-| **9** | **`MLAE-Pow2`** | `non-adaptive` | $1.0$ | $3.592$ | **7.880** `[7.72, 8.02]` | $7.880$ | $13.42$ | **0.039** | [arXiv:1904.10246](https://arxiv.org/abs/1904.10246) |
-| **10** | **`FAE`** | `adaptive-variable` | $8.1$ | $3.932$ | **8.735** `[8.58, 8.90]` | $11.011$ | $14.10$ | $8.735$ | [arXiv:2003.02417](https://arxiv.org/abs/2003.02417) |
-| **11** | **`IQAE-Chernoff`** | `adaptive-variable` | $19.1$ | $4.035$ | **9.371** `[9.20, 9.54]` | $38.952$ | $13.54$ | $9.371$ | [arXiv:1912.05559](https://arxiv.org/abs/1912.05559) |
+| **7** | **`IQAE-CP`** | `adaptive-variable` | $5.2$ | $2.735$ | **6.838** `[6.68, 6.98]` | $14.626$ | $19.40$ | $6.838$ | [arXiv:1912.05559](https://arxiv.org/abs/1912.05559) |
+| **8** | **`MLAE-EIS (Suzuki)`** | `non-adaptive` | $1.0$ | $3.602$ | **7.918** `[7.77, 8.07]` | $7.918$ | $13.85$ | $0.040$ | [arXiv:1904.10246](https://arxiv.org/abs/1904.10246) |
+| **9** | **`FAE`** | `adaptive-variable` | $8.1$ | $3.932$ | **8.735** `[8.58, 8.90]` | $11.011$ | $14.10$ | $8.735$ | [arXiv:2003.02417](https://arxiv.org/abs/2003.02417) |
+| **10** | **`IQAE-Chernoff`** | `adaptive-variable` | $19.1$ | $4.035$ | **9.371** `[9.20, 9.54]` | $38.952$ | $13.54$ | $9.371$ | [arXiv:1912.05559](https://arxiv.org/abs/1912.05559) |
+| **11** | **`MLAE-LIS (Suzuki)`** | `non-adaptive` | $1.0$ | $25.144$ | **53.078** `[52.23, 53.86]` | $53.078$ | $72.07$ | $0.006$ | [arXiv:1904.10246](https://arxiv.org/abs/1904.10246) |
 
 ### Quickstart: Verify & Benchmark Locally
 ```bash

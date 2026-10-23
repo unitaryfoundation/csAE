@@ -1,7 +1,7 @@
 {
   "algo_id": "mlae_linear_suzuki",
-  "algorithm_name": "MLAE (Linear, Suzuki et al. 2020)",
-  "name": "MLAE (Linear, Suzuki et al. 2020)",
+  "algorithm_name": "MLAE-LIS (Suzuki et al. 2020)",
+  "name": "MLAE-LIS (Suzuki et al. 2020)",
   "track": "non-adaptive",
   "authors": [
     "Yohichi Suzuki",
@@ -15,7 +15,7 @@
   "affiliation": "Keio University / IBM Quantum",
   "paper_url": "https://arxiv.org/abs/1904.10246",
   "pr_number": 1,
-  "description": "Linearly Incremental Sequence (LIS) Grover depth schedule n_k = k (k = 0, 1, ..., M) with uniform shots per rung and exact global maximum-likelihood estimation (Suzuki et al. 2020, Quantum Inf. Process. 19, 75), achieving O(Q^{-3/4}) error scaling.",
+  "description": "Suzuki et al. 2020 (Quantum Inf. Process. 19, 75) run exactly as in the paper: linearly incremental sequence m_k = k for k = 0..M, N_shot = 100 shots per circuit, exact global maximum-likelihood estimate. The benchmark scale fixes only M = n_max.",
   "date": "2026-10-23",
   "entrypoint": "submission.py:MLAELinearSuzukiSubmission"
 }
