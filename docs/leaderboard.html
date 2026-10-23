@@ -143,7 +143,7 @@ footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-si
   <p class="lede">Every algorithm estimates <span class="mono">a = sin&thinsp;&theta; &sim; U(0.1, 0.9)</span> from Grover-depth-<span class="mono">n</span> measurements with <span class="mono">p = cos&sup2;((2n+1)&theta;)</span>. The score is a constant: the error percentile times the resources used. Lower is better, and the frontier is what counts, not a single number.</p>
   <div class="defs">
     <span><b>C<sub>&delta;</sub><sup>Q</sup></b> = &epsilon;<sub>&delta;</sub> &middot; &lang;total queries&rang;</span>
-    <span><b>C<sub>&delta;</sub><sup>D</sup></b> = &epsilon;<sub>&delta;</sub> &middot; &lang;sequential depth&rang;</span>
+    <span><b>C&#771;<sub>&delta;</sub></b> = &epsilon;<sub>&delta;</sub>&sup2; &middot; &lang;max circuit depth&rang; &middot; &lang;total queries&rang;</span>
     <span>&epsilon;<sub>&delta;</sub> = &delta;-th percentile of |&acirc; &minus; a|, &delta; &isin; {68, 95, 99}</span>
     <span>cost(n=0) = 1, cost(n&ge;1) = n</span>
     <span>n<sub>max</sub> &isin; {60, 125, 260, 540}</span>
@@ -172,8 +172,8 @@ footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-si
 <section class="panel" aria-label="Depth versus total-query trade-off">
   <div class="head">
     <div>
-      <div class="t">Trade-off frontier: sequential depth vs total queries</div>
-      <div class="s">Lower-left is better. Dashed: Pareto frontier over all entries at the chosen percentile; green: Cramér&ndash;Rao floor &kappa;<sub>&delta;</sub> on the query constant.</div>
+      <div class="t">Trade-off frontier: depth-limited constant vs total queries</div>
+      <div class="s">Lower-left is better. C&#771; is invariant under shot count, C<sup>Q</sup> is not, so a method cannot buy a better position by taking more shots. Dashed: Pareto frontier over all entries; green: Cramér&ndash;Rao floor &kappa;<sub>&delta;</sub> on C<sup>Q</sup>.</div>
     </div>
     <div class="seg" id="segDelta" role="group" aria-label="Percentile">
       <button type="button" data-v="68">&delta; = 68</button>
@@ -181,7 +181,7 @@ footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-si
       <button type="button" data-v="99">&delta; = 99</button>
     </div>
   </div>
-  <svg class="chart" id="svgTrade" role="img" aria-label="Scatter of depth constant against query constant"></svg>
+  <svg class="chart" id="svgTrade" role="img" aria-label="Scatter of depth-limited constant against query constant"></svg>
   <div class="legend" id="legTrade"></div>
 </section>
 
@@ -198,11 +198,11 @@ footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-si
   <section class="panel" aria-label="Sequential depth constants">
     <div class="head">
       <div>
-        <div class="t">Sequential depth &middot; C<sub>68</sub><sup>D</sup> &rarr; C<sub>95</sub><sup>D</sup> &rarr; C<sub>99</sub><sup>D</sup></div>
-        <div class="s">Sorted by C<sub>95</sub><sup>D</sup>. Non-adaptive methods run one parallel round, so depth = n<sub>max</sub>.</div>
+        <div class="t">Depth-limited &middot; C&#771;<sub>68</sub> &rarr; C&#771;<sub>95</sub> &rarr; C&#771;<sub>99</sub></div>
+        <div class="s">Sorted by C&#771;<sub>95</sub>. Measures error per unit of depth &times; queries; few deep rungs with many shots do well here. &#9733; = Pareto-optimal across the three percentiles.</div>
       </div>
     </div>
-    <svg class="chart" id="svgD" role="img" aria-label="Dot plot of depth constants"></svg>
+    <svg class="chart" id="svgD" role="img" aria-label="Dot plot of depth-limited constants"></svg>
   </section>
 </div>
 <div class="legend" style="margin:-4px 0 14px 2px">
@@ -216,7 +216,7 @@ footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-si
   <div class="head">
     <div>
       <div class="t" id="tblTitle">All entries</div>
-      <div class="s">Click a header to sort, a row to expand. Q / D badges mark Pareto-optimal entries in the query and depth frontiers.</div>
+      <div class="s">Click a header to sort, a row to expand. Q / D badges mark Pareto-optimal entries in the query and depth-limited frontiers.</div>
     </div>
   </div>
   <div class="tbl-wrap">
@@ -227,13 +227,14 @@ footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-si
           <th class="l" rowspan="2" data-k="name">Algorithm</th>
           <th class="l" rowspan="2" data-k="track">Track</th>
           <th rowspan="2" data-k="rounds" title="Mean number of sequential rounds">Rounds</th>
+          <th rowspan="2" data-k="rung" title="Deepest Grover circuit actually run (mean over trials; range across scales when averaging)">Deepest rung</th>
           <th class="grp" colspan="3">Total queries C<sup>Q</sup></th>
-          <th class="grp" colspan="3">Sequential depth C<sup>D</sup></th>
-          <th rowspan="2" data-k="pareto" title="Pareto-optimal in the query (Q) and depth (D) frontiers">Pareto</th>
+          <th class="grp" colspan="3">Depth-limited C&#771;</th>
+          <th rowspan="2" data-k="pareto" title="Pareto-optimal in the query (Q) and depth-limited (D) frontiers">Pareto</th>
         </tr>
         <tr>
           <th data-k="Q68">C<sub>68</sub></th><th data-k="Q95">C<sub>95</sub></th><th data-k="Q99">C<sub>99</sub></th>
-          <th data-k="D68">C<sub>68</sub></th><th data-k="D95">C<sub>95</sub></th><th data-k="D99">C<sub>99</sub></th>
+          <th data-k="D68">C&#771;<sub>68</sub></th><th data-k="D95">C&#771;<sub>95</sub></th><th data-k="D99">C&#771;<sub>99</sub></th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -253,7 +254,8 @@ footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-si
 <section class="notes">
   <div>
     <h3>How to read the frontier</h3>
-    <p>An entry is Pareto-optimal in a frontier when no other entry is at least as good on all three percentiles and strictly better on one. The trade-off chart shows a second frontier: depth against queries at one percentile. A method can win on tails (C<sub>99</sub>) while losing on the bulk (C<sub>68</sub>), so a single rank hides most of the story.</p>
+    <p>An entry is Pareto-optimal in a frontier when no other entry is at least as good on all three percentiles and strictly better on one. A method can win on tails (C<sub>99</sub>) while losing on the bulk (C<sub>68</sub>), so a single rank hides most of the story.</p>
+    <p>Why C&#771; and not &epsilon; &middot; depth: multiplying every shot count by k divides &epsilon; by &radic;k and multiplies queries by k, so &epsilon; &middot; depth can be driven down at will while &epsilon; &middot; queries goes up. The product &epsilon;&sup2; &middot; depth &middot; queries does not move, which makes it the honest depth-limited figure of merit (the paper's parallel constant &epsilon;<sub>95</sub> n<sub>max</sub> &asymp; 0.21 assumes one shot on the deepest rung).</p>
   </div>
   <div>
     <h3>Bounds</h3>
@@ -288,27 +290,40 @@ let trackFilter = "all", scale = "mean", delta = 95, selectedId = null, hoverId 
 let sortKey = "Q95", sortAsc = true;
 
 // ---------- data ----------
+// Max circuit depth is only trustworthy when the harness recorded it separately from
+// the summed sequential depth. A multi-round entry whose two depth fields coincide
+// stored the sum in both (chebAE's archived runs), so its C̃ is unknown.
+function maxDepthKnown(s){
+  const r = s.num_rounds_mean ?? 1;
+  return r <= 1.0001 || s.max_depth_mean == null || s.seq_depth_mean == null || Math.abs(s.max_depth_mean - s.seq_depth_mean) > 1e-6;
+}
 function constantsFor(e, sc){
-  // returns {Q68,Q95,Q99,D68,D95,D99,q,depth,rounds,ci95} for one scale or the mean of scales
+  // Q_δ = ε_δ·⟨queries⟩ ; D_δ = C̃_δ = ε_δ²·⟨max circuit depth⟩·⟨queries⟩ (shot-invariant)
   const scales = sc === "mean" ? Object.keys(e.scales) : [sc];
-  const acc = { Q68: [], Q95: [], Q99: [], D68: [], D95: [], D99: [], q: [], depth: [], rounds: [], lo: [], hi: [] };
+  const acc = { Q68: [], Q95: [], Q99: [], D68: [], D95: [], D99: [], q: [], rung: [], seq: [], rounds: [] };
+  let known = true;
   for(const k of scales){
     const s = e.scales[k]; if(!s) continue;
-    const q = s.q_mean ?? s.q_ave, dep = s.seq_depth_mean ?? s.max_depth_mean ?? s.scale_nmax;
+    const q = s.q_mean ?? s.q_ave;
+    const rung = s.max_depth_mean ?? s.scale_nmax, seq = s.seq_depth_mean ?? rung;
+    const ok = maxDepthKnown(s); known = known && ok;
     for(const d of DELTAS){
       const eps = s["eps" + d];
       acc["Q" + d].push(s["C" + d + "_ave"] ?? eps * q);
-      acc["D" + d].push(eps * dep);
+      acc["D" + d].push(ok ? eps * eps * rung * q : NaN);
     }
-    acc.q.push(q); acc.depth.push(dep); acc.rounds.push(s.num_rounds_mean ?? 1);
-    const ci = s.C95_ave_ci || s.C95_ci; if(ci){ acc.lo.push(ci[0]); acc.hi.push(ci[1]); }
+    acc.q.push(q); acc.rung.push(rung); acc.seq.push(seq); acc.rounds.push(s.num_rounds_mean ?? 1);
   }
   const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN;
   const out = {};
   for(const k in acc) out[k] = mean(acc[k]);
   out.n = acc.q.length;
+  out.depthKnown = known;
+  out.rungMin = Math.min(...acc.rung); out.rungMax = Math.max(...acc.rung);
   return out;
 }
+const fmtRung = m => !m.depthKnown ? "n/a" : (m.n > 1 && Math.round(m.rungMin) !== Math.round(m.rungMax) ? `${Math.round(m.rungMin)}–${Math.round(m.rungMax)}` : String(Math.round(m.rung)));
+const fmt3 = x => (x == null || !isFinite(x)) ? "n/a" : Number(x.toPrecision(3)).toString();
 
 function paretoSet(list, keys){
   // ids not dominated by any other entry on the given keys (all <=, one <)
@@ -334,7 +349,7 @@ function prepare(){
     e.col = tok(TRACKS[e.track].v);
   }
   const Q = paretoSet(entries, ["Q68", "Q95", "Q99"]);
-  const D = paretoSet(entries, ["D68", "D95", "D99"]);
+  const D = paretoSet(entries.filter(e => e.m.depthKnown), ["D68", "D95", "D99"]);
   for(const e of entries){ e.pQ = Q.has(e.algo_id); e.pD = D.has(e.algo_id); e.visible = trackFilter === "all" || e.track === trackFilter; }
   const byQ95 = entries.slice().sort((a, b) => a.m.Q95 - b.m.Q95);
   byQ95.forEach((e, i) => e.rank = i + 1);
@@ -385,8 +400,8 @@ function tipHtml(e){
   const m = e.m;
   return `<b>${e.algorithm_name}</b><br><span class="mono">${TRACKS[e.track].label} · ${m.rounds <= 1.0001 ? "1 round" : "~" + m.rounds.toFixed(1) + " rounds"}</span><br>` +
     `<span class="mono">Q: ${fmt(m.Q68)} / ${fmt(m.Q95)} / ${fmt(m.Q99)}</span><br>` +
-    `<span class="mono">D: ${fmt(m.D68, 3)} / ${fmt(m.D95, 3)} / ${fmt(m.D99, 3)}</span><br>` +
-    `<span class="mono">⟨queries⟩ ${Math.round(m.q)} · ⟨depth⟩ ${Math.round(m.depth)}</span>`;
+    `<span class="mono">C̃: ${fmt3(m.D68)} / ${fmt3(m.D95)} / ${fmt3(m.D99)}</span><br>` +
+    `<span class="mono">⟨queries⟩ ${Math.round(m.q)} · deepest rung ${fmtRung(m)}${m.rounds > 1.0001 ? " · ⟨seq. depth⟩ " + Math.round(m.seq) : ""}</span>`;
 }
 function bindHover(node, e){
   node.addEventListener("mousemove", ev => { hoverId = e.algo_id; showTip(tipHtml(e), ev.clientX, ev.clientY); });
@@ -401,7 +416,8 @@ function drawTrade(){
   const pad = { l: 52, r: 24, t: 14, b: 40 };
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   const kx = "D" + delta, ky = "Q" + delta;
-  const xs = entries.map(e => e.m[kx]), ys = entries.map(e => e.m[ky]);
+  const shown = entries.filter(e => e.m.depthKnown);
+  const xs = shown.map(e => e.m[kx]), ys = shown.map(e => e.m[ky]);
   const xlo = Math.min(...xs) / 1.6, xhi = Math.max(...xs) * 1.6;
   const ylo = Math.min(kappa[delta] / 1.25, Math.min(...ys) / 1.2), yhi = Math.max(...ys) * 1.3;
   const X = v => pad.l + (Math.log(v) - Math.log(xlo)) / (Math.log(xhi) - Math.log(xlo)) * (W - pad.l - pad.r);
@@ -417,7 +433,7 @@ function drawTrade(){
   }
   svg.appendChild(el("line", { class: "axis", x1: pad.l, x2: W - pad.r, y1: H - pad.b, y2: H - pad.b }));
   svg.appendChild(el("line", { class: "axis", x1: pad.l, x2: pad.l, y1: pad.t, y2: H - pad.b }));
-  svg.appendChild(richText({ x: pad.l + (W - pad.l - pad.r) / 2, y: H - 6, "text-anchor": "middle" }, `Depth constant C{${delta}}^{D} = ε{${delta}} · ⟨sequential depth⟩`));
+  svg.appendChild(richText({ x: pad.l + (W - pad.l - pad.r) / 2, y: H - 6, "text-anchor": "middle" }, `Depth-limited constant C̃{${delta}} = ε{${delta}}² · ⟨max depth⟩ · ⟨queries⟩`));
   svg.appendChild(richText({ x: 12, y: pad.t + (H - pad.t - pad.b) / 2, "text-anchor": "middle", transform: `rotate(-90 12 ${pad.t + (H - pad.t - pad.b) / 2})` }, `Query constant C{${delta}}^{Q} = ε{${delta}} · ⟨total queries⟩`));
 
   // bounds
@@ -430,7 +446,7 @@ function drawTrade(){
   }
 
   // 2-D frontier over ALL entries (filter only dims)
-  const pts = entries.slice().sort((a, b) => a.m[kx] - b.m[kx] || a.m[ky] - b.m[ky]);
+  const pts = shown.slice().sort((a, b) => a.m[kx] - b.m[kx] || a.m[ky] - b.m[ky]);
   const front = []; let best = Infinity;
   for(const p of pts){ if(p.m[ky] < best - 1e-9){ front.push(p); best = p.m[ky]; } }
   if(front.length > 1){
@@ -440,7 +456,7 @@ function drawTrade(){
 
   // points, labels with simple collision nudging
   const placed = [];
-  const ordered = entries.slice().sort((a, b) => (a.algo_id === selectedId) - (b.algo_id === selectedId));
+  const ordered = shown.slice().sort((a, b) => (a.algo_id === selectedId) - (b.algo_id === selectedId));
   for(const e of ordered){
     const cx = X(e.m[kx]), cy = Y(e.m[ky]);
     const sel = e.algo_id === selectedId || e.algo_id === hoverId;
@@ -465,19 +481,20 @@ function drawTrade(){
 
   $("legTrade").innerHTML = Object.keys(TRACKS).filter(t => entries.some(e => e.track === t))
     .map(t => `<span><span class="sw" style="background:${tok(TRACKS[t].v)}"></span>${TRACKS[t].label}</span>`).join("") +
-    `<span class="mono" style="color:var(--muted)">★ on the ${delta}th-percentile frontier</span>`;
+    `<span class="mono" style="color:var(--muted)">★ on the ${delta}th-percentile frontier</span>` +
+    (entries.some(e => !e.m.depthKnown) ? `<span class="mono" style="color:var(--muted)">not shown (max circuit depth not recorded): ${entries.filter(e => !e.m.depthKnown).map(e => e.short).join(", ")}</span>` : "");
 }
 
 // ---------- dot plots ----------
 function drawDots(svgId, prefix){
   const svg = $(svgId); svg.innerHTML = "";
-  const rows = entries.slice().sort((a, b) => a.m[prefix + "95"] - b.m[prefix + "95"]);
+  const rows = entries.slice().sort((a, b) => (isFinite(a.m[prefix + "95"]) ? a.m[prefix + "95"] : Infinity) - (isFinite(b.m[prefix + "95"]) ? b.m[prefix + "95"] : Infinity));
   const rowH = 26, W = Math.max(420, svg.clientWidth || 520);
   const pad = { l: 150, r: 18, t: 8, b: 30 };
   const H = pad.t + rows.length * rowH + pad.b;
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   const keys = DELTAS.map(d => prefix + d);
-  const all = rows.flatMap(e => keys.map(k => e.m[k]));
+  const all = rows.flatMap(e => keys.map(k => e.m[k])).filter(isFinite);
   let lo = Math.min(...all) / 1.3; const hi = Math.max(...all) * 1.3;
   if(prefix === "Q") lo = Math.min(lo, kappa[68] / 1.15);
   const X = v => pad.l + (Math.log(v) - Math.log(lo)) / (Math.log(hi) - Math.log(lo)) * (W - pad.l - pad.r);
@@ -503,6 +520,11 @@ function drawDots(svgId, prefix){
     const star = prefix === "Q" ? e.pQ : e.pD;
     const g = el("g", {});
     g.appendChild(el("text", { class: "rowlbl" + (sel ? " sel" : "") + (dim ? " dim" : ""), x: pad.l - 10, y: y + 4, "text-anchor": "end" }, (star ? "★ " : "") + e.short));
+    if(!isFinite(e.m[prefix + "95"])){
+      g.appendChild(el("text", { x: pad.l + 4, y: y + 4 }, "max circuit depth not recorded"));
+      g.appendChild(el("rect", { class: "hit", x: 0, y: y - rowH / 2, width: W, height: rowH }));
+      bindHover(g, e); svg.appendChild(g); return;
+    }
     const x68 = X(e.m[prefix + "68"]), x95 = X(e.m[prefix + "95"]), x99 = X(e.m[prefix + "99"]);
     g.appendChild(el("line", { class: "range" + (dim ? " dim" : ""), x1: x68, x2: x99, y1: y, y2: y, stroke: e.col }));
     const cls = "pt" + (dim ? " dim" : "") + (sel ? " sel" : "");
@@ -524,6 +546,8 @@ function renderTable(){
     else if(sortKey === "track") { va = a.track; vb = b.track; }
     else if(sortKey === "rank") { va = a.rank; vb = b.rank; }
     else if(sortKey === "rounds") { va = a.m.rounds; vb = b.m.rounds; }
+    else if(sortKey === "rung") { va = a.m.rung; vb = b.m.rung; }
+    else if(/^D/.test(sortKey)) { va = isFinite(a.m[sortKey]) ? a.m[sortKey] : Infinity; vb = isFinite(b.m[sortKey]) ? b.m[sortKey] : Infinity; }
     else if(sortKey === "pareto") { va = -(a.pQ + a.pD); vb = -(b.pQ + b.pD); }
     else { va = a.m[sortKey]; vb = b.m[sortKey]; }
     return (va < vb ? -1 : va > vb ? 1 : 0) * (sortAsc ? 1 : -1);
@@ -542,8 +566,11 @@ function renderTable(){
       `<td class="l name">${e.short}<span class="sub">${(e.authors || []).slice(0, 2).join(", ")}${(e.authors || []).length > 2 ? " et al." : ""}${e.date ? " · " + e.date.slice(0, 4) : ""}</span></td>` +
       `<td class="l"><span class="chip" style="background:${e.col}">${TRACKS[e.track].label}</span></td>` +
       `<td class="num">${m.rounds <= 1.0001 ? "1" : "~" + m.rounds.toFixed(1)}</td>` +
+      `<td class="num">${fmtRung(m)}</td>` +
       `<td class="num">${fmt(m.Q68)}</td><td class="num"><b>${fmt(m.Q95)}</b></td><td class="num">${fmt(m.Q99)}</td>` +
-      `<td class="num">${fmt(m.D68, 3)}</td><td class="num"><b>${fmt(m.D95, 3)}</b></td><td class="num">${fmt(m.D99, 3)}</td>` +
+      (m.depthKnown
+        ? `<td class="num">${fmt3(m.D68)}</td><td class="num"><b>${fmt3(m.D95)}</b></td><td class="num">${fmt3(m.D99)}</td>`
+        : `<td class="num" colspan="3" style="text-align:center;color:var(--muted)" title="The archived runs stored only the summed sequential depth, so the max circuit depth and C̃ are unknown">max depth not recorded</td>`) +
       `<td><span class="pareto${e.pQ ? "" : " off"}">Q</span><span class="pareto${e.pD ? "" : " off"}">D</span></td>`;
     tr.addEventListener("click", () => { selectedId = selectedId === e.algo_id ? null : e.algo_id; render(); });
     tb.appendChild(tr);
@@ -552,11 +579,11 @@ function renderTable(){
 }
 function detailRow(e){
   const tr = document.createElement("tr"); tr.className = "detail";
-  const td = document.createElement("td"); td.colSpan = 11;
+  const td = document.createElement("td"); td.colSpan = 12;
   const ps = Object.keys(e.scales).sort((a, b) => +a - +b).map(k => {
     const s = e.scales[k], m = constantsFor(e, k);
     const ci = s.C95_ave_ci || s.C95_ci;
-    return `<tr><td>${k}</td><td>${Math.round(m.q)}</td><td>${Math.round(m.depth)}</td><td>${s.ntrials ?? "–"}</td><td>${fmt(m.Q68)}</td><td>${fmt(m.Q95)}${ci ? ` <span style="color:var(--muted)">[${fmt(ci[0])}, ${fmt(ci[1])}]</span>` : ""}</td><td>${fmt(m.Q99)}</td><td>${fmt(m.D68, 3)}</td><td>${fmt(m.D95, 3)}</td><td>${fmt(m.D99, 3)}</td></tr>`;
+    return `<tr><td>${k}</td><td>${Math.round(m.q)}</td><td>${fmtRung(m)}</td><td>${m.rounds > 1.0001 ? Math.round(m.seq) : "= rung"}</td><td>${s.ntrials ?? "–"}</td><td>${fmt(m.Q68)}</td><td>${fmt(m.Q95)}${ci ? ` <span style="color:var(--muted)">[${fmt(ci[0])}, ${fmt(ci[1])}]</span>` : ""}</td><td>${fmt(m.Q99)}</td><td>${fmt3(m.D68)}</td><td>${fmt3(m.D95)}</td><td>${fmt3(m.D99)}</td></tr>`;
   }).join("");
   td.innerHTML = `<div class="dgrid"><div>
       <h4>${e.algorithm_name}</h4>
@@ -565,7 +592,7 @@ function detailRow(e){
       ${e.repro_cmd ? `<h4>Reproduce</h4><pre>${e.repro_cmd}</pre>` : ""}
     </div><div>
       <h4>Per scale</h4>
-      <table class="ps"><thead><tr><th>n<sub>max</sub></th><th>⟨Q⟩</th><th>⟨D⟩</th><th>trials</th><th>C68Q</th><th>C95Q [95% CI]</th><th>C99Q</th><th>C68D</th><th>C95D</th><th>C99D</th></tr></thead><tbody>${ps}</tbody></table>
+      <table class="ps"><thead><tr><th>scale</th><th>⟨queries⟩</th><th>deepest rung</th><th>⟨seq. depth⟩</th><th>trials</th><th>C68Q</th><th>C95Q [95% CI]</th><th>C99Q</th><th>C̃68</th><th>C̃95</th><th>C̃99</th></tr></thead><tbody>${ps}</tbody></table>
     </div></div>`;
   tr.appendChild(td);
   return tr;
