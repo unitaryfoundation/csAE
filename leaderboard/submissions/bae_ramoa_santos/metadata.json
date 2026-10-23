@@ -1,0 +1,17 @@
+{
+  "algo_id": "bae_ramoa_santos",
+  "algorithm_name": "BAE-Adaptive (Ramoa & Santos 2024)",
+  "name": "BAE-Adaptive (Ramoa & Santos 2024)",
+  "track": "adaptive-variable",
+  "authors": [
+    "G. Ramoa",
+    "L. Santos"
+  ],
+  "github_handle": "unitaryfoundation",
+  "affiliation": "INL / University of Minho",
+  "paper_url": "https://arxiv.org/abs/2401.15072",
+  "pr_number": null,
+  "description": "Bayesian Amplitude Estimation (Ramoa & Santos 2024, arXiv:2401.15072): sequential Bayesian inference with adaptive circuit depth selection inversely proportional to posterior angle standard deviation (2k+1 ~ c / sigma_theta).",
+  "date": "2026-10-23",
+  "entrypoint": "submission.py:BAERamoaSantosSubmission"
+}

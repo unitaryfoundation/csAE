@@ -1,0 +1,19 @@
+{
+  "algo_id": "csae_esprit_labib",
+  "algorithm_name": "csAE (Labib et al. 2024)",
+  "name": "csAE (Labib et al. 2024)",
+  "track": "non-adaptive",
+  "authors": [
+    "Farrokh Labib",
+    "B. D. Clader",
+    "Nikitas Stamatopoulos",
+    "William J. Zeng"
+  ],
+  "github_handle": "farrokhlabib",
+  "affiliation": "Unitary Foundation / Goldman Sachs",
+  "paper_url": "https://arxiv.org/abs/2405.14697",
+  "pr_number": 1,
+  "description": "Compressed-sensing / sparse-ruler Quantum Amplitude Estimation on a power-of-two depth schedule with C=4.0 linear shot ramp, sign recovery, difference-coarray Toeplitz ESPRIT rotational invariance, and likelihood quadrant disambiguation (Labib et al. 2024, arXiv:2405.14697).",
+  "date": "2026-10-23",
+  "entrypoint": "submission.py:CSAEESPRITSubmission"
+}

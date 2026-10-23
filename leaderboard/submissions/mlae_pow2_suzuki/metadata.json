@@ -1,0 +1,21 @@
+{
+  "algo_id": "mlae_pow2_suzuki",
+  "algorithm_name": "MLAE (Pow2, Suzuki et al. 2020)",
+  "name": "MLAE (Pow2, Suzuki et al. 2020)",
+  "track": "non-adaptive",
+  "authors": [
+    "Yohichi Suzuki",
+    " Shumpei Uno",
+    "Rudy Raymond",
+    "Tomoki Tanaka",
+    "Tamiya Onodera",
+    "Naoki Yamamoto"
+  ],
+  "github_handle": "unitaryfoundation",
+  "affiliation": "Keio University / IBM Quantum",
+  "paper_url": "https://arxiv.org/abs/1904.10246",
+  "pr_number": 1,
+  "description": "Exponential (power-of-two) Grover depth schedule n_k = 2^(k-1) up to n_max with uniform shots per rung (N_shot=12) and exact global maximum-likelihood estimation (Suzuki et al. 2020, Quantum Inf. Process. 19, 75).",
+  "date": "2026-10-23",
+  "entrypoint": "submission.py:MLAEPow2SuzukiSubmission"
+}

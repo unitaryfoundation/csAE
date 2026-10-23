@@ -1,0 +1,18 @@
+{
+  "algo_id": "biqae_bayesian",
+  "algorithm_name": "BIQAE (Beta-Posterior Interval AE)",
+  "name": "BIQAE (Beta-Posterior Interval AE)",
+  "track": "adaptive-variable",
+  "authors": [
+    "G. Ramoa",
+    "L. Santos",
+    "Bayesian IQAE Baseline"
+  ],
+  "github_handle": "unitaryfoundation",
+  "affiliation": "INL / University of Minho (Reference)",
+  "paper_url": "https://arxiv.org/abs/2401.14972",
+  "pr_number": null,
+  "description": "Bayesian Iterative Quantum Amplitude Estimation (BIQAE): replaces union-bound Clopper-Pearson intervals with conjugate Jeffreys-prior Beta posterior credible intervals and local posterior MAP refinement.",
+  "date": "2026-10-23",
+  "entrypoint": "submission.py:BIQAEBayesianSubmission"
+}

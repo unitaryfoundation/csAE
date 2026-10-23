@@ -1,0 +1,16 @@
+{
+  "algo_id": "fae_nakaji",
+  "algorithm_name": "FAE (Nakaji 2020)",
+  "name": "FAE (Nakaji 2020)",
+  "track": "adaptive-variable",
+  "authors": [
+    "K. Nakaji"
+  ],
+  "github_handle": "unitaryfoundation",
+  "affiliation": "Keio University",
+  "paper_url": "https://arxiv.org/abs/2003.02417",
+  "pr_number": null,
+  "description": "Faster Amplitude Estimation (Nakaji 2020, Quantum Inf. Comput. 20, 1109): two-stage adaptive frequency doubling with Chernoff confidence intervals and two-step cosine-difference phase disambiguation.",
+  "date": "2026-10-23",
+  "entrypoint": "submission.py:FAENakajiSubmission"
+}

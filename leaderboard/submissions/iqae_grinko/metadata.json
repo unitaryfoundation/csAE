@@ -1,0 +1,19 @@
+{
+  "algo_id": "iqae_grinko",
+  "algorithm_name": "IQAE (Grinko et al. 2021)",
+  "name": "IQAE (Grinko et al. 2021)",
+  "track": "adaptive-variable",
+  "authors": [
+    "D. Grinko",
+    "J. Gacon",
+    "C. Zoufal",
+    "S. Woerner"
+  ],
+  "github_handle": "unitaryfoundation",
+  "affiliation": "ETH Zurich / IBM Quantum",
+  "paper_url": "https://arxiv.org/abs/1912.05559",
+  "pr_number": null,
+  "description": "Iterative Quantum Amplitude Estimation (Grinko et al. 2021, npj Quantum Inf. 7, 52): adaptive Grover depth progression via find_next_k with Clopper-Pearson Beta confidence intervals.",
+  "date": "2026-10-23",
+  "entrypoint": "submission.py:IQAEGrinkoSubmission"
+}

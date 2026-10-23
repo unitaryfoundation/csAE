@@ -1,0 +1,17 @@
+{
+  "algo_id": "chebae_rall_fuller",
+  "algorithm_name": "chebAE (Rall & Fuller 2023)",
+  "name": "chebAE (Rall & Fuller 2023)",
+  "track": "adaptive-variable",
+  "authors": [
+    "P. Rall",
+    "B. Fuller"
+  ],
+  "github_handle": "unitaryfoundation",
+  "affiliation": "IBM Quantum",
+  "paper_url": "https://arxiv.org/abs/2207.08628",
+  "pr_number": null,
+  "description": "Chebyshev / QSP Amplitude Estimation (Rall & Fuller 2023, Quantum 7, 937): adaptive Chebyshev degree selection with Clopper-Pearson confidence intervals and late-stage 1-shot stepping.",
+  "date": "2026-10-23",
+  "entrypoint": "submission.py:ChebAERallFullerSubmission"
+}

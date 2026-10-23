@@ -1,0 +1,746 @@
+# ==============================================================================
+# Quantum Amplitude Estimation (AE) Challenge Leaderboard — CI/CD Pipeline
+# Target deployment path: .github/workflows/leaderboard_ci.yml
+#
+# Architecture: Two-Tier Verification, Blind Secret-Seed Certification & Publishing
+#   - Tier 1 (pr-verify + pr-comment):
+#       Triggered on pull_request touching submissions/**.
+#       Validates path isolation & metadata.json schema, runs AST static security
+#       analysis and sandbox verification (unshare -r -n, OPENBLAS_NUM_THREADS=2),
+#       executes fast N=2,000 trial smoke benchmarks on public SEARCH_SEED (100,000),
+#       and posts/updates an automated PR checklist & preliminary metrics comment.
+#   - Tier 2 (certify-and-publish):
+#       Triggered on pull_request_target with label 'certify-leaderboard' or
+#       push to main. Executes the trusted harness from main against the isolated
+#       submission directory for N=20,000 trials on an unguessable blind evaluation
+#       seed derived via HMAC-SHA256 from secrets.LEADERBOARD_SECRET_SEED (plus a
+#       per-commit salted concordance seed), scrubs the numeric seed from all public
+#       outputs so contributors cannot see or overfit to the test amplitudes,
+#       appends certified metrics to leaderboard/data/leaderboard.json, and
+#       deploys docs/ to GitHub Pages.
+#
+# Provisioning / Rotating the Repository Secret (Maintainer One-Liner):
+#   gh secret set LEADERBOARD_SECRET_SEED --body "$(openssl rand -hex 32)"
+# ==============================================================================
+
+name: "AE Challenge Leaderboard CI/CD"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "submissions/**"
+      - "leaderboard/submissions/**"
+
+  pull_request_target:
+    types: [labeled]
+
+  push:
+    branches:
+      - main
+    paths:
+      - "submissions/**"
+      - "leaderboard/submissions/**"
+      - "leaderboard/data/leaderboard.json"
+      - "docs/**"
+
+  workflow_dispatch:
+    inputs:
+      submission_dir:
+        description: "Path to submission directory (e.g., leaderboard/submissions/iqae_grinko)"
+        required: true
+        type: string
+      tier:
+        description: "Execution tier to run"
+        required: true
+        default: "certify"
+        type: choice
+        options:
+          - verify
+          - certify
+
+# Default to least privilege across all jobs; elevate only per-job where required.
+permissions:
+  contents: read
+
+concurrency:
+  # Cancel redundant PR verification runs on rapid pushes, but never cancel
+  # in-flight certification or main-branch publishing runs.
+  group: >-
+    ${{
+      github.event_name == 'pull_request'
+      && format('leaderboard-pr-{0}', github.event.pull_request.number)
+      || format('leaderboard-certify-{0}-{1}', github.ref, github.run_id)
+    }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PYTHON_VERSION: "3.12"
+  OPENBLAS_NUM_THREADS: "2"
+  OMP_NUM_THREADS: "2"
+  MKL_NUM_THREADS: "2"
+  VECLIB_MAXIMUM_THREADS: "2"
+  NUMEXPR_NUM_THREADS: "2"
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONNOUSERSITE: "1"
+  SEARCH_SEED: "100000"
+  HOLDOUT_SEED: "900000"
+  SMOKE_NTRIALS: "2000"
+  CERTIFY_NTRIALS: "20000"
+
+jobs:
+  # ============================================================================
+  # TIER 1A: Untrusted PR Verification & Smoke Benchmark (Sandboxed, Read-Only)
+  # ============================================================================
+  pr-verify:
+    name: "Tier 1: Sandbox Verify & Smoke Benchmark (N=2,000)"
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.tier == 'verify')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    outputs:
+      algo_id: ${{ steps.detect.outputs.algo_id }}
+      submission_path: ${{ steps.detect.outputs.submission_path }}
+      verify_status: ${{ steps.verify.outputs.verify_status }}
+
+    steps:
+      - name: Checkout repository (no persisted credentials)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Enforce path isolation & single-submission hygiene
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/leaderboard_ci
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            SUB_PATH="${{ inputs.submission_dir }}"
+            ALGO_ID="$(basename "$SUB_PATH")"
+          else
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            echo "Checking modified files between ${BASE_SHA} and ${HEAD_SHA}..."
+
+            CHANGED_FILES=$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}")
+            if [[ -z "$CHANGED_FILES" ]]; then
+              echo "::error::No changed files detected in Pull Request."
+              exit 1
+            fi
+
+            echo "Changed files:"
+            echo "$CHANGED_FILES"
+
+            # 1. Reject any modification outside (leaderboard/)?submissions/<algo_id>/
+            INVALID_FILES=$(echo "$CHANGED_FILES" | grep -Ev '^(leaderboard/)?submissions/[a-z0-9_]+/[A-Za-z0-9_.-]+$' || true)
+            if [[ -n "$INVALID_FILES" ]]; then
+              {
+                echo "### :x: Path Isolation Gate Failed"
+                echo "Pull requests to the leaderboard may **only** add or modify files inside a single \`leaderboard/submissions/<algo_id>/\` directory."
+                echo "The following disallowed paths were touched:"
+                echo "\`\`\`text"
+                echo "$INVALID_FILES"
+                echo "\`\`\`"
+              } > /tmp/leaderboard_ci/comment_body.md
+              echo "verify_status=failed_isolation" >> "$GITHUB_OUTPUT"
+              exit 1
+            fi
+
+            # 2. Ensure exactly one <algo_id> directory is touched per PR
+            SUB_DIRS=$(echo "$CHANGED_FILES" | sed -E 's|^((leaderboard/)?submissions/[a-z0-9_]+)/.*$|\1|' | sort -u)
+            NUM_DIRS=$(echo "$SUB_DIRS" | wc -l | tr -d ' ')
+            if [[ "$NUM_DIRS" -ne 1 ]]; then
+              {
+                echo "### :x: Single-Submission Rule Violated"
+                echo "Each PR must target exactly **one** algorithm directory, but ${NUM_DIRS} were modified:"
+                echo "\`\`\`text"
+                echo "$SUB_DIRS"
+                echo "\`\`\`"
+              } > /tmp/leaderboard_ci/comment_body.md
+              exit 1
+            fi
+
+            SUB_PATH="$SUB_DIRS"
+            ALGO_ID="$(basename "$SUB_PATH")"
+          fi
+
+          # 3. Reject symlinks, binary blobs, pickles, compiled shared objects, or oversized files
+          while IFS= read -r -d '' f; do
+            if [[ -L "$f" ]]; then
+              echo "::error file=$f::Symlinks are prohibited inside submissions."
+              exit 1
+            fi
+            case "$f" in
+              *.so|*.dll|*.dylib|*.pkl|*.pickle|*.npy|*.npz|*.whl|*.egg|*.pyc)
+                echo "::error file=$f::Binary, compiled, or serialized data payloads are prohibited ($f)."
+                exit 1
+                ;;
+            esac
+          done < <(find "$SUB_PATH" -mindepth 1 -print0)
+
+          TOTAL_KB=$(du -sk "$SUB_PATH" | cut -f1)
+          if [[ "$TOTAL_KB" -gt 128 ]]; then
+            echo "::error::Submission directory exceeds 128 KB limit (${TOTAL_KB} KB)."
+            exit 1
+          fi
+
+          echo "algo_id=${ALGO_ID}" >> "$GITHUB_OUTPUT"
+          echo "submission_path=${SUB_PATH}" >> "$GITHUB_OUTPUT"
+          echo "Verified clean path isolation for algorithm '${ALGO_ID}' at '${SUB_PATH}' (${TOTAL_KB} KB)."
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install evaluation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [[ -f requirements.txt ]]; then
+            pip install -r requirements.txt
+          else
+            pip install numpy scipy statsmodels
+          fi
+          pip install jsonschema
+
+      - name: Validate metadata.json schema
+        shell: bash
+        env:
+          SUB_PATH: ${{ steps.detect.outputs.submission_path }}
+          ALGO_ID: ${{ steps.detect.outputs.algo_id }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, re, sys
+
+          sub_path = os.environ["SUB_PATH"]
+          algo_id = os.environ["ALGO_ID"]
+          meta_file = os.path.join(sub_path, "metadata.json")
+
+          if not os.path.isfile(meta_file):
+              print(f"::error file={sub_path}::Missing required metadata.json in {sub_path}", file=sys.stderr)
+              sys.exit(1)
+
+          with open(meta_file, "r", encoding="utf-8") as f:
+              meta = json.load(f)
+
+          errors = []
+          if not re.match(r"^[a-z0-9_]{3,60}$", algo_id):
+              errors.append(f"Folder slug ('{algo_id}') must match ^[a-z0-9_]{{3,60}}$")
+
+          if "algo_id" in meta and meta["algo_id"] != algo_id:
+              errors.append(f"`algo_id` in metadata.json ('{meta.get('algo_id')}') must match folder name ('{algo_id}')")
+
+          display_name = meta.get("algorithm_name") or meta.get("name") or meta.get("algo_id")
+          if not isinstance(display_name, str) or not display_name.strip():
+              errors.append("Missing required string field `algorithm_name` (or `name`)")
+
+          allowed_tracks = {
+              "non-adaptive",
+              "semi-adaptive",
+              "adaptive-fixed-budget",
+              "adaptive-variable",
+              "depth-limited",
+              "non_adaptive",
+              "adaptive_heisenberg",
+              "adaptive_depth_limited",
+              "adaptive_noisy",
+              "all",
+          }
+          if meta.get("track") not in allowed_tracks:
+              errors.append(f"`track` ('{meta.get('track')}') must be one of {sorted(allowed_tracks)}")
+
+          authors = meta.get("authors")
+          if isinstance(authors, str):
+              if not authors.strip():
+                  errors.append("`authors` string must not be empty")
+          elif isinstance(authors, list):
+              if not authors or not all(isinstance(a, str) and len(a.strip()) > 0 for a in authors):
+                  errors.append("`authors` must be a non-empty list of author strings")
+          else:
+              errors.append("Missing or invalid `authors` field")
+
+          if not isinstance(meta.get("description"), str) or len(meta.get("description", "").strip()) < 5:
+              errors.append("`description` must be a non-empty summary string (>= 5 chars)")
+
+          entry_spec = meta.get("entrypoint", "submission.py")
+          entry_file = entry_spec.split(":")[0]
+          if not entry_file.endswith(".py"):
+              entry_file += ".py"
+          if not re.match(r"^[A-Za-z0-9_]+\.py$", entry_file) or not os.path.isfile(os.path.join(sub_path, entry_file)):
+              errors.append(f"`entrypoint` file '{entry_file}' does not exist inside {sub_path}")
+
+          if errors:
+              os.makedirs("/tmp/leaderboard_ci", exist_ok=True)
+              with open("/tmp/leaderboard_ci/comment_body.md", "w", encoding="utf-8") as out:
+                  out.write(f"### :x: `metadata.json` Validation Failed for `{algo_id}`\n\n")
+                  for e in errors:
+                      out.write(f"- {e}\n")
+              for e in errors:
+                  print(f"::error file={meta_file}::{e}", file=sys.stderr)
+              sys.exit(1)
+
+          print(f"metadata.json schema validated successfully for '{algo_id}' (name='{display_name}', track={meta['track']}).")
+          PYEOF
+
+      - name: Run AST Anti-Cheat & Network-Disabled Smoke Benchmark (N=2,000 on SEARCH_SEED)
+        id: verify
+        shell: bash
+        env:
+          SUB_PATH: ${{ steps.detect.outputs.submission_path }}
+          ALGO_ID: ${{ steps.detect.outputs.algo_id }}
+          OPENBLAS_NUM_THREADS: "2"
+          OMP_NUM_THREADS: "2"
+          MKL_NUM_THREADS: "2"
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/leaderboard_ci
+
+          # Lock down repository tree as read-only before launching untrusted code
+          chmod -R a-w .
+
+          set +e
+          # Execute inside an unprivileged user + network + IPC + PID namespace:
+          #   - unshare -r -n: removes all external network interfaces (only down loopback exists)
+          #   - ulimit -v 4194304: 4 GB virtual address space cap
+          #   - ulimit -t 300: 300 CPU-seconds cap
+          #   - ulimit -f 10240: 10 MB max file write size in /tmp
+          unshare --user --map-root-user --net --ipc --pid --fork bash -c "
+            ulimit -v 4194304
+            ulimit -t 300
+            ulimit -f 10240
+            export OPENBLAS_NUM_THREADS=2
+            export OMP_NUM_THREADS=2
+            export MKL_NUM_THREADS=2
+            python3 leaderboard/verifier_and_runner.py \
+              --mode=verify \
+              --submission=\"${SUB_PATH}\" \
+              --ntrials=\"${SMOKE_NTRIALS}\" \
+              --seed=\"${SEARCH_SEED}\" \
+              --json-out=/tmp/leaderboard_ci/verify_report.json \
+              --md-out=/tmp/leaderboard_ci/comment_body.md
+          "
+          EXIT_CODE=$?
+          set -e
+
+          # Restore write permissions for artifact upload cleanup
+          chmod -R u+w .
+
+          if [[ $EXIT_CODE -ne 0 ]]; then
+            echo "verify_status=failed" >> "$GITHUB_OUTPUT"
+            if [[ ! -f /tmp/leaderboard_ci/comment_body.md ]]; then
+              {
+                echo "### :x: Tier 1 Sandbox Verification Failed (\`${ALGO_ID}\`)"
+                echo "\`leaderboard/verifier_and_runner.py --mode=verify\` exited with code \`${EXIT_CODE}\`."
+                echo "Please inspect the workflow logs for AST security violations, oracle budget overflows, or runtime exceptions."
+              } > /tmp/leaderboard_ci/comment_body.md
+            fi
+            exit $EXIT_CODE
+          fi
+
+          echo "verify_status=passed" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Tier 1 verification report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-verify-report-${{ steps.detect.outputs.algo_id || 'unknown' }}
+          path: /tmp/leaderboard_ci/
+          retention-days: 14
+
+  # ============================================================================
+  # TIER 1B: Automated PR Comment Bot (Isolated from Untrusted Code Execution)
+  # ============================================================================
+  pr-comment:
+    name: "Tier 1: Post Automated PR Checklist & Metrics"
+    needs: [pr-verify]
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Download Tier 1 verification report artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-verify-report-${{ needs.pr-verify.outputs.algo_id || 'unknown' }}
+          path: /tmp/leaderboard_ci/
+        continue-on-error: true
+
+      - name: Post or update sticky PR review comment
+        uses: actions/github-script@v7
+        env:
+          ALGO_ID: ${{ needs.pr-verify.outputs.algo_id }}
+          VERIFY_STATUS: ${{ needs.pr-verify.outputs.verify_status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- ae-leaderboard-bot-comment -->';
+            const algoId = process.env.ALGO_ID || 'unknown';
+            const verifyStatus = process.env.VERIFY_STATUS || 'failed';
+            const runUrl = process.env.RUN_URL;
+
+            let detailsMd = '';
+            const mdPath = '/tmp/leaderboard_ci/comment_body.md';
+            const jsonPath = '/tmp/leaderboard_ci/verify_report.json';
+
+            if (fs.existsSync(mdPath)) {
+              detailsMd = fs.readFileSync(mdPath, 'utf8');
+            } else if (fs.existsSync(jsonPath)) {
+              const report = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+              detailsMd = '```json\n' + JSON.stringify(report, null, 2) + '\n```';
+            } else {
+              detailsMd = '_No detailed Markdown report was generated; see the workflow logs for full output._';
+            }
+
+            const passed = verifyStatus === 'passed';
+            const badge = passed ? ':white_check_mark: **PASSED**' : ':x: **FAILED**';
+
+            const body = [
+              marker,
+              `## Quantum AE Leaderboard Bot — Tier 1 Verification (${badge})`,
+              '',
+              `| Check | Status | Details |`,
+              `| :--- | :---: | :--- |`,
+              `| **Path Isolation** | ${verifyStatus === 'failed_isolation' ? ':x:' : ':white_check_mark:'} | Single directory \`leaderboard/submissions/${algoId}/\` |`,
+              `| **Schema & Static AST Scan** | ${passed ? ':white_check_mark:' : ':warning:'} | Forbidden imports/introspection blocked |`,
+              `| **Network-Disabled Sandbox** | ${passed ? ':white_check_mark:' : ':warning:'} | \`unshare -r -n\`, \`OPENBLAS_NUM_THREADS=2\`, 4 GB RAM cap |`,
+              `| **Smoke Benchmark ($N=2{,}000$)** | ${passed ? ':white_check_mark:' : ':x:'} | Evaluated on public \`SEARCH_SEED = 100,000\` |`,
+              '',
+              detailsMd,
+              '',
+              '---',
+              passed
+                ? '> :unlock: **Next step for Maintainers:** Apply the `certify-leaderboard` label to trigger **Tier 2 Blind Secret-Seed Certification** ($N=20{,}000$ trials on `secrets.LEADERBOARD_SECRET_SEED`).'
+                : `> :wrench: **Action required:** Please fix the issues above and push a new commit. ([View CI Run Logs](${runUrl}))`,
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+  # ============================================================================
+  # TIER 2: Blind Secret-Seed Holdout Certification (N=20,000) & Pages Deploy
+  # ============================================================================
+  certify-and-publish:
+    name: "Tier 2: Certify (N=20,000 on Blind Secret Seed) & Publish Pages"
+    if: >-
+      (github.event_name == 'pull_request_target' && github.event.label.name == 'certify-leaderboard') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && inputs.tier == 'certify')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      pull-requests: write
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout trusted base branch (main)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Extract isolated submission files from PR or commit
+        id: target_sub
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/leaderboard_cert
+
+          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+            PR_HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            git fetch origin "${PR_HEAD_SHA}"
+
+            CHANGED_FILES=$(git diff --name-only "${BASE_SHA}...${PR_HEAD_SHA}")
+            INVALID_FILES=$(echo "$CHANGED_FILES" | grep -Ev '^(leaderboard/)?submissions/[a-z0-9_]+/[A-Za-z0-9_.-]+$' || true)
+            if [[ -n "$INVALID_FILES" ]]; then
+              echo "::error::Refusing to certify PR that modifies files outside submissions/<algo_id>/:"
+              echo "$INVALID_FILES"
+              exit 1
+            fi
+
+            SUB_PATH=$(echo "$CHANGED_FILES" | sed -E 's|^((leaderboard/)?submissions/[a-z0-9_]+)/.*$|\1|' | sort -u)
+            if [[ $(echo "$SUB_PATH" | wc -l | tr -d ' ') -ne 1 ]]; then
+              echo "::error::Expected exactly one submission directory in PR."
+              exit 1
+            fi
+
+            # Checkout ONLY the isolated submission folder from the PR head SHA;
+            # the verifier, harness, and workflow remain 100% from trusted main.
+            git checkout "${PR_HEAD_SHA}" -- "${SUB_PATH}"
+            COMMIT_SHA="${PR_HEAD_SHA}"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            SUB_PATH="${{ inputs.submission_dir }}"
+            COMMIT_SHA="${{ github.sha }}"
+          else
+            # Push to main: check if a submission directory changed in the push
+            CHANGED_SUBS=$(git diff --name-only "${{ github.event.before }}...${{ github.sha }}" | grep -E '^(leaderboard/)?submissions/[a-z0-9_]+/' | sed -E 's|^((leaderboard/)?submissions/[a-z0-9_]+)/.*$|\1|' | sort -u || true)
+            SUB_PATH=$(echo "$CHANGED_SUBS" | head -n 1)
+            COMMIT_SHA="${{ github.sha }}"
+          fi
+
+          echo "submission_path=${SUB_PATH}" >> "$GITHUB_OUTPUT"
+          echo "algo_id=$(basename "${SUB_PATH:-none}")" >> "$GITHUB_OUTPUT"
+          echo "commit_sha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        if: steps.target_sub.outputs.submission_path != ''
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install evaluation dependencies
+        if: steps.target_sub.outputs.submission_path != ''
+        run: |
+          python -m pip install --upgrade pip
+          if [[ -f requirements.txt ]]; then
+            pip install -r requirements.txt
+          else
+            pip install numpy scipy statsmodels
+          fi
+          pip install jsonschema
+
+      - name: Run 20,000-Trial Blind Secret-Seed Benchmark in Network-Isolated Sandbox
+        if: steps.target_sub.outputs.submission_path != ''
+        env:
+          SUB_PATH: ${{ steps.target_sub.outputs.submission_path }}
+          ALGO_ID: ${{ steps.target_sub.outputs.algo_id }}
+          COMMIT_SHA: ${{ steps.target_sub.outputs.commit_sha }}
+          LEADERBOARD_SECRET_SEED: ${{ secrets.LEADERBOARD_SECRET_SEED }}
+          LEADERBOARD_SALT_SEED: ${{ secrets.LEADERBOARD_SALT_SEED }}
+          OPENBLAS_NUM_THREADS: "2"
+          OMP_NUM_THREADS: "2"
+          MKL_NUM_THREADS: "2"
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Derive TWO unguessable evaluation seeds from secrets.LEADERBOARD_SECRET_SEED
+          # (with fallback to secrets.LEADERBOARD_SALT_SEED) inside the trusted host shell
+          # BEFORE entering the unshare sandbox:
+          #   1. BLIND_TEST_SEED: Primary blind certification seed (shared across algorithms
+          #      for fair paired comparison, but completely unknown to the public).
+          #   2. SALTED_CONCORDANCE_SEED: Per-(algo_id, commit_sha) dynamic seed to verify
+          #      statistical concordance and defeat any seed-specific behavior.
+          read -r BLIND_TEST_SEED SALTED_CONCORDANCE_SEED < <(python3 -c '
+          import hashlib, hmac, os, sys
+          raw_secret = (
+              os.environ.get("LEADERBOARD_SECRET_SEED")
+              or os.environ.get("LEADERBOARD_SALT_SEED")
+              or ""
+          ).strip()
+          if not raw_secret:
+              print("::warning::LEADERBOARD_SECRET_SEED is not configured in GitHub Secrets; falling back to HOLDOUT_SEED.", file=sys.stderr)
+              raw_secret = "fallback-unconfigured-secret-seed"
+          key = raw_secret.encode("utf-8")
+          d_primary = hmac.new(key, b"ae-leaderboard-primary-blind-test-seed-v1", hashlib.sha256).digest()
+          blind_seed = 10_000_000 + (int.from_bytes(d_primary[:8], "big") % 900_000_000)
+          msg_salt = (os.environ["ALGO_ID"] + ":" + os.environ["COMMIT_SHA"]).encode("utf-8")
+          d_salt = hmac.new(key, msg_salt, hashlib.sha256).digest()
+          salted_seed = 1_000_000_000 + (int.from_bytes(d_salt[:8], "big") % 990_000_000)
+          print(f"{blind_seed} {salted_seed}")
+          ')
+
+          # Mask both derived seeds in GitHub Actions logs and scrub raw secrets from env
+          echo "::add-mask::${BLIND_TEST_SEED}"
+          echo "::add-mask::${SALTED_CONCORDANCE_SEED}"
+          unset LEADERBOARD_SECRET_SEED
+          unset LEADERBOARD_SALT_SEED
+
+          chmod -R a-w .
+
+          set +e
+          unshare --user --map-root-user --net --ipc --pid --fork bash -c "
+            ulimit -v 8388608
+            ulimit -t 1800
+            ulimit -f 51200
+            export OPENBLAS_NUM_THREADS=2
+            export OMP_NUM_THREADS=2
+            export MKL_NUM_THREADS=2
+            python3 leaderboard/verifier_and_runner.py \
+              --mode=certify \
+              --submission=\"${SUB_PATH}\" \
+              --ntrials=\"${CERTIFY_NTRIALS}\" \
+              --seed=\"${BLIND_TEST_SEED}\" \
+              --salted-seed=\"${SALTED_CONCORDANCE_SEED}\" \
+              --json-out=/tmp/leaderboard_cert/certified_entry.json \
+              --md-out=/tmp/leaderboard_cert/certified_summary.md
+          "
+          EXIT_CODE=$?
+          set -e
+
+          chmod -R u+w .
+          if [[ $EXIT_CODE -ne 0 ]]; then
+            echo "::error::Tier 2 blind certification failed with exit code ${EXIT_CODE}."
+            exit $EXIT_CODE
+          fi
+
+          # Redact the numeric blind seed from the generated JSON and Markdown files
+          # so public commits and PR comments never disclose the derived integer seed!
+          python3 - "${BLIND_TEST_SEED}" "${SALTED_CONCORDANCE_SEED}" <<'PYEOF'
+          import json, os, sys
+
+          blind_s, salted_s = sys.argv[1], sys.argv[2]
+          json_p = "/tmp/leaderboard_cert/certified_entry.json"
+          md_p = "/tmp/leaderboard_cert/certified_summary.md"
+
+          if os.path.isfile(json_p):
+              with open(json_p, "r", encoding="utf-8") as f:
+                  data = json.load(f)
+              data["seed_band"] = "BLIND_SECRET_SEED"
+              with open(json_p, "w", encoding="utf-8") as f:
+                  json.dump(data, f, indent=2)
+
+          if os.path.isfile(md_p):
+              with open(md_p, "r", encoding="utf-8") as f:
+                  text = f.read()
+              text = text.replace(blind_s, "BLIND_SECRET_SEED").replace(salted_s, "SALTED_SECRET_SEED")
+              with open(md_p, "w", encoding="utf-8") as f:
+                  f.write(text)
+          PYEOF
+
+      - name: Append certified entry to leaderboard/data/leaderboard.json & commit
+        if: steps.target_sub.outputs.submission_path != ''
+        env:
+          ALGO_ID: ${{ steps.target_sub.outputs.algo_id }}
+          COMMIT_SHA: ${{ steps.target_sub.outputs.commit_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYEOF'
+          import datetime, json, os
+
+          db_path = "leaderboard/data/leaderboard.json"
+          os.makedirs(os.path.dirname(db_path), exist_ok=True)
+
+          if os.path.isfile(db_path):
+              with open(db_path, "r", encoding="utf-8") as f:
+                  db = json.load(f)
+          else:
+              db = {
+                  "schema_version": "1.0.0",
+                  "updated_at": None,
+                  "evaluation_protocol": {
+                      "ntrials_holdout": 20000,
+                      "blind_secret_seed": True,
+                      "salted_seed_verification": True,
+                      "a_range": [0.1, 0.9],
+                      "scales": [60, 125, 260, 540],
+                  },
+                  "entries": [],
+              }
+
+          with open("/tmp/leaderboard_cert/certified_entry.json", "r", encoding="utf-8") as f:
+              new_entry = json.load(f)
+
+          algo_id = os.environ["ALGO_ID"]
+          new_entry["algo_id"] = algo_id
+          new_entry["commit_sha"] = os.environ["COMMIT_SHA"]
+          new_entry["certified_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+          new_entry["seed_band"] = "BLIND_SECRET_SEED"
+
+          # Replace any previous entry with the same algo_id or append
+          entries = [e for e in db.get("entries", []) if e.get("algo_id") != algo_id]
+          entries.append(new_entry)
+          # Sort primary leaderboard entries by flagship C95_ave ascending
+          entries.sort(key=lambda e: e.get("headline_C95_ave", e.get("C95_ave", float("inf"))))
+          db["entries"] = entries
+          db["updated_at"] = new_entry["certified_at"]
+
+          with open(db_path, "w", encoding="utf-8") as f:
+              json.dump(db, f, indent=2, sort_keys=False)
+              f.write("\n")
+
+          # Mirror JSON payload into docs/leaderboard_data.json for live GitHub Pages dashboard
+          if os.path.isdir("docs"):
+              with open("docs/leaderboard_data.json", "w", encoding="utf-8") as f:
+                  json.dump(db, f, indent=2, sort_keys=False)
+                  f.write("\n")
+
+          print(f"Updated {db_path} with certified results for '{algo_id}'.")
+          PYEOF
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add leaderboard/data/leaderboard.json
+          if [[ -f docs/leaderboard_data.json ]]; then
+            git add docs/leaderboard_data.json
+          fi
+
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(leaderboard): certify ${ALGO_ID} (${COMMIT_SHA:0:7}) [skip ci]"
+            git push origin HEAD:main
+          fi
+
+      - name: Post Tier 2 Certification Comment on PR
+        if: github.event_name == 'pull_request_target' && steps.target_sub.outputs.submission_path != ''
+        uses: actions/github-script@v7
+        env:
+          ALGO_ID: ${{ steps.target_sub.outputs.algo_id }}
+        with:
+          script: |
+            const fs = require('fs');
+            const summaryPath = '/tmp/leaderboard_cert/certified_summary.md';
+            const summaryMd = fs.existsSync(summaryPath)
+              ? fs.readFileSync(summaryPath, 'utf8')
+              : 'Certified results have been appended to `leaderboard/data/leaderboard.json`.';
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: [
+                `## :trophy: Tier 2 Blind Holdout Certification Complete (\`${process.env.ALGO_ID}\`)`,
+                '',
+                summaryMd,
+                '',
+                'Certified metrics ($N=20{,}000$ trials on `secrets.LEADERBOARD_SECRET_SEED` + dynamic salted concordance check) have been committed to `leaderboard/data/leaderboard.json` and published to GitHub Pages.',
+              ].join('\n'),
+            });
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload docs/ artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "docs"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

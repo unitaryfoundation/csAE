@@ -1,0 +1,16 @@
+{
+  "algo_id": "mlqae_plain_labib",
+  "algorithm_name": "mlqae-plain (r=1.45)",
+  "name": "mlqae-plain (r=1.45)",
+  "track": "non-adaptive",
+  "authors": [
+    "Farrokh Labib"
+  ],
+  "github_handle": "farrokhlabib",
+  "affiliation": "Unitary Foundation",
+  "paper_url": "https://arxiv.org/abs/2609.02715",
+  "pr_number": 1,
+  "description": "Plain geometric Grover depth ladder round(1.45^j) up to n_max with untuned linear-decay shot profile [L, L-1, ..., 1] and exact global maximum-likelihood estimation (Labib 2026, arXiv:2609.02715).",
+  "date": "2026-10-23",
+  "entrypoint": "submission.py:MLQAEPlainLabibSubmission"
+}

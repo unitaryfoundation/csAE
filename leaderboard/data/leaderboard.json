@@ -1,0 +1,4396 @@
+{
+  "schema_version": "1.0.0",
+  "updated_at": "2026-10-23T10:55:49.708848+00:00",
+  "evaluation_protocol": {
+    "ntrials_holdout": 20000,
+    "boot_B": 1000,
+    "holdout_seed": 900000,
+    "search_seed": 100000,
+    "salted_seed_verification": true,
+    "a_range": [
+      0.1,
+      0.9
+    ],
+    "scales": [
+      60,
+      125,
+      260,
+      540
+    ],
+    "query_accounting": "shot_cost(0) = 1, shot_cost(n) = n for n >= 1 (total = sum(n * N_n) + N_0)",
+    "kappa_crlb": {
+      "68": 0.802408,
+      "95": 1.668608,
+      "99": 2.258032
+    }
+  },
+  "tracks": [
+    "non-adaptive",
+    "semi-adaptive",
+    "adaptive-fixed-budget",
+    "adaptive-variable",
+    "depth-limited"
+  ],
+  "scales": [
+    60,
+    125,
+    260,
+    540
+  ],
+  "entries": [
+    {
+      "algo_id": "mlqae_plain",
+      "algorithm_name": "mlqae-plain (Labib 2026)",
+      "name": "mlqae-plain (Labib 2026)",
+      "category": "literature",
+      "badge": "Literature (2026)",
+      "track": "non-adaptive",
+      "track_category": "non-adaptive",
+      "authors": [
+        "F. Labib"
+      ],
+      "github_handle": "farrokhlabib",
+      "affiliation": "Unitary Foundation",
+      "paper_url": "https://arxiv.org/abs/2609.02715",
+      "pr_number": null,
+      "description": "Non-adaptive geometric Grover depth ladder round(1.45^j) up to n_max with untuned linear-decay canonical shot ramp (N_j = L - j) and exact global maximum-likelihood estimation (Labib 2026, arXiv:2609.02715).",
+      "date": "2026-09-04",
+      "status": "Literature Ref",
+      "repro_cmd": "OPENBLAS_NUM_THREADS=1 .venv/bin/python mlqae/final_numbers.py",
+      "agent_origin": "Literature (Labib 2026)",
+      "is_baseline": true,
+      "verified": true,
+      "deterministic_budget": true,
+      "rounds": "1 (Parallel)",
+      "rounds_num": 1.0,
+      "num_rounds_mean": 1.0,
+      "query_spread": 0.0,
+      "q_spread": 0.0,
+      "C68_ave": 1.1988,
+      "C68_max": 1.1988,
+      "C68_ave_ci": [
+        1.1795,
+        1.2154
+      ],
+      "C95_ave": 2.8177,
+      "C95_max": 2.8177,
+      "C95_ave_ci": [
+        2.7553,
+        2.8909
+      ],
+      "C95_ci": [
+        2.7553,
+        2.8909
+      ],
+      "C99_ave": 6.4543,
+      "C99_max": 6.4543,
+      "C99_ave_ci": [
+        5.961,
+        6.8974
+      ],
+      "C99_ci": [
+        5.961,
+        6.8974
+      ],
+      "C95_seq": 0.2843,
+      "C95_par": 0.2843,
+      "headline_C95_ave": 2.8177,
+      "headline_C95_max": 2.8177,
+      "headline_C99_ave": 6.4543,
+      "scales": {
+        "60": {
+          "scale_nmax": 60,
+          "ntrials": 20000,
+          "q_mean": 569.0,
+          "q_ave": 569.0,
+          "q_max": 569.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 60.0,
+          "seq_depth_mean": 60.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.00133787,
+          "eps68": 0.002021165,
+          "eps95": 0.004685074,
+          "eps99": 0.01085754,
+          "C50_ave": 0.7612,
+          "C68_ave": 1.15,
+          "C68_max": 1.15,
+          "C68_ave_ci": [
+            1.132,
+            1.1667
+          ],
+          "C68_ci": [
+            1.132,
+            1.1667
+          ],
+          "C68_max_ci": [
+            1.132,
+            1.1667
+          ],
+          "C95_ave": 2.6658,
+          "C95_max": 2.6658,
+          "C95_ave_ci": [
+            2.5958,
+            2.7286
+          ],
+          "C95_ci": [
+            2.5958,
+            2.7286
+          ],
+          "C95_max_ci": [
+            2.5958,
+            2.7286
+          ],
+          "C99_ave": 6.1779,
+          "C99_max": 6.1779,
+          "C99_ave_ci": [
+            5.4924,
+            6.709
+          ],
+          "C99_ci": [
+            5.4924,
+            6.709
+          ],
+          "C99_max_ci": [
+            5.4924,
+            6.709
+          ],
+          "C95_seq": 0.2811,
+          "C95_par": 0.2811,
+          "C95_crlb": 2.0556,
+          "ratio_crlb95": 1.2969
+        },
+        "125": {
+          "scale_nmax": 125,
+          "ntrials": 20000,
+          "q_mean": 1242.0,
+          "q_ave": 1242.0,
+          "q_max": 1242.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 125.0,
+          "seq_depth_mean": 125.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.0006345419,
+          "eps68": 0.000956984,
+          "eps95": 0.002282996,
+          "eps99": 0.005257156,
+          "C50_ave": 0.7881,
+          "C68_ave": 1.1886,
+          "C68_max": 1.1886,
+          "C68_ave_ci": [
+            1.1698,
+            1.2059
+          ],
+          "C68_ci": [
+            1.1698,
+            1.2059
+          ],
+          "C68_max_ci": [
+            1.1698,
+            1.2059
+          ],
+          "C95_ave": 2.8355,
+          "C95_max": 2.8355,
+          "C95_ave_ci": [
+            2.7815,
+            2.9304
+          ],
+          "C95_ci": [
+            2.7815,
+            2.9304
+          ],
+          "C95_max_ci": [
+            2.7815,
+            2.9304
+          ],
+          "C99_ave": 6.5294,
+          "C99_max": 6.5294,
+          "C99_ave_ci": [
+            6.0602,
+            6.8344
+          ],
+          "C99_ci": [
+            6.0602,
+            6.8344
+          ],
+          "C99_max_ci": [
+            6.0602,
+            6.8344
+          ],
+          "C95_seq": 0.2854,
+          "C95_par": 0.2854,
+          "C95_crlb": 2.1515,
+          "ratio_crlb95": 1.3179
+        },
+        "260": {
+          "scale_nmax": 260,
+          "ntrials": 20000,
+          "q_mean": 1823.0,
+          "q_ave": 1823.0,
+          "q_max": 1823.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 182.0,
+          "seq_depth_mean": 182.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.0004421665,
+          "eps68": 0.0006670725,
+          "eps95": 0.001560109,
+          "eps99": 0.00358724,
+          "C50_ave": 0.8061,
+          "C68_ave": 1.2161,
+          "C68_max": 1.2161,
+          "C68_ave_ci": [
+            1.1961,
+            1.2301
+          ],
+          "C68_ci": [
+            1.1961,
+            1.2301
+          ],
+          "C68_max_ci": [
+            1.1961,
+            1.2301
+          ],
+          "C95_ave": 2.8441,
+          "C95_max": 2.8441,
+          "C95_ave_ci": [
+            2.7829,
+            2.9036
+          ],
+          "C95_ci": [
+            2.7829,
+            2.9036
+          ],
+          "C95_max_ci": [
+            2.7829,
+            2.9036
+          ],
+          "C99_ave": 6.5395,
+          "C99_max": 6.5395,
+          "C99_ave_ci": [
+            6.0741,
+            7.0191
+          ],
+          "C99_ci": [
+            6.0741,
+            7.0191
+          ],
+          "C99_max_ci": [
+            6.0741,
+            7.0191
+          ],
+          "C95_seq": 0.2839,
+          "C95_par": 0.2839,
+          "C95_crlb": 2.1817,
+          "ratio_crlb95": 1.3036
+        },
+        "540": {
+          "scale_nmax": 540,
+          "ntrials": 20000,
+          "q_mean": 3893.0,
+          "q_ave": 3893.0,
+          "q_max": 3893.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 382.0,
+          "seq_depth_mean": 382.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.0002101034,
+          "eps68": 0.0003186576,
+          "eps95": 0.0007514084,
+          "eps99": 0.001687738,
+          "C50_ave": 0.8179,
+          "C68_ave": 1.2405,
+          "C68_max": 1.2405,
+          "C68_ave_ci": [
+            1.2199,
+            1.2589
+          ],
+          "C68_ci": [
+            1.2199,
+            1.2589
+          ],
+          "C68_max_ci": [
+            1.2199,
+            1.2589
+          ],
+          "C95_ave": 2.9252,
+          "C95_max": 2.9252,
+          "C95_ave_ci": [
+            2.8612,
+            3.0009
+          ],
+          "C95_ci": [
+            2.8612,
+            3.0009
+          ],
+          "C95_max_ci": [
+            2.8612,
+            3.0009
+          ],
+          "C99_ave": 6.5704,
+          "C99_max": 6.5704,
+          "C99_ave_ci": [
+            6.2171,
+            7.027
+          ],
+          "C99_ci": [
+            6.2171,
+            7.027
+          ],
+          "C99_max_ci": [
+            6.2171,
+            7.027
+          ],
+          "C95_seq": 0.287,
+          "C95_par": 0.287,
+          "C95_crlb": 2.223,
+          "ratio_crlb95": 1.3159
+        }
+      },
+      "overall_rank": 1
+    },
+    {
+      "algo_id": "mlqae_flagship",
+      "algorithm_name": "mlqae-flagship (Labib 2026)",
+      "name": "mlqae-flagship (Labib 2026)",
+      "category": "literature",
+      "badge": "Flagship Baseline (1R)",
+      "track": "non-adaptive",
+      "track_category": "non-adaptive",
+      "authors": [
+        "F. Labib"
+      ],
+      "github_handle": "farrokhlabib",
+      "affiliation": "Unitary Foundation",
+      "paper_url": "https://arxiv.org/abs/2609.02715",
+      "pr_number": null,
+      "description": "Flagship non-adaptive schedule of Labib (2026, arXiv:2609.02715): ratio r=1.45 geometric Grover depth ladder plus one degeneracy-breaking cap rung at round(n_max / 1.3), cutting C99 by 16-20% and achieving C95_seq = 0.21.",
+      "date": "2026-09-04",
+      "status": "Literature Ref",
+      "repro_cmd": "OPENBLAS_NUM_THREADS=1 .venv/bin/python mlqae/final_numbers.py",
+      "agent_origin": "Literature (Labib 2026)",
+      "is_baseline": true,
+      "verified": true,
+      "deterministic_budget": true,
+      "rounds": "1 (Parallel)",
+      "rounds_num": 1.0,
+      "num_rounds_mean": 1.0,
+      "query_spread": 0.0,
+      "q_spread": 0.0,
+      "C68_ave": 1.2748,
+      "C68_max": 1.2748,
+      "C68_ave_ci": [
+        1.2552,
+        1.2951
+      ],
+      "C95_ave": 2.8826,
+      "C95_max": 2.8826,
+      "C95_ave_ci": [
+        2.8236,
+        2.9447
+      ],
+      "C95_ci": [
+        2.8236,
+        2.9447
+      ],
+      "C99_ave": 5.4953,
+      "C99_max": 5.4953,
+      "C99_ave_ci": [
+        5.21,
+        5.782
+      ],
+      "C99_ci": [
+        5.21,
+        5.782
+      ],
+      "C95_seq": 0.2116,
+      "C95_par": 0.2116,
+      "headline_C95_ave": 2.8826,
+      "headline_C95_max": 2.8826,
+      "headline_C99_ave": 5.4953,
+      "scales": {
+        "60": {
+          "scale_nmax": 60,
+          "ntrials": 20000,
+          "q_mean": 789.0,
+          "q_ave": 789.0,
+          "q_max": 789.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 60.0,
+          "seq_depth_mean": 60.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.001020793,
+          "eps68": 0.001547034,
+          "eps95": 0.003529169,
+          "eps99": 0.006560681,
+          "C50_ave": 0.8054,
+          "C68_ave": 1.2206,
+          "C68_max": 1.2206,
+          "C68_ave_ci": [
+            1.2009,
+            1.243
+          ],
+          "C68_ci": [
+            1.2009,
+            1.243
+          ],
+          "C68_max_ci": [
+            1.2009,
+            1.243
+          ],
+          "C95_ave": 2.7845,
+          "C95_max": 2.7845,
+          "C95_ave_ci": [
+            2.7196,
+            2.837
+          ],
+          "C95_ci": [
+            2.7196,
+            2.837
+          ],
+          "C95_max_ci": [
+            2.7196,
+            2.837
+          ],
+          "C99_ave": 5.1764,
+          "C99_max": 5.1764,
+          "C99_ave_ci": [
+            4.9042,
+            5.4242
+          ],
+          "C99_ci": [
+            4.9042,
+            5.4242
+          ],
+          "C99_max_ci": [
+            4.9042,
+            5.4242
+          ],
+          "C95_seq": 0.2118,
+          "C95_par": 0.2118,
+          "C95_crlb": 2.2729,
+          "ratio_crlb95": 1.2251
+        },
+        "125": {
+          "scale_nmax": 125,
+          "ntrials": 20000,
+          "q_mean": 1708.0,
+          "q_ave": 1708.0,
+          "q_max": 1708.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 125.0,
+          "seq_depth_mean": 125.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.0004944193,
+          "eps68": 0.0007472087,
+          "eps95": 0.001657496,
+          "eps99": 0.003069643,
+          "C50_ave": 0.8445,
+          "C68_ave": 1.2762,
+          "C68_max": 1.2762,
+          "C68_ave_ci": [
+            1.2575,
+            1.2927
+          ],
+          "C68_ci": [
+            1.2575,
+            1.2927
+          ],
+          "C68_max_ci": [
+            1.2575,
+            1.2927
+          ],
+          "C95_ave": 2.831,
+          "C95_max": 2.831,
+          "C95_ave_ci": [
+            2.7848,
+            2.8939
+          ],
+          "C95_ci": [
+            2.7848,
+            2.8939
+          ],
+          "C95_max_ci": [
+            2.7848,
+            2.8939
+          ],
+          "C99_ave": 5.2429,
+          "C99_max": 5.2429,
+          "C99_ave_ci": [
+            4.9657,
+            5.5486
+          ],
+          "C99_ci": [
+            4.9657,
+            5.5486
+          ],
+          "C99_max_ci": [
+            4.9657,
+            5.5486
+          ],
+          "C95_seq": 0.2072,
+          "C95_par": 0.2072,
+          "C95_crlb": 2.361,
+          "ratio_crlb95": 1.1991
+        },
+        "260": {
+          "scale_nmax": 260,
+          "ntrials": 20000,
+          "q_mean": 2502.0,
+          "q_ave": 2502.0,
+          "q_max": 2502.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 182.0,
+          "seq_depth_mean": 182.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.0003467426,
+          "eps68": 0.0005164935,
+          "eps95": 0.001175075,
+          "eps99": 0.002299014,
+          "C50_ave": 0.8676,
+          "C68_ave": 1.2923,
+          "C68_max": 1.2923,
+          "C68_ave_ci": [
+            1.2706,
+            1.3142
+          ],
+          "C68_ci": [
+            1.2706,
+            1.3142
+          ],
+          "C68_max_ci": [
+            1.2706,
+            1.3142
+          ],
+          "C95_ave": 2.94,
+          "C95_max": 2.94,
+          "C95_ave_ci": [
+            2.869,
+            3.0196
+          ],
+          "C95_ci": [
+            2.869,
+            3.0196
+          ],
+          "C95_max_ci": [
+            2.869,
+            3.0196
+          ],
+          "C99_ave": 5.7521,
+          "C99_max": 5.7521,
+          "C99_ave_ci": [
+            5.5158,
+            6.1026
+          ],
+          "C99_ci": [
+            5.5158,
+            6.1026
+          ],
+          "C99_max_ci": [
+            5.5158,
+            6.1026
+          ],
+          "C95_seq": 0.2139,
+          "C95_par": 0.2139,
+          "C95_crlb": 2.387,
+          "ratio_crlb95": 1.2317
+        },
+        "540": {
+          "scale_nmax": 540,
+          "ntrials": 20000,
+          "q_mean": 5325.0,
+          "q_ave": 5325.0,
+          "q_max": 5325.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 382.0,
+          "seq_depth_mean": 382.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.0001639036,
+          "eps68": 0.0002460497,
+          "eps95": 0.0005586311,
+          "eps99": 0.001091019,
+          "C50_ave": 0.8728,
+          "C68_ave": 1.3102,
+          "C68_max": 1.3102,
+          "C68_ave_ci": [
+            1.2917,
+            1.3304
+          ],
+          "C68_ci": [
+            1.2917,
+            1.3304
+          ],
+          "C68_max_ci": [
+            1.2917,
+            1.3304
+          ],
+          "C95_ave": 2.9747,
+          "C95_max": 2.9747,
+          "C95_ave_ci": [
+            2.9211,
+            3.0283
+          ],
+          "C95_ci": [
+            2.9211,
+            3.0283
+          ],
+          "C95_max_ci": [
+            2.9211,
+            3.0283
+          ],
+          "C99_ave": 5.8097,
+          "C99_max": 5.8097,
+          "C99_ave_ci": [
+            5.4541,
+            6.0525
+          ],
+          "C99_ci": [
+            5.4541,
+            6.0525
+          ],
+          "C99_max_ci": [
+            5.4541,
+            6.0525
+          ],
+          "C95_seq": 0.2134,
+          "C95_par": 0.2134,
+          "C95_crlb": 2.4235,
+          "ratio_crlb95": 1.2274
+        }
+      },
+      "overall_rank": 2
+    },
+    {
+      "algo_id": "bae_adaptive",
+      "algorithm_name": "BAE-Adaptive (Ramoa & Santos 2024)",
+      "name": "BAE-Adaptive (Ramoa & Santos 2024)",
+      "category": "literature",
+      "badge": "Literature (2024)",
+      "track": "adaptive-fixed-budget",
+      "track_category": "adaptive-fixed-budget",
+      "authors": [
+        "M. Ramoa",
+        "L. Santos"
+      ],
+      "github_handle": "unitaryfoundation",
+      "affiliation": "INL / University of Minho (Reference)",
+      "paper_url": "https://arxiv.org/abs/2401.15072",
+      "pr_number": null,
+      "description": "Annealed Bayesian Amplitude Estimation (Ramoa & Santos 2024, arXiv:2401.15072): online Bayesian posterior tracking with annealed depth selection 2n+1 ~ c / sigma_theta and PGH step-ratio cap.",
+      "date": "2024-01-26",
+      "status": "Literature Ref",
+      "repro_cmd": "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/populate_baselines.py",
+      "agent_origin": "Literature (Ramoa & Santos 2024)",
+      "is_baseline": true,
+      "verified": true,
+      "deterministic_budget": true,
+      "rounds": "Adaptive (~21.1)",
+      "rounds_num": 21.0823,
+      "num_rounds_mean": 21.0823,
+      "query_spread": 0.0,
+      "q_spread": 0.0,
+      "C68_ave": 1.0681,
+      "C68_max": 1.0681,
+      "C68_ave_ci": [
+        1.0506,
+        1.0828
+      ],
+      "C95_ave": 3.0335,
+      "C95_max": 3.0335,
+      "C95_ave_ci": [
+        2.9123,
+        3.1587
+      ],
+      "C95_ci": [
+        2.9123,
+        3.1587
+      ],
+      "C99_ave": 10.9707,
+      "C99_max": 10.9707,
+      "C99_ave_ci": [
+        9.5545,
+        13.1925
+      ],
+      "C99_ci": [
+        9.5545,
+        13.1925
+      ],
+      "C95_seq": 3.0133,
+      "C95_par": 0.2479,
+      "headline_C95_ave": 3.0335,
+      "headline_C95_max": 3.0335,
+      "headline_C99_ave": 10.9707,
+      "scales": {
+        "60": {
+          "scale_nmax": 60,
+          "ntrials": 20000,
+          "q_mean": 789.0,
+          "q_ave": 789.0,
+          "q_max": 789.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 57.7,
+          "seq_depth_mean": 778.0,
+          "num_rounds_mean": 15.896,
+          "eps50": 0.0008963283,
+          "eps68": 0.001359641,
+          "eps95": 0.00373379,
+          "eps99": 0.01435859,
+          "C50_ave": 0.7072,
+          "C68_ave": 1.0728,
+          "C68_max": 1.0728,
+          "C68_ave_ci": [
+            1.0556,
+            1.0851
+          ],
+          "C68_ci": [
+            1.0556,
+            1.0851
+          ],
+          "C68_max_ci": [
+            1.0556,
+            1.0851
+          ],
+          "C95_ave": 2.946,
+          "C95_max": 2.946,
+          "C95_ave_ci": [
+            2.8288,
+            3.0602
+          ],
+          "C95_ci": [
+            2.8288,
+            3.0602
+          ],
+          "C95_max_ci": [
+            2.8288,
+            3.0602
+          ],
+          "C99_ave": 11.3289,
+          "C99_max": 11.3289,
+          "C99_ave_ci": [
+            9.019,
+            14.4457
+          ],
+          "C99_ci": [
+            9.019,
+            14.4457
+          ],
+          "C99_max_ci": [
+            9.019,
+            14.4457
+          ],
+          "C95_seq": 2.9049,
+          "C95_par": 0.2154,
+          "deterministic_budget_B": 789
+        },
+        "125": {
+          "scale_nmax": 125,
+          "ntrials": 20000,
+          "q_mean": 1708.0,
+          "q_ave": 1708.0,
+          "q_max": 1708.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 121.33,
+          "seq_depth_mean": 1697.0,
+          "num_rounds_mean": 19.577,
+          "eps50": 0.0004270898,
+          "eps68": 0.0006414932,
+          "eps95": 0.00185736,
+          "eps99": 0.005752272,
+          "C50_ave": 0.7295,
+          "C68_ave": 1.0957,
+          "C68_max": 1.0957,
+          "C68_ave_ci": [
+            1.0808,
+            1.1108
+          ],
+          "C68_ci": [
+            1.0808,
+            1.1108
+          ],
+          "C68_max_ci": [
+            1.0808,
+            1.1108
+          ],
+          "C95_ave": 3.1724,
+          "C95_max": 3.1724,
+          "C95_ave_ci": [
+            3.0235,
+            3.278
+          ],
+          "C95_ci": [
+            3.0235,
+            3.278
+          ],
+          "C95_max_ci": [
+            3.0235,
+            3.278
+          ],
+          "C99_ave": 9.8249,
+          "C99_max": 9.8249,
+          "C99_ave_ci": [
+            8.8193,
+            11.7471
+          ],
+          "C99_ci": [
+            8.8193,
+            11.7471
+          ],
+          "C99_max_ci": [
+            8.8193,
+            11.7471
+          ],
+          "C95_seq": 3.1519,
+          "C95_par": 0.2254,
+          "deterministic_budget_B": 1708
+        },
+        "260": {
+          "scale_nmax": 260,
+          "ntrials": 20000,
+          "q_mean": 2502.0,
+          "q_ave": 2502.0,
+          "q_max": 2502.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 230.77,
+          "seq_depth_mean": 2491.0,
+          "num_rounds_mean": 21.971,
+          "eps50": 0.0002759517,
+          "eps68": 0.0004182867,
+          "eps95": 0.001171952,
+          "eps99": 0.004418331,
+          "C50_ave": 0.6904,
+          "C68_ave": 1.0466,
+          "C68_max": 1.0466,
+          "C68_ave_ci": [
+            1.0276,
+            1.0596
+          ],
+          "C68_ci": [
+            1.0276,
+            1.0596
+          ],
+          "C68_max_ci": [
+            1.0276,
+            1.0596
+          ],
+          "C95_ave": 2.9322,
+          "C95_max": 2.9322,
+          "C95_ave_ci": [
+            2.8405,
+            3.0777
+          ],
+          "C95_ci": [
+            2.8405,
+            3.0777
+          ],
+          "C95_max_ci": [
+            2.8405,
+            3.0777
+          ],
+          "C99_ave": 11.0547,
+          "C99_max": 11.0547,
+          "C99_ave_ci": [
+            9.8096,
+            13.0174
+          ],
+          "C99_ci": [
+            9.8096,
+            13.0174
+          ],
+          "C99_max_ci": [
+            9.8096,
+            13.0174
+          ],
+          "C95_seq": 2.9193,
+          "C95_par": 0.2705,
+          "deterministic_budget_B": 2502
+        },
+        "540": {
+          "scale_nmax": 540,
+          "ntrials": 20000,
+          "q_mean": 5325.0,
+          "q_ave": 5325.0,
+          "q_max": 5325.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 483.73,
+          "seq_depth_mean": 5314.0,
+          "num_rounds_mean": 26.885,
+          "eps50": 0.0001304525,
+          "eps68": 0.0001985412,
+          "eps95": 0.0005790753,
+          "eps99": 0.002192352,
+          "C50_ave": 0.6947,
+          "C68_ave": 1.0572,
+          "C68_max": 1.0572,
+          "C68_ave_ci": [
+            1.0382,
+            1.0756
+          ],
+          "C68_ci": [
+            1.0382,
+            1.0756
+          ],
+          "C68_max_ci": [
+            1.0382,
+            1.0756
+          ],
+          "C95_ave": 3.0836,
+          "C95_max": 3.0836,
+          "C95_ave_ci": [
+            2.9563,
+            3.219
+          ],
+          "C95_ci": [
+            2.9563,
+            3.219
+          ],
+          "C95_max_ci": [
+            2.9563,
+            3.219
+          ],
+          "C99_ave": 11.6743,
+          "C99_max": 11.6743,
+          "C99_ave_ci": [
+            10.5701,
+            13.5596
+          ],
+          "C99_ci": [
+            10.5701,
+            13.5596
+          ],
+          "C99_max_ci": [
+            10.5701,
+            13.5596
+          ],
+          "C95_seq": 3.0772,
+          "C95_par": 0.2801,
+          "deterministic_budget_B": 5325
+        }
+      },
+      "overall_rank": 3
+    },
+    {
+      "algo_id": "chebae",
+      "algorithm_name": "chebAE (Rall & Fuller 2023)",
+      "name": "chebAE (Rall & Fuller 2023)",
+      "category": "literature",
+      "badge": "Literature (2023)",
+      "track": "adaptive-variable",
+      "track_category": "adaptive-variable",
+      "authors": [
+        "P. Rall",
+        "B. Fuller"
+      ],
+      "github_handle": "unitaryfoundation",
+      "affiliation": "IBM Quantum / MIT",
+      "paper_url": "https://doi.org/10.22331/q-2023-03-02-937",
+      "pr_number": null,
+      "description": "Chebyshev Amplitude Estimation (Rall & Fuller 2023, Quantum 7, 937; arXiv:2207.08628): adaptive Chebyshev degree selection with Clopper-Pearson confidence intervals, late-stage single-shot stepping (nu=8), and polynomial inversion.",
+      "date": "2023-03-02",
+      "status": "Literature Ref",
+      "repro_cmd": "OPENBLAS_NUM_THREADS=1 .venv/bin/python mlqae/head_to_head.py",
+      "agent_origin": "Literature (Rall & Fuller 2023)",
+      "is_baseline": true,
+      "verified": true,
+      "deterministic_budget": false,
+      "rounds": "Adaptive (~15.0)",
+      "rounds_num": 15.0,
+      "num_rounds_mean": 15.0,
+      "query_spread": 0.226,
+      "q_spread": 0.226,
+      "C68_ave": 1.391,
+      "C68_max": 2.1402,
+      "C68_ave_ci": [
+        1.3283,
+        1.4552
+      ],
+      "C95_ave": 3.1414,
+      "C95_max": 4.8328,
+      "C95_ave_ci": [
+        2.9308,
+        3.4155
+      ],
+      "C95_ci": [
+        2.9308,
+        3.4155
+      ],
+      "C99_ave": 9.9728,
+      "C99_max": 15.3066,
+      "C99_ave_ci": [
+        6.0978,
+        31.5243
+      ],
+      "C99_ci": [
+        6.0978,
+        31.5243
+      ],
+      "C95_seq": 2.9054,
+      "C95_par": 2.9054,
+      "headline_C95_ave": 3.1414,
+      "headline_C95_max": 4.8328,
+      "headline_C99_ave": 9.9728,
+      "scales": {
+        "60": {
+          "scale_nmax": 60,
+          "ntrials": 2000,
+          "q_mean": 1084.34,
+          "q_ave": 1084.34,
+          "q_max": 1698.0,
+          "q_std": 252.985,
+          "query_spread": 0.23331,
+          "q_spread": 0.23331,
+          "max_depth_mean": 1023.61,
+          "seq_depth_mean": 1023.61,
+          "num_rounds_mean": 15.0,
+          "eps50": 0.0007996265,
+          "eps68": 0.001265618,
+          "eps95": 0.002765462,
+          "eps99": 0.006221858,
+          "C50_ave": 0.8671,
+          "C68_ave": 1.3724,
+          "C68_max": 2.149,
+          "C68_ave_ci": [
+            1.2988,
+            1.4519
+          ],
+          "C68_ci": [
+            1.2988,
+            1.4519
+          ],
+          "C68_max_ci": [
+            2.0092,
+            2.2702
+          ],
+          "C95_ave": 2.9987,
+          "C95_max": 4.6958,
+          "C95_ave_ci": [
+            2.8775,
+            3.2572
+          ],
+          "C95_ci": [
+            2.8775,
+            3.2572
+          ],
+          "C95_max_ci": [
+            4.4446,
+            5.0861
+          ],
+          "C99_ave": 6.7466,
+          "C99_max": 10.5647,
+          "C99_ave_ci": [
+            5.0418,
+            9.6682
+          ],
+          "C99_ci": [
+            5.0418,
+            9.6682
+          ],
+          "C99_max_ci": [
+            7.8499,
+            15.0256
+          ],
+          "C95_seq": 2.8307,
+          "C95_par": 2.8307,
+          "target_eps95": 0.003503534
+        },
+        "125": {
+          "scale_nmax": 125,
+          "ntrials": 2000,
+          "q_mean": 2327.26,
+          "q_ave": 2327.26,
+          "q_max": 3592.0,
+          "q_std": 537.5384,
+          "query_spread": 0.23098,
+          "q_spread": 0.23098,
+          "max_depth_mean": 2152.32,
+          "seq_depth_mean": 2152.32,
+          "num_rounds_mean": 15.0,
+          "eps50": 0.0004080738,
+          "eps68": 0.0006152931,
+          "eps95": 0.00138365,
+          "eps99": 0.005332322,
+          "C50_ave": 0.9497,
+          "C68_ave": 1.4319,
+          "C68_max": 2.2101,
+          "C68_ave_ci": [
+            1.3797,
+            1.507
+          ],
+          "C68_ci": [
+            1.3797,
+            1.507
+          ],
+          "C68_max_ci": [
+            2.0912,
+            2.3236
+          ],
+          "C95_ave": 3.2201,
+          "C95_max": 4.9701,
+          "C95_ave_ci": [
+            2.9662,
+            3.3561
+          ],
+          "C95_ci": [
+            2.9662,
+            3.3561
+          ],
+          "C95_max_ci": [
+            4.5064,
+            5.1679
+          ],
+          "C99_ave": 12.4097,
+          "C99_max": 19.1537,
+          "C99_ave_ci": [
+            6.2387,
+            27.0217
+          ],
+          "C99_ci": [
+            6.2387,
+            27.0217
+          ],
+          "C99_max_ci": [
+            9.5698,
+            41.733
+          ],
+          "C95_seq": 2.9781,
+          "C95_par": 2.9781,
+          "target_eps95": 0.001695783
+        },
+        "260": {
+          "scale_nmax": 260,
+          "ntrials": 2000,
+          "q_mean": 3436.89,
+          "q_ave": 3436.89,
+          "q_max": 5326.0,
+          "q_std": 773.032,
+          "query_spread": 0.22492,
+          "q_spread": 0.22492,
+          "max_depth_mean": 3163.55,
+          "seq_depth_mean": 3163.55,
+          "num_rounds_mean": 15.0,
+          "eps50": 0.0002665576,
+          "eps68": 0.000402822,
+          "eps95": 0.0009386366,
+          "eps99": 0.002698901,
+          "C50_ave": 0.9161,
+          "C68_ave": 1.3845,
+          "C68_max": 2.1454,
+          "C68_ave_ci": [
+            1.3235,
+            1.4446
+          ],
+          "C68_ci": [
+            1.3235,
+            1.4446
+          ],
+          "C68_max_ci": [
+            1.9829,
+            2.2313
+          ],
+          "C95_ave": 3.226,
+          "C95_max": 4.9992,
+          "C95_ave_ci": [
+            2.9921,
+            3.6741
+          ],
+          "C95_ci": [
+            2.9921,
+            3.6741
+          ],
+          "C95_max_ci": [
+            4.5056,
+            5.6678
+          ],
+          "C99_ave": 9.2758,
+          "C99_max": 14.3743,
+          "C99_ave_ci": [
+            6.4281,
+            27.317
+          ],
+          "C99_ci": [
+            6.4281,
+            27.317
+          ],
+          "C99_max_ci": [
+            9.9192,
+            40.7013
+          ],
+          "C95_seq": 2.9694,
+          "C95_par": 2.9694,
+          "target_eps95": 0.001167154
+        },
+        "540": {
+          "scale_nmax": 540,
+          "ntrials": 2000,
+          "q_mean": 7336.84,
+          "q_ave": 7336.84,
+          "q_max": 10970.0,
+          "q_std": 1575.7163,
+          "query_spread": 0.21477,
+          "q_spread": 0.21477,
+          "max_depth_mean": 6684.87,
+          "seq_depth_mean": 6684.87,
+          "num_rounds_mean": 15.0,
+          "eps50": 0.0001267404,
+          "eps68": 0.0001874308,
+          "eps95": 0.0004253521,
+          "eps99": 0.001561856,
+          "C50_ave": 0.9299,
+          "C68_ave": 1.3751,
+          "C68_max": 2.0561,
+          "C68_ave_ci": [
+            1.3114,
+            1.4172
+          ],
+          "C68_ci": [
+            1.3114,
+            1.4172
+          ],
+          "C68_max_ci": [
+            1.8914,
+            2.1071
+          ],
+          "C95_ave": 3.1207,
+          "C95_max": 4.6661,
+          "C95_ave_ci": [
+            2.8873,
+            3.3747
+          ],
+          "C95_ci": [
+            2.8873,
+            3.3747
+          ],
+          "C95_max_ci": [
+            4.1333,
+            4.9975
+          ],
+          "C99_ave": 11.4591,
+          "C99_max": 17.1336,
+          "C99_ave_ci": [
+            6.6826,
+            62.0904
+          ],
+          "C99_ci": [
+            6.6826,
+            62.0904
+          ],
+          "C99_max_ci": [
+            9.5287,
+            89.4362
+          ],
+          "C95_seq": 2.8434,
+          "C95_par": 2.8434,
+          "target_eps95": 0.0005619548
+        }
+      },
+      "overall_rank": 4
+    },
+    {
+      "algo_id": "biqae_beta",
+      "algorithm_name": "BIQAE (Bayesian Interval QAE, 2024)",
+      "name": "BIQAE (Bayesian Interval QAE, 2024)",
+      "category": "literature",
+      "badge": "Literature (2024)",
+      "track": "adaptive-variable",
+      "track_category": "adaptive-variable",
+      "authors": [
+        "BIQAE Reference Baseline"
+      ],
+      "github_handle": "unitaryfoundation",
+      "affiliation": "Literature Reference",
+      "paper_url": "https://doi.org/10.1038/s41534-021-00379-1",
+      "pr_number": null,
+      "description": "Bayesian Interval Quantum Amplitude Estimation (BIQAE): replaces frequentist Clopper-Pearson bounds in IQAE with conjugate Beta(k+1, N-k+1) posterior credible intervals (N_shots=36) and Bayesian posterior-mean terminal readout.",
+      "date": "2024-02-15",
+      "status": "Literature Ref",
+      "repro_cmd": "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/populate_baselines.py",
+      "agent_origin": "Literature (Bayesian IQAE 2024)",
+      "is_baseline": true,
+      "verified": true,
+      "deterministic_budget": false,
+      "rounds": "Adaptive (~10.0)",
+      "rounds_num": 10.025,
+      "num_rounds_mean": 10.025,
+      "query_spread": 0.35927,
+      "q_spread": 0.35927,
+      "C68_ave": 1.9896,
+      "C68_max": 4.0355,
+      "C68_ave_ci": [
+        1.963,
+        2.0182
+      ],
+      "C95_ave": 4.6907,
+      "C95_max": 9.5132,
+      "C95_ave_ci": [
+        4.6092,
+        4.7877
+      ],
+      "C95_ci": [
+        4.6092,
+        4.7877
+      ],
+      "C99_ave": 8.6509,
+      "C99_max": 17.5401,
+      "C99_ave_ci": [
+        7.8977,
+        10.3092
+      ],
+      "C99_ci": [
+        7.8977,
+        10.3092
+      ],
+      "C95_seq": 4.6907,
+      "C95_par": 0.0822,
+      "headline_C95_ave": 4.6907,
+      "headline_C95_max": 9.5132,
+      "headline_C99_ave": 8.6509,
+      "scales": {
+        "60": {
+          "scale_nmax": 60,
+          "ntrials": 20000,
+          "q_mean": 2955.6,
+          "q_ave": 2955.6,
+          "q_max": 6120.0,
+          "q_std": 1028.229,
+          "query_spread": 0.34789,
+          "q_spread": 0.34789,
+          "max_depth_mean": 49.97,
+          "seq_depth_mean": 2955.6,
+          "num_rounds_mean": 8.977,
+          "eps50": 0.0004606786,
+          "eps68": 0.0006937959,
+          "eps95": 0.001606431,
+          "eps99": 0.002849593,
+          "C50_ave": 1.3616,
+          "C68_ave": 2.0506,
+          "C68_max": 4.246,
+          "C68_ave_ci": [
+            2.0233,
+            2.0789
+          ],
+          "C68_ci": [
+            2.0233,
+            2.0789
+          ],
+          "C68_max_ci": [
+            4.0397,
+            4.2991
+          ],
+          "C95_ave": 4.748,
+          "C95_max": 9.8314,
+          "C95_ave_ci": [
+            4.6654,
+            4.8524
+          ],
+          "C95_ci": [
+            4.6654,
+            4.8524
+          ],
+          "C95_max_ci": [
+            9.3128,
+            10.0399
+          ],
+          "C99_ave": 8.4222,
+          "C99_max": 17.4395,
+          "C99_ave_ci": [
+            7.8246,
+            9.2203
+          ],
+          "C99_ci": [
+            7.8246,
+            9.2203
+          ],
+          "C99_max_ci": [
+            15.9416,
+            19.0602
+          ],
+          "C95_seq": 4.748,
+          "C95_par": 0.0803,
+          "target_eps95": 0.003503534
+        },
+        "125": {
+          "scale_nmax": 125,
+          "ntrials": 20000,
+          "q_mean": 6071.13,
+          "q_ave": 6071.13,
+          "q_max": 12312.0,
+          "q_std": 2205.9471,
+          "query_spread": 0.36335,
+          "q_spread": 0.36335,
+          "max_depth_mean": 105.95,
+          "seq_depth_mean": 6071.13,
+          "num_rounds_mean": 9.823,
+          "eps50": 0.0002159021,
+          "eps68": 0.000327895,
+          "eps95": 0.0007731291,
+          "eps99": 0.001371651,
+          "C50_ave": 1.3108,
+          "C68_ave": 1.9907,
+          "C68_max": 4.037,
+          "C68_ave_ci": [
+            1.9638,
+            2.0207
+          ],
+          "C68_ci": [
+            1.9638,
+            2.0207
+          ],
+          "C68_max_ci": [
+            3.9723,
+            4.102
+          ],
+          "C95_ave": 4.6938,
+          "C95_max": 9.5188,
+          "C95_ave_ci": [
+            4.6214,
+            4.79
+          ],
+          "C95_ci": [
+            4.6214,
+            4.79
+          ],
+          "C95_max_ci": [
+            9.3557,
+            9.7125
+          ],
+          "C99_ave": 8.3275,
+          "C99_max": 16.8878,
+          "C99_ave_ci": [
+            7.7209,
+            9.3511
+          ],
+          "C99_ci": [
+            7.7209,
+            9.3511
+          ],
+          "C99_max_ci": [
+            15.644,
+            18.938
+          ],
+          "C95_seq": 4.6938,
+          "C95_par": 0.0819,
+          "target_eps95": 0.001695783
+        },
+        "260": {
+          "scale_nmax": 260,
+          "ntrials": 20000,
+          "q_mean": 8856.55,
+          "q_ave": 8856.55,
+          "q_max": 17568.0,
+          "q_std": 3143.9202,
+          "query_spread": 0.35498,
+          "q_spread": 0.35498,
+          "max_depth_mean": 156.81,
+          "seq_depth_mean": 8856.55,
+          "num_rounds_mean": 10.203,
+          "eps50": 0.0001457593,
+          "eps68": 0.0002235505,
+          "eps95": 0.0005280957,
+          "eps99": 0.0009897687,
+          "C50_ave": 1.2909,
+          "C68_ave": 1.9799,
+          "C68_max": 3.9273,
+          "C68_ave_ci": [
+            1.9541,
+            2.0079
+          ],
+          "C68_ci": [
+            1.9541,
+            2.0079
+          ],
+          "C68_max_ci": [
+            3.8636,
+            3.9841
+          ],
+          "C95_ave": 4.6771,
+          "C95_max": 9.2776,
+          "C95_ave_ci": [
+            4.5775,
+            4.7627
+          ],
+          "C95_ci": [
+            4.5775,
+            4.7627
+          ],
+          "C95_max_ci": [
+            9.0623,
+            9.4375
+          ],
+          "C99_ave": 8.7659,
+          "C99_max": 17.3883,
+          "C99_ave_ci": [
+            7.8658,
+            10.0325
+          ],
+          "C99_ci": [
+            7.8658,
+            10.0325
+          ],
+          "C99_max_ci": [
+            15.5922,
+            19.8775
+          ],
+          "C95_seq": 4.6771,
+          "C95_par": 0.0828,
+          "target_eps95": 0.001167154
+        },
+        "540": {
+          "scale_nmax": 540,
+          "ntrials": 20000,
+          "q_mean": 18322.58,
+          "q_ave": 18322.58,
+          "q_max": 37188.0,
+          "q_std": 6795.2955,
+          "query_spread": 0.37087,
+          "q_spread": 0.37087,
+          "max_depth_mean": 329.76,
+          "seq_depth_mean": 18322.58,
+          "num_rounds_mean": 11.097,
+          "eps50": 6.880353e-05,
+          "eps68": 0.0001057221,
+          "eps95": 0.0002534456,
+          "eps99": 0.0004959866,
+          "C50_ave": 1.2607,
+          "C68_ave": 1.9371,
+          "C68_max": 3.9316,
+          "C68_ave_ci": [
+            1.9108,
+            1.9653
+          ],
+          "C68_ci": [
+            1.9108,
+            1.9653
+          ],
+          "C68_max_ci": [
+            3.8353,
+            3.9822
+          ],
+          "C95_ave": 4.6438,
+          "C95_max": 9.4251,
+          "C95_ave_ci": [
+            4.5726,
+            4.7459
+          ],
+          "C95_ci": [
+            4.5726,
+            4.7459
+          ],
+          "C95_max_ci": [
+            9.1821,
+            9.6116
+          ],
+          "C99_ave": 9.0878,
+          "C99_max": 18.4447,
+          "C99_ave_ci": [
+            8.1794,
+            12.6327
+          ],
+          "C99_ci": [
+            8.1794,
+            12.6327
+          ],
+          "C99_max_ci": [
+            16.5002,
+            25.4388
+          ],
+          "C95_seq": 4.6438,
+          "C95_par": 0.0836,
+          "target_eps95": 0.0005619548
+        }
+      },
+      "overall_rank": 5
+    },
+    {
+      "algo_id": "csae_esprit",
+      "algorithm_name": "csAE (Labib et al. 2024)",
+      "name": "csAE (Labib et al. 2024)",
+      "category": "literature",
+      "badge": "Literature (2024)",
+      "track": "non-adaptive",
+      "track_category": "non-adaptive",
+      "authors": [
+        "R. Kirby",
+        "F. Labib",
+        "et al."
+      ],
+      "github_handle": "farrokhlabib",
+      "affiliation": "Tufts / IBM / Unitary Foundation",
+      "paper_url": "https://arxiv.org/abs/2405.14697",
+      "pr_number": null,
+      "description": "Compressed-Sensing Amplitude Estimation (Labib et al. 2024, arXiv:2405.14697): power-of-two Grover depth schedule with sliding-window sign recovery, 2q-th order virtual uniform linear array (ULA) covariance construction, and ESPRIT frequency estimation.",
+      "date": "2024-05-23",
+      "status": "Literature Ref",
+      "repro_cmd": "OPENBLAS_NUM_THREADS=1 .venv/bin/python mlqae/compare_to_csae.py",
+      "agent_origin": "Literature (Labib et al. 2024)",
+      "is_baseline": true,
+      "verified": true,
+      "deterministic_budget": true,
+      "rounds": "1 (Parallel)",
+      "rounds_num": 1.0,
+      "num_rounds_mean": 1.0,
+      "query_spread": 0.0,
+      "q_spread": 0.0,
+      "C68_ave": 1.7598,
+      "C68_max": 1.7598,
+      "C68_ave_ci": [
+        1.6018,
+        1.9521
+      ],
+      "C95_ave": 4.8152,
+      "C95_max": 4.8152,
+      "C95_ave_ci": [
+        4.1561,
+        6.1141
+      ],
+      "C95_ci": [
+        4.1561,
+        6.1141
+      ],
+      "C99_ave": 15.6404,
+      "C99_max": 15.6404,
+      "C99_ave_ci": [
+        8.2506,
+        72.3079
+      ],
+      "C99_ci": [
+        8.2506,
+        72.3079
+      ],
+      "C95_seq": 0.2964,
+      "C95_par": 0.2964,
+      "headline_C95_ave": 4.8152,
+      "headline_C95_max": 4.8152,
+      "headline_C99_ave": 15.6404,
+      "scales": {
+        "60": {
+          "scale_nmax": 60,
+          "ntrials": 500,
+          "q_mean": 536.0,
+          "q_ave": 536.0,
+          "q_max": 536.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 32.0,
+          "seq_depth_mean": 32.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.00200326,
+          "eps68": 0.003132743,
+          "eps95": 0.00796829,
+          "eps99": 0.0227791,
+          "C50_ave": 1.0737,
+          "C68_ave": 1.6792,
+          "C68_max": 1.6792,
+          "C68_ave_ci": [
+            1.511,
+            1.8803
+          ],
+          "C68_ci": [
+            1.511,
+            1.8803
+          ],
+          "C68_max_ci": [
+            1.511,
+            1.8803
+          ],
+          "C95_ave": 4.271,
+          "C95_max": 4.271,
+          "C95_ave_ci": [
+            3.8759,
+            5.9763
+          ],
+          "C95_ci": [
+            3.8759,
+            5.9763
+          ],
+          "C95_max_ci": [
+            3.8759,
+            5.9763
+          ],
+          "C99_ave": 12.2096,
+          "C99_max": 12.2096,
+          "C99_ave_ci": [
+            7.5625,
+            19.0521
+          ],
+          "C99_ci": [
+            7.5625,
+            19.0521
+          ],
+          "C99_max_ci": [
+            7.5625,
+            19.0521
+          ],
+          "C95_seq": 0.255,
+          "C95_par": 0.255,
+          "csae_max_depth": 32,
+          "C99_C8_schedule": 8.1424
+        },
+        "125": {
+          "scale_nmax": 125,
+          "ntrials": 500,
+          "q_mean": 2080.0,
+          "q_ave": 2080.0,
+          "q_max": 2080.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 128.0,
+          "seq_depth_mean": 128.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.0005563895,
+          "eps68": 0.0008425208,
+          "eps95": 0.002098858,
+          "eps99": 0.005929933,
+          "C50_ave": 1.1573,
+          "C68_ave": 1.7524,
+          "C68_max": 1.7524,
+          "C68_ave_ci": [
+            1.5829,
+            1.9006
+          ],
+          "C68_ci": [
+            1.5829,
+            1.9006
+          ],
+          "C68_max_ci": [
+            1.5829,
+            1.9006
+          ],
+          "C95_ave": 4.3656,
+          "C95_max": 4.3656,
+          "C95_ave_ci": [
+            3.82,
+            5.8608
+          ],
+          "C95_ci": [
+            3.82,
+            5.8608
+          ],
+          "C95_max_ci": [
+            3.82,
+            5.8608
+          ],
+          "C99_ave": 12.3343,
+          "C99_max": 12.3343,
+          "C99_ave_ci": [
+            7.081,
+            21.4208
+          ],
+          "C99_ci": [
+            7.081,
+            21.4208
+          ],
+          "C99_max_ci": [
+            7.081,
+            21.4208
+          ],
+          "C95_seq": 0.2687,
+          "C95_par": 0.2687,
+          "csae_max_depth": 128,
+          "C99_C8_schedule": 8.9177
+        },
+        "260": {
+          "scale_nmax": 260,
+          "ntrials": 500,
+          "q_mean": 8232.0,
+          "q_ave": 8232.0,
+          "q_max": 8232.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 512.0,
+          "seq_depth_mean": 512.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.0001361437,
+          "eps68": 0.0002020784,
+          "eps95": 0.0006051296,
+          "eps99": 0.001973576,
+          "C50_ave": 1.1207,
+          "C68_ave": 1.6635,
+          "C68_max": 1.6635,
+          "C68_ave_ci": [
+            1.5074,
+            1.8612
+          ],
+          "C68_ci": [
+            1.5074,
+            1.8612
+          ],
+          "C68_max_ci": [
+            1.5074,
+            1.8612
+          ],
+          "C95_ave": 4.9814,
+          "C95_max": 4.9814,
+          "C95_ave_ci": [
+            4.1286,
+            5.7805
+          ],
+          "C95_ci": [
+            4.1286,
+            5.7805
+          ],
+          "C95_max_ci": [
+            4.1286,
+            5.7805
+          ],
+          "C99_ave": 16.2465,
+          "C99_max": 16.2465,
+          "C99_ave_ci": [
+            8.8573,
+            51.1386
+          ],
+          "C99_ci": [
+            8.8573,
+            51.1386
+          ],
+          "C99_max_ci": [
+            8.8573,
+            51.1386
+          ],
+          "C95_seq": 0.3098,
+          "C95_par": 0.3098,
+          "csae_max_depth": 512,
+          "C99_C8_schedule": 11.2675
+        },
+        "540": {
+          "scale_nmax": 540,
+          "ntrials": 500,
+          "q_mean": 32816.0,
+          "q_ave": 32816.0,
+          "q_max": 32816.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 2048.0,
+          "seq_depth_mean": 2048.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 3.693718e-05,
+          "eps68": 5.923848e-05,
+          "eps95": 0.0001719536,
+          "eps99": 0.0006634347,
+          "C50_ave": 1.2121,
+          "C68_ave": 1.944,
+          "C68_max": 1.944,
+          "C68_ave_ci": [
+            1.8058,
+            2.1662
+          ],
+          "C68_ci": [
+            1.8058,
+            2.1662
+          ],
+          "C68_max_ci": [
+            1.8058,
+            2.1662
+          ],
+          "C95_ave": 5.6428,
+          "C95_max": 5.6428,
+          "C95_ave_ci": [
+            4.8,
+            6.8388
+          ],
+          "C95_ci": [
+            4.8,
+            6.8388
+          ],
+          "C95_max_ci": [
+            4.8,
+            6.8388
+          ],
+          "C99_ave": 21.7713,
+          "C99_max": 21.7713,
+          "C99_ave_ci": [
+            9.5017,
+            197.6202
+          ],
+          "C99_ci": [
+            9.5017,
+            197.6202
+          ],
+          "C99_max_ci": [
+            9.5017,
+            197.6202
+          ],
+          "C95_seq": 0.3522,
+          "C95_par": 0.3522,
+          "csae_max_depth": 2048,
+          "C99_C8_schedule": 8.6718
+        }
+      },
+      "published_wls_C68": 1.6736,
+      "published_wls_C95": 4.3472,
+      "published_wls_C99_C4": 12.2077,
+      "published_wls_C99_C8": 8.9904,
+      "published_wls_C95_seq": 0.2639,
+      "overall_rank": 6
+    },
+    {
+      "algo_id": "mlae_linear",
+      "algorithm_name": "MLAE-Linear (Suzuki et al. 2020)",
+      "name": "MLAE-Linear (Suzuki et al. 2020)",
+      "category": "literature",
+      "badge": "Literature (2020)",
+      "track": "non-adaptive",
+      "track_category": "non-adaptive",
+      "authors": [
+        "Y. Suzuki",
+        "S. Uno",
+        "R. Raymond",
+        "T. Tanaka",
+        "T. Onodera",
+        "N. Yamamoto"
+      ],
+      "github_handle": "unitaryfoundation",
+      "affiliation": "Keio University / IBM Quantum",
+      "paper_url": "https://arxiv.org/abs/1904.10246",
+      "pr_number": null,
+      "description": "Linear-schedule Maximum-Likelihood Amplitude Estimation (Suzuki et al. 2020, Quantum Inf. Process. 19, 75; arXiv:1904.10246): linear Grover depth ladder n_k = k with uniform shots per level and global ML post-processing. Exhibits O(eps^{-4/3}) query complexity (C95 grows as Q^{1/4} across scales).",
+      "date": "2020-01-14",
+      "status": "Literature Ref",
+      "repro_cmd": "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/populate_baselines.py",
+      "agent_origin": "Literature (Suzuki et al. 2020)",
+      "is_baseline": true,
+      "verified": true,
+      "deterministic_budget": true,
+      "rounds": "1 (Parallel)",
+      "rounds_num": 1.0,
+      "num_rounds_mean": 1.0,
+      "query_spread": 0.0,
+      "q_spread": 0.0,
+      "C68_ave": 2.5211,
+      "C68_max": 2.5211,
+      "C68_ave_ci": [
+        2.4862,
+        2.5583
+      ],
+      "C95_ave": 5.3197,
+      "C95_max": 5.3197,
+      "C95_ave_ci": [
+        5.2378,
+        5.3982
+      ],
+      "C95_ci": [
+        5.2378,
+        5.3982
+      ],
+      "C99_ave": 7.4522,
+      "C99_max": 7.4522,
+      "C99_ave_ci": [
+        7.2785,
+        7.6492
+      ],
+      "C99_ci": [
+        7.2785,
+        7.6492
+      ],
+      "C95_seq": 0.0507,
+      "C95_par": 0.0507,
+      "headline_C95_ave": 5.3197,
+      "headline_C95_max": 5.3197,
+      "headline_C99_ave": 7.4522,
+      "scales": {
+        "60": {
+          "scale_nmax": 60,
+          "ntrials": 20000,
+          "q_mean": 790.0,
+          "q_ave": 790.0,
+          "q_max": 790.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 12.0,
+          "seq_depth_mean": 12.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.001627601,
+          "eps68": 0.002441953,
+          "eps95": 0.005158435,
+          "eps99": 0.007441056,
+          "C50_ave": 1.2858,
+          "C68_ave": 1.9291,
+          "C68_max": 1.9291,
+          "C68_ave_ci": [
+            1.8999,
+            1.9591
+          ],
+          "C68_ci": [
+            1.8999,
+            1.9591
+          ],
+          "C68_max_ci": [
+            1.8999,
+            1.9591
+          ],
+          "C95_ave": 4.0752,
+          "C95_max": 4.0752,
+          "C95_ave_ci": [
+            4.0136,
+            4.1545
+          ],
+          "C95_ci": [
+            4.0136,
+            4.1545
+          ],
+          "C95_max_ci": [
+            4.0136,
+            4.1545
+          ],
+          "C99_ave": 5.8784,
+          "C99_max": 5.8784,
+          "C99_ave_ci": [
+            5.7361,
+            6.0064
+          ],
+          "C99_ci": [
+            5.7361,
+            6.0064
+          ],
+          "C99_max_ci": [
+            5.7361,
+            6.0064
+          ],
+          "C95_seq": 0.0619,
+          "C95_par": 0.0619,
+          "C95_crlb": 3.8538,
+          "ratio_crlb95": 1.0574
+        },
+        "125": {
+          "scale_nmax": 125,
+          "ntrials": 20000,
+          "q_mean": 1720.0,
+          "q_ave": 1720.0,
+          "q_max": 1720.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 18.0,
+          "seq_depth_mean": 18.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.0009248817,
+          "eps68": 0.001391617,
+          "eps95": 0.002922867,
+          "eps99": 0.00406203,
+          "C50_ave": 1.5908,
+          "C68_ave": 2.3936,
+          "C68_max": 2.3936,
+          "C68_ave_ci": [
+            2.3607,
+            2.4307
+          ],
+          "C68_ci": [
+            2.3607,
+            2.4307
+          ],
+          "C68_max_ci": [
+            2.3607,
+            2.4307
+          ],
+          "C95_ave": 5.0273,
+          "C95_max": 5.0273,
+          "C95_ave_ci": [
+            4.946,
+            5.0875
+          ],
+          "C95_ci": [
+            4.946,
+            5.0875
+          ],
+          "C95_max_ci": [
+            4.946,
+            5.0875
+          ],
+          "C99_ave": 6.9867,
+          "C99_max": 6.9867,
+          "C99_ave_ci": [
+            6.8058,
+            7.1678
+          ],
+          "C99_ci": [
+            6.8058,
+            7.1678
+          ],
+          "C99_max_ci": [
+            6.8058,
+            7.1678
+          ],
+          "C95_seq": 0.0526,
+          "C95_par": 0.0526,
+          "C95_crlb": 4.7468,
+          "ratio_crlb95": 1.0591
+        },
+        "260": {
+          "scale_nmax": 260,
+          "ntrials": 20000,
+          "q_mean": 2540.0,
+          "q_ave": 2540.0,
+          "q_max": 2540.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 22.0,
+          "seq_depth_mean": 22.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.0006847941,
+          "eps68": 0.001027097,
+          "eps95": 0.002171024,
+          "eps99": 0.003051058,
+          "C50_ave": 1.7394,
+          "C68_ave": 2.6088,
+          "C68_max": 2.6088,
+          "C68_ave_ci": [
+            2.5757,
+            2.6446
+          ],
+          "C68_ci": [
+            2.5757,
+            2.6446
+          ],
+          "C68_max_ci": [
+            2.5757,
+            2.6446
+          ],
+          "C95_ave": 5.5144,
+          "C95_max": 5.5144,
+          "C95_ave_ci": [
+            5.4347,
+            5.6049
+          ],
+          "C95_ci": [
+            5.4347,
+            5.6049
+          ],
+          "C95_max_ci": [
+            5.4347,
+            5.6049
+          ],
+          "C99_ave": 7.7497,
+          "C99_max": 7.7497,
+          "C99_ave_ci": [
+            7.5328,
+            7.9407
+          ],
+          "C99_ci": [
+            7.5328,
+            7.9407
+          ],
+          "C99_max_ci": [
+            7.5328,
+            7.9407
+          ],
+          "C95_seq": 0.0478,
+          "C95_par": 0.0478,
+          "C95_crlb": 5.2626,
+          "ratio_crlb95": 1.0478
+        },
+        "540": {
+          "scale_nmax": 540,
+          "ntrials": 20000,
+          "q_mean": 5290.0,
+          "q_ave": 5290.0,
+          "q_max": 5290.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 32.0,
+          "seq_depth_mean": 32.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.0003990579,
+          "eps68": 0.000596017,
+          "eps95": 0.001259383,
+          "eps99": 0.001737988,
+          "C50_ave": 2.111,
+          "C68_ave": 3.1529,
+          "C68_max": 3.1529,
+          "C68_ave_ci": [
+            3.1084,
+            3.1988
+          ],
+          "C68_ci": [
+            3.1084,
+            3.1988
+          ],
+          "C68_max_ci": [
+            3.1084,
+            3.1988
+          ],
+          "C95_ave": 6.6621,
+          "C95_max": 6.6621,
+          "C95_ave_ci": [
+            6.5568,
+            6.746
+          ],
+          "C95_ci": [
+            6.5568,
+            6.746
+          ],
+          "C95_max_ci": [
+            6.5568,
+            6.746
+          ],
+          "C99_ave": 9.194,
+          "C99_max": 9.194,
+          "C99_ave_ci": [
+            9.0392,
+            9.482
+          ],
+          "C99_ci": [
+            9.0392,
+            9.482
+          ],
+          "C99_max_ci": [
+            9.0392,
+            9.482
+          ],
+          "C95_seq": 0.0403,
+          "C95_par": 0.0403,
+          "C95_crlb": 6.3766,
+          "ratio_crlb95": 1.0448
+        }
+      },
+      "overall_rank": 7
+    },
+    {
+      "algo_id": "iqae_cp",
+      "algorithm_name": "IQAE-CP (Grinko et al. 2021)",
+      "name": "IQAE-CP (Grinko et al. 2021)",
+      "category": "literature",
+      "badge": "Literature (2021)",
+      "track": "adaptive-variable",
+      "track_category": "adaptive-variable",
+      "authors": [
+        "D. Grinko",
+        "J. Gacon",
+        "C. Zoufal",
+        "S. Woerner"
+      ],
+      "github_handle": "unitaryfoundation",
+      "affiliation": "ETH Zurich / IBM Quantum",
+      "paper_url": "https://doi.org/10.1038/s41534-021-00379-1",
+      "pr_number": null,
+      "description": "Iterative Quantum Amplitude Estimation with exact Clopper-Pearson beta confidence intervals (Grinko et al. 2021, npj Quantum Inf. 7, 52; arXiv:1912.05559, N_shots=100, r=2, alpha=delta/T).",
+      "date": "2021-03-25",
+      "status": "Literature Ref",
+      "repro_cmd": "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/populate_baselines.py",
+      "agent_origin": "Literature (Grinko et al. 2021)",
+      "is_baseline": true,
+      "verified": true,
+      "deterministic_budget": false,
+      "rounds": "Adaptive (~5.2)",
+      "rounds_num": 5.222,
+      "num_rounds_mean": 5.222,
+      "query_spread": 0.4266,
+      "q_spread": 0.4266,
+      "C68_ave": 2.7347,
+      "C68_max": 5.8487,
+      "C68_ave_ci": [
+        2.6919,
+        2.773
+      ],
+      "C95_ave": 6.8382,
+      "C95_max": 14.6255,
+      "C95_ave_ci": [
+        6.6792,
+        6.9771
+      ],
+      "C95_ci": [
+        6.6792,
+        6.9771
+      ],
+      "C99_ave": 19.3967,
+      "C99_max": 41.5342,
+      "C99_ave_ci": [
+        14.1176,
+        28.0163
+      ],
+      "C99_ci": [
+        14.1176,
+        28.0163
+      ],
+      "C95_seq": 6.8382,
+      "C95_par": 0.0696,
+      "headline_C95_ave": 6.8382,
+      "headline_C95_max": 14.6255,
+      "headline_C99_ave": 19.3967,
+      "scales": {
+        "60": {
+          "scale_nmax": 60,
+          "ntrials": 20000,
+          "q_mean": 3973.02,
+          "q_ave": 3973.02,
+          "q_max": 8500.0,
+          "q_std": 1686.253,
+          "query_spread": 0.42443,
+          "q_spread": 0.42443,
+          "max_depth_mean": 37.84,
+          "seq_depth_mean": 3973.02,
+          "num_rounds_mean": 4.548,
+          "eps50": 0.000451527,
+          "eps68": 0.0007052879,
+          "eps95": 0.001755787,
+          "eps99": 0.003568532,
+          "C50_ave": 1.7939,
+          "C68_ave": 2.8021,
+          "C68_max": 5.9949,
+          "C68_ave_ci": [
+            2.7597,
+            2.8402
+          ],
+          "C68_ci": [
+            2.7597,
+            2.8402
+          ],
+          "C68_max_ci": [
+            5.8681,
+            6.0701
+          ],
+          "C95_ave": 6.9758,
+          "C95_max": 14.9242,
+          "C95_ave_ci": [
+            6.8188,
+            7.1136
+          ],
+          "C95_ci": [
+            6.8188,
+            7.1136
+          ],
+          "C95_max_ci": [
+            14.5376,
+            15.2225
+          ],
+          "C99_ave": 14.1778,
+          "C99_max": 30.3325,
+          "C99_ave_ci": [
+            12.8084,
+            17.6201
+          ],
+          "C99_ci": [
+            12.8084,
+            17.6201
+          ],
+          "C99_max_ci": [
+            27.3379,
+            37.6755
+          ],
+          "C95_seq": 6.9758,
+          "C95_par": 0.0664,
+          "target_eps95": 0.003503534
+        },
+        "125": {
+          "scale_nmax": 125,
+          "ntrials": 20000,
+          "q_mean": 8521.01,
+          "q_ave": 8521.01,
+          "q_max": 18100.0,
+          "q_std": 3616.0986,
+          "query_spread": 0.42437,
+          "q_spread": 0.42437,
+          "max_depth_mean": 86.74,
+          "seq_depth_mean": 8521.01,
+          "num_rounds_mean": 5.113,
+          "eps50": 0.0002060226,
+          "eps68": 0.0003197132,
+          "eps95": 0.0007908875,
+          "eps99": 0.001579458,
+          "C50_ave": 1.7555,
+          "C68_ave": 2.7243,
+          "C68_max": 5.7868,
+          "C68_ave_ci": [
+            2.6825,
+            2.7627
+          ],
+          "C68_ci": [
+            2.6825,
+            2.7627
+          ],
+          "C68_max_ci": [
+            5.5752,
+            5.8583
+          ],
+          "C95_ave": 6.7392,
+          "C95_max": 14.3151,
+          "C95_ave_ci": [
+            6.5785,
+            6.873
+          ],
+          "C95_ci": [
+            6.5785,
+            6.873
+          ],
+          "C95_max_ci": [
+            13.6721,
+            14.5754
+          ],
+          "C99_ave": 13.4586,
+          "C99_max": 28.5882,
+          "C99_ave_ci": [
+            11.867,
+            15.4139
+          ],
+          "C99_ci": [
+            11.867,
+            15.4139
+          ],
+          "C99_max_ci": [
+            25.1741,
+            32.4177
+          ],
+          "C95_seq": 6.7392,
+          "C95_par": 0.0686,
+          "target_eps95": 0.001695783
+        },
+        "260": {
+          "scale_nmax": 260,
+          "ntrials": 20000,
+          "q_mean": 12109.6,
+          "q_ave": 12109.6,
+          "q_max": 25900.0,
+          "q_std": 5080.4625,
+          "query_spread": 0.41954,
+          "q_spread": 0.41954,
+          "max_depth_mean": 122.27,
+          "seq_depth_mean": 12109.6,
+          "num_rounds_mean": 5.326,
+          "eps50": 0.0001451592,
+          "eps68": 0.0002223834,
+          "eps95": 0.000559018,
+          "eps99": 0.001830342,
+          "C50_ave": 1.7578,
+          "C68_ave": 2.693,
+          "C68_max": 5.7597,
+          "C68_ave_ci": [
+            2.6553,
+            2.7308
+          ],
+          "C68_ci": [
+            2.6553,
+            2.7308
+          ],
+          "C68_max_ci": [
+            5.5874,
+            5.8397
+          ],
+          "C95_ave": 6.7695,
+          "C95_max": 14.4786,
+          "C95_ave_ci": [
+            6.6001,
+            6.9053
+          ],
+          "C95_ci": [
+            6.6001,
+            6.9053
+          ],
+          "C95_max_ci": [
+            14.0056,
+            14.7336
+          ],
+          "C99_ave": 22.1647,
+          "C99_max": 47.4059,
+          "C99_ave_ci": [
+            14.5712,
+            31.5747
+          ],
+          "C99_ci": [
+            14.5712,
+            31.5747
+          ],
+          "C99_max_ci": [
+            31.0439,
+            67.3497
+          ],
+          "C95_seq": 6.7695,
+          "C95_par": 0.0684,
+          "target_eps95": 0.001167154
+        },
+        "540": {
+          "scale_nmax": 540,
+          "ntrials": 20000,
+          "q_mean": 24900.69,
+          "q_ave": 24900.69,
+          "q_max": 53600.0,
+          "q_std": 10908.1629,
+          "query_spread": 0.43807,
+          "q_spread": 0.43807,
+          "max_depth_mean": 272.45,
+          "seq_depth_mean": 24900.69,
+          "num_rounds_mean": 5.901,
+          "eps50": 6.922895e-05,
+          "eps68": 0.000109205,
+          "eps95": 0.0002758213,
+          "eps99": 0.001115864,
+          "C50_ave": 1.7238,
+          "C68_ave": 2.7193,
+          "C68_max": 5.8534,
+          "C68_ave_ci": [
+            2.67,
+            2.7582
+          ],
+          "C68_ci": [
+            2.67,
+            2.7582
+          ],
+          "C68_max_ci": [
+            5.7014,
+            5.934
+          ],
+          "C95_ave": 6.8681,
+          "C95_max": 14.784,
+          "C95_ave_ci": [
+            6.7192,
+            7.0167
+          ],
+          "C95_ci": [
+            6.7192,
+            7.0167
+          ],
+          "C95_max_ci": [
+            14.3876,
+            15.0995
+          ],
+          "C99_ave": 27.7858,
+          "C99_max": 59.8103,
+          "C99_ave_ci": [
+            17.2239,
+            47.4565
+          ],
+          "C99_ci": [
+            17.2239,
+            47.4565
+          ],
+          "C99_max_ci": [
+            37.0168,
+            102.2731
+          ],
+          "C95_seq": 6.8681,
+          "C95_par": 0.0751,
+          "target_eps95": 0.0005619548
+        }
+      },
+      "overall_rank": 8
+    },
+    {
+      "algo_id": "mlae_pow2",
+      "algorithm_name": "MLAE-Pow2 (Suzuki et al. 2020)",
+      "name": "MLAE-Pow2 (Suzuki et al. 2020)",
+      "category": "literature",
+      "badge": "Literature (2020)",
+      "track": "non-adaptive",
+      "track_category": "non-adaptive",
+      "authors": [
+        "Y. Suzuki",
+        "S. Uno",
+        "R. Raymond",
+        "T. Tanaka",
+        "T. Onodera",
+        "N. Yamamoto"
+      ],
+      "github_handle": "unitaryfoundation",
+      "affiliation": "Keio University / IBM Quantum",
+      "paper_url": "https://arxiv.org/abs/1904.10246",
+      "pr_number": null,
+      "description": "Exponential-schedule Maximum-Likelihood Amplitude Estimation (Suzuki et al. 2020, Quantum Inf. Process. 19, 75; arXiv:1904.10246): power-of-two Grover depth ladder n_k = 2^{k-1} with uniform 100 shots per rung and exact global ML estimation.",
+      "date": "2020-01-14",
+      "status": "Literature Ref",
+      "repro_cmd": "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/populate_baselines.py",
+      "agent_origin": "Literature (Suzuki et al. 2020)",
+      "is_baseline": true,
+      "verified": true,
+      "deterministic_budget": true,
+      "rounds": "1 (Parallel)",
+      "rounds_num": 1.0,
+      "num_rounds_mean": 1.0,
+      "query_spread": 0.0,
+      "q_spread": 0.0,
+      "C68_ave": 3.5921,
+      "C68_max": 3.5921,
+      "C68_ave_ci": [
+        3.5434,
+        3.6397
+      ],
+      "C95_ave": 7.8803,
+      "C95_max": 7.8803,
+      "C95_ave_ci": [
+        7.7185,
+        8.0183
+      ],
+      "C95_ci": [
+        7.7185,
+        8.0183
+      ],
+      "C99_ave": 13.4169,
+      "C99_max": 13.4169,
+      "C99_ave_ci": [
+        12.7399,
+        14.318
+      ],
+      "C99_ci": [
+        12.7399,
+        14.318
+      ],
+      "C95_seq": 0.0394,
+      "C95_par": 0.0394,
+      "headline_C95_ave": 7.8803,
+      "headline_C95_max": 7.8803,
+      "headline_C99_ave": 13.4169,
+      "scales": {
+        "60": {
+          "scale_nmax": 60,
+          "ntrials": 20000,
+          "q_mean": 6400.0,
+          "q_ave": 6400.0,
+          "q_max": 6400.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 32.0,
+          "seq_depth_mean": 32.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.0003666767,
+          "eps68": 0.0005522087,
+          "eps95": 0.001214282,
+          "eps99": 0.002047791,
+          "C50_ave": 2.3467,
+          "C68_ave": 3.5341,
+          "C68_max": 3.5341,
+          "C68_ave_ci": [
+            3.4945,
+            3.5768
+          ],
+          "C68_ci": [
+            3.4945,
+            3.5768
+          ],
+          "C68_max_ci": [
+            3.4945,
+            3.5768
+          ],
+          "C95_ave": 7.7714,
+          "C95_max": 7.7714,
+          "C95_ave_ci": [
+            7.6355,
+            7.909
+          ],
+          "C95_ci": [
+            7.6355,
+            7.909
+          ],
+          "C95_max_ci": [
+            7.6355,
+            7.909
+          ],
+          "C99_ave": 13.1059,
+          "C99_max": 13.1059,
+          "C99_ave_ci": [
+            12.4479,
+            13.7994
+          ],
+          "C99_ci": [
+            12.4479,
+            13.7994
+          ],
+          "C99_max_ci": [
+            12.4479,
+            13.7994
+          ],
+          "C95_seq": 0.0389,
+          "C95_par": 0.0389,
+          "C95_crlb": 7.0606,
+          "ratio_crlb95": 1.1007
+        },
+        "125": {
+          "scale_nmax": 125,
+          "ntrials": 20000,
+          "q_mean": 12800.0,
+          "q_ave": 12800.0,
+          "q_max": 12800.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 64.0,
+          "seq_depth_mean": 64.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 0.0001873461,
+          "eps68": 0.0002840386,
+          "eps95": 0.0006230275,
+          "eps99": 0.001031516,
+          "C50_ave": 2.398,
+          "C68_ave": 3.6357,
+          "C68_max": 3.6357,
+          "C68_ave_ci": [
+            3.5854,
+            3.6851
+          ],
+          "C68_ci": [
+            3.5854,
+            3.6851
+          ],
+          "C68_max_ci": [
+            3.5854,
+            3.6851
+          ],
+          "C95_ave": 7.9748,
+          "C95_max": 7.9748,
+          "C95_ave_ci": [
+            7.787,
+            8.0967
+          ],
+          "C95_ci": [
+            7.787,
+            8.0967
+          ],
+          "C95_max_ci": [
+            7.787,
+            8.0967
+          ],
+          "C99_ave": 13.2034,
+          "C99_max": 13.2034,
+          "C99_ave_ci": [
+            12.6076,
+            14.0774
+          ],
+          "C99_ci": [
+            12.6076,
+            14.0774
+          ],
+          "C99_max_ci": [
+            12.6076,
+            14.0774
+          ],
+          "C95_seq": 0.0399,
+          "C95_par": 0.0399,
+          "C95_crlb": 7.1416,
+          "ratio_crlb95": 1.1167
+        },
+        "260": {
+          "scale_nmax": 260,
+          "ntrials": 20000,
+          "q_mean": 25600.0,
+          "q_ave": 25600.0,
+          "q_max": 25600.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 128.0,
+          "seq_depth_mean": 128.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 9.33375e-05,
+          "eps68": 0.0001400792,
+          "eps95": 0.0003062389,
+          "eps99": 0.0005306944,
+          "C50_ave": 2.3894,
+          "C68_ave": 3.586,
+          "C68_max": 3.586,
+          "C68_ave_ci": [
+            3.5404,
+            3.6346
+          ],
+          "C68_ci": [
+            3.5404,
+            3.6346
+          ],
+          "C68_max_ci": [
+            3.5404,
+            3.6346
+          ],
+          "C95_ave": 7.8397,
+          "C95_max": 7.8397,
+          "C95_ave_ci": [
+            7.6626,
+            7.9859
+          ],
+          "C95_ci": [
+            7.6626,
+            7.9859
+          ],
+          "C95_max_ci": [
+            7.6626,
+            7.9859
+          ],
+          "C99_ave": 13.5858,
+          "C99_max": 13.5858,
+          "C99_ave_ci": [
+            12.9008,
+            14.472
+          ],
+          "C99_ci": [
+            12.9008,
+            14.472
+          ],
+          "C99_max_ci": [
+            12.9008,
+            14.472
+          ],
+          "C95_seq": 0.0392,
+          "C95_par": 0.0392,
+          "C95_crlb": 7.1832,
+          "ratio_crlb95": 1.0914
+        },
+        "540": {
+          "scale_nmax": 540,
+          "ntrials": 20000,
+          "q_mean": 51200.0,
+          "q_ave": 51200.0,
+          "q_max": 51200.0,
+          "q_std": 0.0,
+          "query_spread": 0.0,
+          "q_spread": 0.0,
+          "max_depth_mean": 256.0,
+          "seq_depth_mean": 256.0,
+          "num_rounds_mean": 1.0,
+          "eps50": 4.688911e-05,
+          "eps68": 7.055502e-05,
+          "eps95": 0.0001549891,
+          "eps99": 0.0002689926,
+          "C50_ave": 2.4007,
+          "C68_ave": 3.6124,
+          "C68_max": 3.6124,
+          "C68_ave_ci": [
+            3.5532,
+            3.6625
+          ],
+          "C68_ci": [
+            3.5532,
+            3.6625
+          ],
+          "C68_max_ci": [
+            3.5532,
+            3.6625
+          ],
+          "C95_ave": 7.9354,
+          "C95_max": 7.9354,
+          "C95_ave_ci": [
+            7.7888,
+            8.0814
+          ],
+          "C95_ci": [
+            7.7888,
+            8.0814
+          ],
+          "C95_max_ci": [
+            7.7888,
+            8.0814
+          ],
+          "C99_ave": 13.7724,
+          "C99_max": 13.7724,
+          "C99_ave_ci": [
+            13.0033,
+            14.9232
+          ],
+          "C99_ci": [
+            13.0033,
+            14.9232
+          ],
+          "C99_max_ci": [
+            13.0033,
+            14.9232
+          ],
+          "C95_seq": 0.0397,
+          "C95_par": 0.0397,
+          "C95_crlb": 7.2042,
+          "ratio_crlb95": 1.1015
+        }
+      },
+      "overall_rank": 9
+    },
+    {
+      "algo_id": "fae_nakaji",
+      "algorithm_name": "FAE (Nakaji 2020)",
+      "name": "FAE (Nakaji 2020)",
+      "category": "literature",
+      "badge": "Literature (2020)",
+      "track": "adaptive-variable",
+      "track_category": "adaptive-variable",
+      "authors": [
+        "K. Nakaji"
+      ],
+      "github_handle": "unitaryfoundation",
+      "affiliation": "Keio University",
+      "paper_url": "https://arxiv.org/abs/2003.02417",
+      "pr_number": null,
+      "description": "Faster Amplitude Estimation (Nakaji 2020, Quantum Inf. Comput. 20, 1109; arXiv:2003.02417): two-stage adaptive cosine schedule with doubling Grover depths k_j = 2^{j-1}, Hoeffding confidence intervals, and two-circuit cosine product disambiguation in Stage 2.",
+      "date": "2020-03-05",
+      "status": "Literature Ref",
+      "repro_cmd": "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/populate_baselines.py",
+      "agent_origin": "Literature (Nakaji 2020)",
+      "is_baseline": true,
+      "verified": true,
+      "deterministic_budget": false,
+      "rounds": "Adaptive (~8.1)",
+      "rounds_num": 8.1032,
+      "num_rounds_mean": 8.1032,
+      "query_spread": 0.28815,
+      "q_spread": 0.28815,
+      "C68_ave": 3.9323,
+      "C68_max": 4.9427,
+      "C68_ave_ci": [
+        3.8777,
+        3.9889
+      ],
+      "C95_ave": 8.7351,
+      "C95_max": 11.0111,
+      "C95_ave_ci": [
+        8.5756,
+        8.8968
+      ],
+      "C95_ci": [
+        8.5756,
+        8.8968
+      ],
+      "C99_ave": 14.0953,
+      "C99_max": 17.793,
+      "C99_ave_ci": [
+        13.4772,
+        14.7467
+      ],
+      "C99_ci": [
+        13.4772,
+        14.7467
+      ],
+      "C95_seq": 8.7351,
+      "C95_par": 0.0722,
+      "headline_C95_ave": 8.7351,
+      "headline_C95_max": 11.0111,
+      "headline_C99_ave": 14.0953,
+      "scales": {
+        "60": {
+          "scale_nmax": 60,
+          "ntrials": 20000,
+          "q_mean": 3479.2,
+          "q_ave": 3479.2,
+          "q_max": 4000.0,
+          "q_std": 862.8268,
+          "query_spread": 0.248,
+          "q_spread": 0.248,
+          "max_depth_mean": 28.73,
+          "seq_depth_mean": 3479.2,
+          "num_rounds_mean": 6.733,
+          "eps50": 0.0007495621,
+          "eps68": 0.00112377,
+          "eps95": 0.002426695,
+          "eps99": 0.003921744,
+          "C50_ave": 2.6079,
+          "C68_ave": 3.9098,
+          "C68_max": 4.4951,
+          "C68_ave_ci": [
+            3.8598,
+            3.9717
+          ],
+          "C68_ci": [
+            3.8598,
+            3.9717
+          ],
+          "C68_max_ci": [
+            4.4373,
+            4.5632
+          ],
+          "C95_ave": 8.443,
+          "C95_max": 9.7068,
+          "C95_ave_ci": [
+            8.2517,
+            8.5777
+          ],
+          "C95_ci": [
+            8.2517,
+            8.5777
+          ],
+          "C95_max_ci": [
+            9.4836,
+            9.866
+          ],
+          "C99_ave": 13.6445,
+          "C99_max": 15.687,
+          "C99_ave_ci": [
+            13.0971,
+            14.3024
+          ],
+          "C99_ci": [
+            13.0971,
+            14.3024
+          ],
+          "C99_max_ci": [
+            15.0549,
+            16.453
+          ],
+          "C95_seq": 8.443,
+          "C95_par": 0.0697,
+          "target_eps95": 0.003503534
+        },
+        "125": {
+          "scale_nmax": 125,
+          "ntrials": 20000,
+          "q_mean": 7080.13,
+          "q_ave": 7080.13,
+          "q_max": 7870.0,
+          "q_std": 1559.7742,
+          "query_spread": 0.2203,
+          "q_spread": 0.2203,
+          "max_depth_mean": 58.47,
+          "seq_depth_mean": 7080.13,
+          "num_rounds_mean": 7.796,
+          "eps50": 0.0003652364,
+          "eps68": 0.0005479122,
+          "eps95": 0.001184896,
+          "eps99": 0.001844906,
+          "C50_ave": 2.5859,
+          "C68_ave": 3.8793,
+          "C68_max": 4.3121,
+          "C68_ave_ci": [
+            3.8197,
+            3.9283
+          ],
+          "C68_ci": [
+            3.8197,
+            3.9283
+          ],
+          "C68_max_ci": [
+            4.2433,
+            4.3687
+          ],
+          "C95_ave": 8.3892,
+          "C95_max": 9.3251,
+          "C95_ave_ci": [
+            8.2554,
+            8.5688
+          ],
+          "C95_ci": [
+            8.2554,
+            8.5688
+          ],
+          "C95_max_ci": [
+            9.1741,
+            9.5211
+          ],
+          "C99_ave": 13.0622,
+          "C99_max": 14.5194,
+          "C99_ave_ci": [
+            12.5916,
+            13.6973
+          ],
+          "C99_ci": [
+            12.5916,
+            13.6973
+          ],
+          "C99_max_ci": [
+            13.9991,
+            15.206
+          ],
+          "C95_seq": 8.3892,
+          "C95_par": 0.0693,
+          "target_eps95": 0.001695783
+        },
+        "260": {
+          "scale_nmax": 260,
+          "ntrials": 20000,
+          "q_mean": 10836.94,
+          "q_ave": 10836.94,
+          "q_max": 15580.0,
+          "q_std": 3850.3587,
+          "query_spread": 0.3553,
+          "q_spread": 0.3553,
+          "max_depth_mean": 89.63,
+          "seq_depth_mean": 10836.94,
+          "num_rounds_mean": 8.376,
+          "eps50": 0.0002427104,
+          "eps68": 0.0003665504,
+          "eps95": 0.0008428541,
+          "eps99": 0.00136247,
+          "C50_ave": 2.6302,
+          "C68_ave": 3.9723,
+          "C68_max": 5.7109,
+          "C68_ave_ci": [
+            3.9218,
+            4.0265
+          ],
+          "C68_ci": [
+            3.9218,
+            4.0265
+          ],
+          "C68_max_ci": [
+            5.635,
+            5.7846
+          ],
+          "C95_ave": 9.134,
+          "C95_max": 13.1317,
+          "C95_ave_ci": [
+            8.9552,
+            9.2979
+          ],
+          "C95_ci": [
+            8.9552,
+            9.2979
+          ],
+          "C95_max_ci": [
+            12.8707,
+            13.3619
+          ],
+          "C99_ave": 14.765,
+          "C99_max": 21.2273,
+          "C99_ave_ci": [
+            14.0617,
+            15.372
+          ],
+          "C99_ci": [
+            14.0617,
+            15.372
+          ],
+          "C99_max_ci": [
+            20.2236,
+            22.1454
+          ],
+          "C95_seq": 9.134,
+          "C95_par": 0.0755,
+          "target_eps95": 0.001167154
+        },
+        "540": {
+          "scale_nmax": 540,
+          "ntrials": 20000,
+          "q_mean": 23393.5,
+          "q_ave": 23393.5,
+          "q_max": 30970.0,
+          "q_std": 7696.4019,
+          "query_spread": 0.329,
+          "q_spread": 0.329,
+          "max_depth_mean": 193.99,
+          "seq_depth_mean": 23393.5,
+          "num_rounds_mean": 9.508,
+          "eps50": 0.0001124621,
+          "eps68": 0.0001696091,
+          "eps95": 0.000383616,
+          "eps99": 0.0006373347,
+          "C50_ave": 2.6309,
+          "C68_ave": 3.9677,
+          "C68_max": 5.2528,
+          "C68_ave_ci": [
+            3.9095,
+            4.0289
+          ],
+          "C68_ci": [
+            3.9095,
+            4.0289
+          ],
+          "C68_max_ci": [
+            5.1754,
+            5.3365
+          ],
+          "C95_ave": 8.9741,
+          "C95_max": 11.8806,
+          "C95_ave_ci": [
+            8.8403,
+            9.1429
+          ],
+          "C95_ci": [
+            8.8403,
+            9.1429
+          ],
+          "C95_max_ci": [
+            11.7097,
+            12.1215
+          ],
+          "C99_ave": 14.9095,
+          "C99_max": 19.7383,
+          "C99_ave_ci": [
+            14.1585,
+            15.615
+          ],
+          "C99_ci": [
+            14.1585,
+            15.615
+          ],
+          "C99_max_ci": [
+            18.7573,
+            20.6867
+          ],
+          "C95_seq": 8.9741,
+          "C95_par": 0.0744,
+          "target_eps95": 0.0005619548
+        }
+      },
+      "overall_rank": 10
+    },
+    {
+      "algo_id": "iqae_chernoff",
+      "algorithm_name": "IQAE-Chernoff (Grinko et al. 2021)",
+      "name": "IQAE-Chernoff (Grinko et al. 2021)",
+      "category": "literature",
+      "badge": "Literature (2021)",
+      "track": "adaptive-variable",
+      "track_category": "adaptive-variable",
+      "authors": [
+        "D. Grinko",
+        "J. Gacon",
+        "C. Zoufal",
+        "S. Woerner"
+      ],
+      "github_handle": "unitaryfoundation",
+      "affiliation": "ETH Zurich / IBM Quantum",
+      "paper_url": "https://arxiv.org/abs/1912.05559",
+      "pr_number": null,
+      "description": "Iterative Quantum Amplitude Estimation with Chernoff-Hoeffding confidence intervals (Grinko et al. 2021, npj Quantum Inf. 7, 52; arXiv:1912.05559): adaptive odd-degree Chebyshev interval shrinking with Hoeffding bounds (N_shots=100, r=2, alpha=delta/T).",
+      "date": "2021-03-25",
+      "status": "Literature Ref",
+      "repro_cmd": "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/populate_baselines.py",
+      "agent_origin": "Literature (Grinko et al. 2021)",
+      "is_baseline": true,
+      "verified": true,
+      "deterministic_budget": false,
+      "rounds": "Adaptive (~19.1)",
+      "rounds_num": 19.13,
+      "num_rounds_mean": 19.13,
+      "query_spread": 0.49738,
+      "q_spread": 0.49738,
+      "C68_ave": 4.0351,
+      "C68_max": 16.7949,
+      "C68_ave_ci": [
+        3.971,
+        4.0954
+      ],
+      "C95_ave": 9.3713,
+      "C95_max": 38.9515,
+      "C95_ave_ci": [
+        9.1968,
+        9.5366
+      ],
+      "C95_ci": [
+        9.1968,
+        9.5366
+      ],
+      "C99_ave": 13.5405,
+      "C99_max": 56.2256,
+      "C99_ave_ci": [
+        13.1654,
+        13.8491
+      ],
+      "C99_ci": [
+        13.1654,
+        13.8491
+      ],
+      "C95_seq": 9.3713,
+      "C95_par": 0.0605,
+      "headline_C95_ave": 9.3713,
+      "headline_C95_max": 38.9515,
+      "headline_C99_ave": 13.5405,
+      "scales": {
+        "60": {
+          "scale_nmax": 60,
+          "ntrials": 20000,
+          "q_mean": 7720.41,
+          "q_ave": 7720.41,
+          "q_max": 44900.0,
+          "q_std": 4620.1034,
+          "query_spread": 0.59843,
+          "q_spread": 0.59843,
+          "max_depth_mean": 45.02,
+          "seq_depth_mean": 7720.41,
+          "num_rounds_mean": 17.892,
+          "eps50": 0.0003694484,
+          "eps68": 0.0005690879,
+          "eps95": 0.001297964,
+          "eps99": 0.001870123,
+          "C50_ave": 2.8523,
+          "C68_ave": 4.3936,
+          "C68_max": 25.552,
+          "C68_ave_ci": [
+            4.321,
+            4.462
+          ],
+          "C68_ci": [
+            4.321,
+            4.462
+          ],
+          "C68_max_ci": [
+            23.8937,
+            25.902
+          ],
+          "C95_ave": 10.0208,
+          "C95_max": 58.2786,
+          "C95_ave_ci": [
+            9.8219,
+            10.212
+          ],
+          "C95_ci": [
+            9.8219,
+            10.212
+          ],
+          "C95_max_ci": [
+            54.2132,
+            59.152
+          ],
+          "C99_ave": 14.4381,
+          "C99_max": 83.9685,
+          "C99_ave_ci": [
+            14.0537,
+            14.7515
+          ],
+          "C99_ci": [
+            14.0537,
+            14.7515
+          ],
+          "C99_max_ci": [
+            78.0215,
+            85.4543
+          ],
+          "C95_seq": 10.0208,
+          "C95_par": 0.0584,
+          "target_eps95": 0.003503534
+        },
+        "125": {
+          "scale_nmax": 125,
+          "ntrials": 20000,
+          "q_mean": 15093.04,
+          "q_ave": 15093.04,
+          "q_max": 65400.0,
+          "q_std": 7488.1917,
+          "query_spread": 0.49614,
+          "q_spread": 0.49614,
+          "max_depth_mean": 97.48,
+          "seq_depth_mean": 15093.04,
+          "num_rounds_mean": 19.034,
+          "eps50": 0.0001736901,
+          "eps68": 0.0002682515,
+          "eps95": 0.0006385878,
+          "eps99": 0.0009194953,
+          "C50_ave": 2.6215,
+          "C68_ave": 4.0487,
+          "C68_max": 17.5436,
+          "C68_ave_ci": [
+            3.9883,
+            4.1057
+          ],
+          "C68_ci": [
+            3.9883,
+            4.1057
+          ],
+          "C68_max_ci": [
+            15.3372,
+            17.7677
+          ],
+          "C95_ave": 9.6382,
+          "C95_max": 41.7636,
+          "C95_ave_ci": [
+            9.4633,
+            9.797
+          ],
+          "C95_ci": [
+            9.4633,
+            9.797
+          ],
+          "C95_max_ci": [
+            36.6019,
+            42.2673
+          ],
+          "C99_ave": 13.878,
+          "C99_max": 60.135,
+          "C99_ave_ci": [
+            13.4886,
+            14.2125
+          ],
+          "C99_ci": [
+            13.4886,
+            14.2125
+          ],
+          "C99_max_ci": [
+            52.4198,
+            61.3961
+          ],
+          "C95_seq": 9.6382,
+          "C95_par": 0.0622,
+          "target_eps95": 0.001695783
+        },
+        "260": {
+          "scale_nmax": 260,
+          "ntrials": 20000,
+          "q_mean": 21056.69,
+          "q_ave": 21056.69,
+          "q_max": 71900.0,
+          "q_std": 9326.7603,
+          "query_spread": 0.44294,
+          "q_spread": 0.44294,
+          "max_depth_mean": 140.53,
+          "seq_depth_mean": 21056.69,
+          "num_rounds_mean": 19.709,
+          "eps50": 0.0001192047,
+          "eps68": 0.0001846359,
+          "eps95": 0.0004270854,
+          "eps99": 0.0006148999,
+          "C50_ave": 2.5101,
+          "C68_ave": 3.8878,
+          "C68_max": 13.2753,
+          "C68_ave_ci": [
+            3.8224,
+            3.948
+          ],
+          "C68_ci": [
+            3.8224,
+            3.948
+          ],
+          "C68_max_ci": [
+            12.9088,
+            13.4593
+          ],
+          "C95_ave": 8.993,
+          "C95_max": 30.7074,
+          "C95_ave_ci": [
+            8.8152,
+            9.1495
+          ],
+          "C95_ci": [
+            8.8152,
+            9.1495
+          ],
+          "C95_max_ci": [
+            29.8091,
+            31.1842
+          ],
+          "C99_ave": 12.9478,
+          "C99_max": 44.2113,
+          "C99_ave_ci": [
+            12.5861,
+            13.281
+          ],
+          "C99_ci": [
+            12.5861,
+            13.281
+          ],
+          "C99_max_ci": [
+            42.562,
+            45.1903
+          ],
+          "C95_seq": 8.993,
+          "C95_par": 0.06,
+          "target_eps95": 0.001167154
+        },
+        "540": {
+          "scale_nmax": 540,
+          "ntrials": 20000,
+          "q_mean": 43431.85,
+          "q_ave": 43431.85,
+          "q_max": 123200.0,
+          "q_std": 19631.1639,
+          "query_spread": 0.452,
+          "q_spread": 0.452,
+          "max_depth_mean": 303.01,
+          "seq_depth_mean": 43431.85,
+          "num_rounds_mean": 19.885,
+          "eps50": 5.632832e-05,
+          "eps68": 8.773157e-05,
+          "eps95": 0.0002033793,
+          "eps99": 0.000296977,
+          "C50_ave": 2.4464,
+          "C68_ave": 3.8103,
+          "C68_max": 10.8085,
+          "C68_ave_ci": [
+            3.7521,
+            3.866
+          ],
+          "C68_ci": [
+            3.7521,
+            3.866
+          ],
+          "C68_max_ci": [
+            10.239,
+            10.9593
+          ],
+          "C95_ave": 8.8331,
+          "C95_max": 25.0563,
+          "C95_ave_ci": [
+            8.687,
+            8.9881
+          ],
+          "C95_ci": [
+            8.687,
+            8.9881
+          ],
+          "C95_max_ci": [
+            23.7995,
+            25.451
+          ],
+          "C99_ave": 12.8983,
+          "C99_max": 36.5876,
+          "C99_ave_ci": [
+            12.5332,
+            13.1513
+          ],
+          "C99_ci": [
+            12.5332,
+            13.1513
+          ],
+          "C99_max_ci": [
+            34.7308,
+            37.2375
+          ],
+          "C95_seq": 8.8331,
+          "C95_par": 0.0616,
+          "target_eps95": 0.0005619548
+        }
+      },
+      "overall_rank": 11
+    }
+  ],
+  "depth_limited": {
+    "description": "Depth-Limited Regime (max Grover depth capped at M in {64, 256}, total budget B = s * B_0(M) for s in {4, 16, 64}; Labib 2026, arXiv:2609.02715). Reports trade-off constants Ctilde_delta = eps_delta^2 * M * B_tot.",
+    "seed": 900000,
+    "ntrials": 20000,
+    "caps": [
+      64,
+      256
+    ],
+    "scale_factors": [
+      4,
+      16,
+      64
+    ],
+    "summary_by_algorithm": [
+      {
+        "algo_id": "nonadapt_single_anchor",
+        "algorithm_name": "Non-Adapt Single Anchor {M}",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "mean_Ct68": 0.0708,
+        "mean_Ct95": 14.7655,
+        "mean_Ct99": 85.3422,
+        "mean_Ct999": 783.9472,
+        "max_Ct999": 2088.4784,
+        "mean_ratio_crlb": 5.5287
+      },
+      {
+        "algo_id": "nonadapt_pair_anchor",
+        "algorithm_name": "Non-Adapt Pair Anchor {0.8M, M}",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "mean_Ct68": 0.0522,
+        "mean_Ct95": 0.2566,
+        "mean_Ct99": 0.8889,
+        "mean_Ct999": 20.5507,
+        "max_Ct999": 47.4219,
+        "mean_ratio_crlb": 0.7866
+      },
+      {
+        "algo_id": "nonadapt_uniform_scaling",
+        "algorithm_name": "Non-Adapt Uniform Scaling (s)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "mean_Ct68": 0.106,
+        "mean_Ct95": 0.481,
+        "mean_Ct99": 1.0023,
+        "mean_Ct999": 2.7279,
+        "max_Ct999": 5.2854,
+        "mean_ratio_crlb": 0.7532
+      }
+    ],
+    "records": [
+      {
+        "M": 64,
+        "s": 4,
+        "algo_id": "nonadapt_single_anchor",
+        "algorithm_name": "Non-Adapt Single Anchor {M}",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 3284,
+        "nq": 3253.0,
+        "eps68": 0.0005559127,
+        "eps95": 0.002230487,
+        "eps99": 0.006098431,
+        "eps999": 0.0221433,
+        "Ct68": 0.0643,
+        "Ct95": 1.0358,
+        "Ct99": 7.7428,
+        "Ct999": 102.0819,
+        "ratio_crlb": 1.6154,
+        "flip1_rate": 0.01405,
+        "flip2_rate": 0.002
+      },
+      {
+        "M": 64,
+        "s": 4,
+        "algo_id": "nonadapt_pair_anchor",
+        "algorithm_name": "Non-Adapt Pair Anchor {0.8M, M}",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 3284,
+        "nq": 3236.0,
+        "eps68": 0.0005300638,
+        "eps95": 0.001206968,
+        "eps99": 0.002194772,
+        "eps999": 0.005651637,
+        "Ct68": 0.0582,
+        "Ct95": 0.3017,
+        "Ct99": 0.9976,
+        "Ct999": 6.6151,
+        "ratio_crlb": 0.8248,
+        "flip1_rate": 0.00145,
+        "flip2_rate": 0.0002
+      },
+      {
+        "M": 64,
+        "s": 4,
+        "algo_id": "nonadapt_uniform_scaling",
+        "algorithm_name": "Non-Adapt Uniform Scaling (s)",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 3284,
+        "nq": 3284.0,
+        "eps68": 0.0006799018,
+        "eps95": 0.001466948,
+        "eps99": 0.002215346,
+        "eps999": 0.003888653,
+        "Ct68": 0.0972,
+        "Ct95": 0.4523,
+        "Ct99": 1.0315,
+        "Ct999": 3.1782,
+        "ratio_crlb": 0.7779,
+        "flip1_rate": 0.00015,
+        "flip2_rate": 0.0
+      },
+      {
+        "M": 64,
+        "s": 16,
+        "algo_id": "nonadapt_single_anchor",
+        "algorithm_name": "Non-Adapt Single Anchor {M}",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 13136,
+        "nq": 13109.0,
+        "eps68": 0.0002749893,
+        "eps95": 0.002510688,
+        "eps99": 0.00650413,
+        "eps999": 0.02395305,
+        "Ct68": 0.0634,
+        "Ct95": 5.2885,
+        "Ct99": 35.4918,
+        "Ct999": 481.3614,
+        "ratio_crlb": 3.8614,
+        "flip1_rate": 0.01735,
+        "flip2_rate": 0.00255
+      },
+      {
+        "M": 64,
+        "s": 16,
+        "algo_id": "nonadapt_pair_anchor",
+        "algorithm_name": "Non-Adapt Pair Anchor {0.8M, M}",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 13136,
+        "nq": 13126.0,
+        "eps68": 0.0002386461,
+        "eps95": 0.000522114,
+        "eps99": 0.0008811679,
+        "eps999": 0.00379908,
+        "Ct68": 0.0478,
+        "Ct95": 0.229,
+        "Ct99": 0.6523,
+        "Ct999": 12.1247,
+        "ratio_crlb": 0.7656,
+        "flip1_rate": 0.0006,
+        "flip2_rate": 5e-05
+      },
+      {
+        "M": 64,
+        "s": 16,
+        "algo_id": "nonadapt_uniform_scaling",
+        "algorithm_name": "Non-Adapt Uniform Scaling (s)",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 13136,
+        "nq": 13136.0,
+        "eps68": 0.0003357131,
+        "eps95": 0.000708264,
+        "eps99": 0.001001914,
+        "eps999": 0.001510472,
+        "Ct68": 0.0948,
+        "Ct95": 0.4217,
+        "Ct99": 0.8439,
+        "Ct999": 1.9181,
+        "ratio_crlb": 0.7511,
+        "flip1_rate": 0.0,
+        "flip2_rate": 0.0
+      },
+      {
+        "M": 64,
+        "s": 64,
+        "algo_id": "nonadapt_single_anchor",
+        "algorithm_name": "Non-Adapt Single Anchor {M}",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 52544,
+        "nq": 52533.0,
+        "eps68": 0.0001384734,
+        "eps95": 0.002586977,
+        "eps99": 0.006421603,
+        "eps999": 0.02127912,
+        "Ct68": 0.0645,
+        "Ct95": 22.5008,
+        "Ct99": 138.6434,
+        "Ct999": 1522.3678,
+        "ratio_crlb": 8.0691,
+        "flip1_rate": 0.01635,
+        "flip2_rate": 0.00175
+      },
+      {
+        "M": 64,
+        "s": 64,
+        "algo_id": "nonadapt_pair_anchor",
+        "algorithm_name": "Non-Adapt Pair Anchor {0.8M, M}",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 52544,
+        "nq": 52507.0,
+        "eps68": 0.0001161328,
+        "eps95": 0.000250702,
+        "eps99": 0.0003595341,
+        "eps999": 0.001063867,
+        "Ct68": 0.0453,
+        "Ct95": 0.2112,
+        "Ct99": 0.4344,
+        "Ct999": 3.8034,
+        "ratio_crlb": 0.7459,
+        "flip1_rate": 0.0002,
+        "flip2_rate": 0.0
+      },
+      {
+        "M": 64,
+        "s": 64,
+        "algo_id": "nonadapt_uniform_scaling",
+        "algorithm_name": "Non-Adapt Uniform Scaling (s)",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 52544,
+        "nq": 52544.0,
+        "eps68": 0.0001625395,
+        "eps95": 0.0003418208,
+        "eps99": 0.0004715032,
+        "eps999": 0.0006460242,
+        "Ct68": 0.0888,
+        "Ct95": 0.3929,
+        "Ct99": 0.7476,
+        "Ct999": 1.4035,
+        "ratio_crlb": 0.725,
+        "flip1_rate": 0.0,
+        "flip2_rate": 0.0
+      },
+      {
+        "M": 256,
+        "s": 4,
+        "algo_id": "nonadapt_single_anchor",
+        "algorithm_name": "Non-Adapt Single Anchor {M}",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 10640,
+        "nq": 10596.0,
+        "eps68": 0.0001675338,
+        "eps95": 0.0009671207,
+        "eps99": 0.002356454,
+        "eps999": 0.00678095,
+        "Ct68": 0.0761,
+        "Ct95": 2.5371,
+        "Ct99": 15.0626,
+        "Ct999": 124.7277,
+        "ratio_crlb": 2.481,
+        "flip1_rate": 0.03415,
+        "flip2_rate": 0.00455
+      },
+      {
+        "M": 256,
+        "s": 4,
+        "algo_id": "nonadapt_pair_anchor",
+        "algorithm_name": "Non-Adapt Pair Anchor {0.8M, M}",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 10640,
+        "nq": 10566.0,
+        "eps68": 0.0001534331,
+        "eps95": 0.0003519073,
+        "eps99": 0.0007795787,
+        "eps999": 0.003002048,
+        "Ct68": 0.0637,
+        "Ct95": 0.335,
+        "Ct99": 1.6439,
+        "Ct999": 24.3773,
+        "ratio_crlb": 0.8476,
+        "flip1_rate": 0.00435,
+        "flip2_rate": 0.00085
+      },
+      {
+        "M": 256,
+        "s": 4,
+        "algo_id": "nonadapt_uniform_scaling",
+        "algorithm_name": "Non-Adapt Uniform Scaling (s)",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 10640,
+        "nq": 10640.0,
+        "eps68": 0.0002155171,
+        "eps95": 0.0004706054,
+        "eps99": 0.0007114031,
+        "eps999": 0.001392996,
+        "Ct68": 0.1265,
+        "Ct95": 0.6032,
+        "Ct99": 1.3785,
+        "Ct999": 5.2854,
+        "ratio_crlb": 0.799,
+        "flip1_rate": 0.00105,
+        "flip2_rate": 0.0
+      },
+      {
+        "M": 256,
+        "s": 16,
+        "algo_id": "nonadapt_single_anchor",
+        "algorithm_name": "Non-Adapt Single Anchor {M}",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 42560,
+        "nq": 42340.0,
+        "eps68": 8.419424e-05,
+        "eps95": 0.001057726,
+        "eps99": 0.002447043,
+        "eps999": 0.00595726,
+        "Ct68": 0.0768,
+        "Ct95": 12.1265,
+        "Ct99": 64.9044,
+        "Ct999": 384.6661,
+        "ratio_crlb": 5.7955,
+        "flip1_rate": 0.03745,
+        "flip2_rate": 0.00405
+      },
+      {
+        "M": 256,
+        "s": 16,
+        "algo_id": "nonadapt_pair_anchor",
+        "algorithm_name": "Non-Adapt Pair Anchor {0.8M, M}",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 42560,
+        "nq": 42375.0,
+        "eps68": 6.907863e-05,
+        "eps95": 0.0001521693,
+        "eps99": 0.0003054166,
+        "eps999": 0.001633949,
+        "Ct68": 0.0518,
+        "Ct95": 0.2512,
+        "Ct99": 1.0119,
+        "Ct999": 28.9619,
+        "ratio_crlb": 0.7939,
+        "flip1_rate": 0.00225,
+        "flip2_rate": 0.00045
+      },
+      {
+        "M": 256,
+        "s": 16,
+        "algo_id": "nonadapt_uniform_scaling",
+        "algorithm_name": "Non-Adapt Uniform Scaling (s)",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 42560,
+        "nq": 42560.0,
+        "eps68": 0.000103675,
+        "eps95": 0.0002187511,
+        "eps99": 0.0003145553,
+        "eps999": 0.0004891654,
+        "Ct68": 0.1171,
+        "Ct95": 0.5214,
+        "Ct99": 1.078,
+        "Ct999": 2.6071,
+        "ratio_crlb": 0.7428,
+        "flip1_rate": 0.0,
+        "flip2_rate": 0.0
+      },
+      {
+        "M": 256,
+        "s": 64,
+        "algo_id": "nonadapt_single_anchor",
+        "algorithm_name": "Non-Adapt Single Anchor {M}",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 170240,
+        "nq": 170084.0,
+        "eps68": 4.27842e-05,
+        "eps95": 0.001017791,
+        "eps99": 0.00239717,
+        "eps999": 0.006925694,
+        "Ct68": 0.0797,
+        "Ct95": 45.1046,
+        "Ct99": 250.208,
+        "Ct999": 2088.4784,
+        "ratio_crlb": 11.3498,
+        "flip1_rate": 0.03655,
+        "flip2_rate": 0.0039
+      },
+      {
+        "M": 256,
+        "s": 64,
+        "algo_id": "nonadapt_pair_anchor",
+        "algorithm_name": "Non-Adapt Pair Anchor {0.8M, M}",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 170240,
+        "nq": 170072.0,
+        "eps68": 3.252787e-05,
+        "eps95": 6.970283e-05,
+        "eps99": 0.0001167358,
+        "eps999": 0.001043646,
+        "Ct68": 0.0461,
+        "Ct95": 0.2115,
+        "Ct99": 0.5933,
+        "Ct999": 47.4219,
+        "ratio_crlb": 0.7416,
+        "flip1_rate": 0.001,
+        "flip2_rate": 0.00015
+      },
+      {
+        "M": 256,
+        "s": 64,
+        "algo_id": "nonadapt_uniform_scaling",
+        "algorithm_name": "Non-Adapt Uniform Scaling (s)",
+        "category": "literature",
+        "track": "depth-limited",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "B_target": 170240,
+        "nq": 170240.0,
+        "eps68": 5.065868e-05,
+        "eps95": 0.0001065439,
+        "eps99": 0.0001464147,
+        "eps999": 0.000212875,
+        "Ct68": 0.1118,
+        "Ct95": 0.4947,
+        "Ct99": 0.9343,
+        "Ct999": 1.9749,
+        "ratio_crlb": 0.7236,
+        "flip1_rate": 0.0,
+        "flip2_rate": 0.0
+      }
+    ]
+  },
+  "noisy": {
+    "description": "Depolarizing Noise Regime (per-oracle depolarizing rate eta = 1e-3, fringe visibility V_n = (1 - eta)^(2n+1); Labib 2026, arXiv:2609.02715). Compares noise-ignorant and noise-aware non-adaptive schedules, depth-capped uniform scaling, and pair anchors.",
+    "seed": 900000,
+    "ntrials": 20000,
+    "eta": 0.001,
+    "scales": [
+      125,
+      182,
+      260,
+      540
+    ],
+    "summary_by_algorithm": [
+      {
+        "algo_id": "flagship_noise_ignorant",
+        "algorithm_name": "mlqae-flagship (Noise-Ignorant)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "mean_C68": 2.2806,
+        "mean_C95": 6.6075,
+        "mean_C99": 14.8963,
+        "mean_C999": 38.2383
+      },
+      {
+        "algo_id": "flagship_noise_aware",
+        "algorithm_name": "mlqae-flagship (Noise-Aware)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "mean_C68": 1.9876,
+        "mean_C95": 5.1163,
+        "mean_C99": 11.6861,
+        "mean_C999": 30.429
+      },
+      {
+        "algo_id": "nonadapt_uniform_cap_noisy",
+        "algorithm_name": "Non-Adapt Uniform Scaling (Cap M_opt)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "mean_C68": 2.0494,
+        "mean_C95": 5.0825,
+        "mean_C99": 9.8682,
+        "mean_C999": 26.9379
+      },
+      {
+        "algo_id": "nonadapt_pair_anchor_noisy",
+        "algorithm_name": "Non-Adapt Pair Anchor {0.8M, M} (Cap M_opt)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "mean_C68": 1.9781,
+        "mean_C95": 5.0274,
+        "mean_C99": 11.5571,
+        "mean_C999": 29.7812
+      }
+    ],
+    "records": [
+      {
+        "scale_nmax": 125,
+        "actual_nmax": 125,
+        "M_eff": 125,
+        "eta": 0.001,
+        "algo_id": "flagship_noise_ignorant",
+        "algorithm_name": "mlqae-flagship (Noise-Ignorant)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 1708,
+        "eps68": 0.001065348,
+        "eps95": 0.002825525,
+        "eps99": 0.006115479,
+        "eps999": 0.01897297,
+        "C68": 1.8196,
+        "C95": 4.826,
+        "C99": 10.4452,
+        "C999": 32.4058
+      },
+      {
+        "scale_nmax": 125,
+        "actual_nmax": 125,
+        "M_eff": 125,
+        "eta": 0.001,
+        "algo_id": "flagship_noise_aware",
+        "algorithm_name": "mlqae-flagship (Noise-Aware)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 1708,
+        "eps68": 0.0009916897,
+        "eps95": 0.00240279,
+        "eps99": 0.004698629,
+        "eps999": 0.01568974,
+        "C68": 1.6938,
+        "C95": 4.104,
+        "C99": 8.0253,
+        "C999": 26.7981
+      },
+      {
+        "scale_nmax": 125,
+        "actual_nmax": 125,
+        "M_eff": 124,
+        "eta": 0.001,
+        "algo_id": "nonadapt_uniform_cap_noisy",
+        "algorithm_name": "Non-Adapt Uniform Scaling (Cap M_opt)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 1697,
+        "eps68": 0.001054936,
+        "eps95": 0.002556648,
+        "eps99": 0.004746758,
+        "eps999": 0.01353261,
+        "C68": 1.7902,
+        "C95": 4.3386,
+        "C99": 8.0552,
+        "C999": 22.9648
+      },
+      {
+        "scale_nmax": 125,
+        "actual_nmax": 125,
+        "M_eff": 124,
+        "eta": 0.001,
+        "algo_id": "nonadapt_pair_anchor_noisy",
+        "algorithm_name": "Non-Adapt Pair Anchor {0.8M, M} (Cap M_opt)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 1713,
+        "eps68": 0.0009919972,
+        "eps95": 0.002446038,
+        "eps99": 0.005391812,
+        "eps999": 0.01564081,
+        "C68": 1.6993,
+        "C95": 4.1901,
+        "C99": 9.2362,
+        "C999": 26.7927
+      },
+      {
+        "scale_nmax": 182,
+        "actual_nmax": 182,
+        "M_eff": 182,
+        "eta": 0.001,
+        "algo_id": "flagship_noise_ignorant",
+        "algorithm_name": "mlqae-flagship (Noise-Ignorant)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 2502,
+        "eps68": 0.0008327419,
+        "eps95": 0.002342878,
+        "eps99": 0.005440265,
+        "eps999": 0.0141662,
+        "C68": 2.0835,
+        "C95": 5.8619,
+        "C99": 13.6115,
+        "C999": 35.4438
+      },
+      {
+        "scale_nmax": 182,
+        "actual_nmax": 182,
+        "M_eff": 182,
+        "eta": 0.001,
+        "algo_id": "flagship_noise_aware",
+        "algorithm_name": "mlqae-flagship (Noise-Aware)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 2502,
+        "eps68": 0.0007484083,
+        "eps95": 0.001887485,
+        "eps99": 0.004249488,
+        "eps999": 0.01185156,
+        "C68": 1.8725,
+        "C95": 4.7225,
+        "C99": 10.6322,
+        "C999": 29.6526
+      },
+      {
+        "scale_nmax": 182,
+        "actual_nmax": 182,
+        "M_eff": 182,
+        "eta": 0.001,
+        "algo_id": "nonadapt_uniform_cap_noisy",
+        "algorithm_name": "Non-Adapt Uniform Scaling (Cap M_opt)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 2431,
+        "eps68": 0.0008080998,
+        "eps95": 0.001990453,
+        "eps99": 0.003868218,
+        "eps999": 0.009878467,
+        "C68": 1.9645,
+        "C95": 4.8388,
+        "C99": 9.4036,
+        "C999": 24.0146
+      },
+      {
+        "scale_nmax": 182,
+        "actual_nmax": 182,
+        "M_eff": 182,
+        "eta": 0.001,
+        "algo_id": "nonadapt_pair_anchor_noisy",
+        "algorithm_name": "Non-Adapt Pair Anchor {0.8M, M} (Cap M_opt)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 2514,
+        "eps68": 0.0007432159,
+        "eps95": 0.001886665,
+        "eps99": 0.00417432,
+        "eps999": 0.01078637,
+        "C68": 1.8684,
+        "C95": 4.7431,
+        "C99": 10.4942,
+        "C999": 27.1169
+      },
+      {
+        "scale_nmax": 260,
+        "actual_nmax": 182,
+        "M_eff": 182,
+        "eta": 0.001,
+        "algo_id": "flagship_noise_ignorant",
+        "algorithm_name": "mlqae-flagship (Noise-Ignorant)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 2502,
+        "eps68": 0.0008276237,
+        "eps95": 0.002275715,
+        "eps99": 0.005136561,
+        "eps999": 0.01069121,
+        "C68": 2.0707,
+        "C95": 5.6938,
+        "C99": 12.8517,
+        "C999": 26.7494
+      },
+      {
+        "scale_nmax": 260,
+        "actual_nmax": 182,
+        "M_eff": 182,
+        "eta": 0.001,
+        "algo_id": "flagship_noise_aware",
+        "algorithm_name": "mlqae-flagship (Noise-Aware)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 2502,
+        "eps68": 0.0007452311,
+        "eps95": 0.001871976,
+        "eps99": 0.004249107,
+        "eps999": 0.009930846,
+        "C68": 1.8646,
+        "C95": 4.6837,
+        "C99": 10.6313,
+        "C999": 24.847
+      },
+      {
+        "scale_nmax": 260,
+        "actual_nmax": 182,
+        "M_eff": 182,
+        "eta": 0.001,
+        "algo_id": "nonadapt_uniform_cap_noisy",
+        "algorithm_name": "Non-Adapt Uniform Scaling (Cap M_opt)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 2431,
+        "eps68": 0.0007900503,
+        "eps95": 0.001965578,
+        "eps99": 0.003850227,
+        "eps999": 0.01135602,
+        "C68": 1.9206,
+        "C95": 4.7783,
+        "C99": 9.3599,
+        "C999": 27.6065
+      },
+      {
+        "scale_nmax": 260,
+        "actual_nmax": 182,
+        "M_eff": 182,
+        "eta": 0.001,
+        "algo_id": "nonadapt_pair_anchor_noisy",
+        "algorithm_name": "Non-Adapt Pair Anchor {0.8M, M} (Cap M_opt)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 2514,
+        "eps68": 0.0007415255,
+        "eps95": 0.00183391,
+        "eps99": 0.004082136,
+        "eps999": 0.009807614,
+        "C68": 1.8642,
+        "C95": 4.6105,
+        "C99": 10.2625,
+        "C999": 24.6563
+      },
+      {
+        "scale_nmax": 540,
+        "actual_nmax": 382,
+        "M_eff": 382,
+        "eta": 0.001,
+        "algo_id": "flagship_noise_ignorant",
+        "algorithm_name": "mlqae-flagship (Noise-Ignorant)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 5325,
+        "eps68": 0.0005912732,
+        "eps95": 0.001887019,
+        "eps99": 0.004258565,
+        "eps999": 0.0109585,
+        "C68": 3.1485,
+        "C95": 10.0484,
+        "C99": 22.6769,
+        "C999": 58.354
+      },
+      {
+        "scale_nmax": 540,
+        "actual_nmax": 382,
+        "M_eff": 382,
+        "eta": 0.001,
+        "algo_id": "flagship_noise_aware",
+        "algorithm_name": "mlqae-flagship (Noise-Aware)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 5325,
+        "eps68": 0.0004731189,
+        "eps95": 0.001306127,
+        "eps99": 0.003278055,
+        "eps999": 0.007590312,
+        "C68": 2.5194,
+        "C95": 6.9551,
+        "C99": 17.4556,
+        "C999": 40.4184
+      },
+      {
+        "scale_nmax": 540,
+        "actual_nmax": 382,
+        "M_eff": 328,
+        "eta": 0.001,
+        "algo_id": "nonadapt_uniform_cap_noisy",
+        "algorithm_name": "Non-Adapt Uniform Scaling (Cap M_opt)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 5271,
+        "eps68": 0.0004784797,
+        "eps95": 0.001209306,
+        "eps99": 0.002400699,
+        "eps999": 0.006292089,
+        "C68": 2.5221,
+        "C95": 6.3743,
+        "C99": 12.6541,
+        "C999": 33.1656
+      },
+      {
+        "scale_nmax": 540,
+        "actual_nmax": 382,
+        "M_eff": 328,
+        "eta": 0.001,
+        "algo_id": "nonadapt_pair_anchor_noisy",
+        "algorithm_name": "Non-Adapt Pair Anchor {0.8M, M} (Cap M_opt)",
+        "category": "literature",
+        "adaptive_rounds": 1,
+        "ntrials": 20000,
+        "N_tot": 5206,
+        "eps68": 0.0004764599,
+        "eps95": 0.001261258,
+        "eps99": 0.003118571,
+        "eps999": 0.007790778,
+        "C68": 2.4805,
+        "C95": 6.5661,
+        "C99": 16.2353,
+        "C999": 40.5588
+      }
+    ]
+  }
+}
