@@ -44,11 +44,13 @@ def cheb_worker(args):
     r = chebae(a, eps, delta)
     # time_complexity = sum of circuit depths over the adaptive rounds; this is
     # chebAE's sequential-depth (parallel) cost in the paper's convention,
-    # since adaptive rounds cannot be parallelized.
-    return abs(r['a_hat'] - a), r['queries'], r['time_complexity']
+    # since adaptive rounds cannot be parallelized. max_depth is the deepest
+    # single circuit (Grover depth floor(deg/2)) the run executed, which is
+    # what a hardware depth cap constrains.
+    return abs(r['a_hat'] - a), r['queries'], r['time_complexity'], r['max_depth']
 
 
-def run_chebae(eps, delta, ntrials, seed0):
+def run_chebae(eps, delta, ntrials, seed0, return_max_depth=False):
     rng = np.random.default_rng(seed0)
     avals = rng.uniform(0.1, 0.9, ntrials)
     args = [(avals[i], eps, delta, seed0 + i) for i in range(ntrials)]
@@ -57,7 +59,41 @@ def run_chebae(eps, delta, ntrials, seed0):
     err = np.array([o[0] for o in out])
     q = np.array([o[1] for o in out])
     md = np.array([o[2] for o in out])
+    if return_max_depth:
+        mx = np.array([o[3] for o in out])
+        return err, q, md, mx
     return err, q, md
+
+
+def rerun_chebae_max_depth():
+    """Re-run only the 95% chebAE comparison at the four scales, with the same
+    seeds and targets as the stored results, and store each trial's maximum
+    circuit depth under results['cheb95_maxdepth'] = {nmax: array}.
+
+    The stored (err, q, md) tuples are left untouched; the rerun is checked
+    against them so the new depths are known to belong to the same trials.
+    """
+    with open(OUTFILE, 'rb') as h:
+        results = pickle.load(h)
+    results['cheb95_maxdepth'] = {}
+    for (nmax, eps, err0, q0, md0) in results['cheb95']:
+        if nmax not in SCALES:
+            continue
+        err, q, md, mx = run_chebae(eps, 0.05, NT_CHEB, seed0=555000 + nmax,
+                                    return_max_depth=True)
+        same = (np.allclose(err, err0) and np.array_equal(q, q0)
+                and np.array_equal(md, md0))
+        results['cheb95_maxdepth'][int(nmax)] = mx
+        print(f"nmax={nmax:4d}: reproduced stored trials={same}  "
+              f"<max depth>={mx.mean():.1f} (min {mx.min()}, max {mx.max()})  "
+              f"<seq depth>={md.mean():.1f}  <queries>={q.mean():.1f}", flush=True)
+        if not same:
+            raise RuntimeError(f"chebAE rerun at nmax={nmax} does not reproduce "
+                               "the stored trials; refusing to mix depths from "
+                               "different runs.")
+    with open(OUTFILE, 'wb') as h:
+        pickle.dump(results, h)
+    print(f'saved {OUTFILE} with cheb95_maxdepth')
 
 
 def cheb_constants(err, q, md, pct, B=2000, seed=1):
@@ -79,8 +115,11 @@ def cheb_constants(err, q, md, pct, B=2000, seed=1):
 
 
 if __name__ == '__main__':
+    if '--chebae-only' in sys.argv:
+        rerun_chebae_max_depth()
+        sys.exit(0)
     results = {'ours': [], 'cheb95': [], 'cheb68': None, 'cheb99': None,
-               'ours99': None}
+               'ours99': None, 'cheb95_maxdepth': {}}
     print(f'=== ours: ratio-{RATIO} ladder + cap rung, canonical shots ===')
     for nmax in SCALES:
         ladder, shots = flagship_schedule(nmax, RATIO)
@@ -100,9 +139,11 @@ if __name__ == '__main__':
     print(f'\n=== chebAE at matched targets (delta=0.05, {NT_CHEB} trials/scale) ===')
     for (nmax, ladder, shots, r, _, _, _) in results['ours']:
         eps = r['p95']
-        err, q, md = run_chebae(eps, 0.05, NT_CHEB, seed0=555000 + nmax)
+        err, q, md, mx = run_chebae(eps, 0.05, NT_CHEB, seed0=555000 + nmax,
+                                    return_max_depth=True)
         (cav, cmx, cpar), (ciav, cimx, cipar) = cheb_constants(err, q, md, 95)
         results['cheb95'].append((nmax, eps, err, q, md))
+        results['cheb95_maxdepth'][int(nmax)] = mx
         cov = np.mean(err <= eps)
         print(f"target eps={eps:.2e}: achieved eps95={np.percentile(err,95):.2e} "
               f"(P[err<=target]={cov:.2f})  C_ave={cav:.2f} [{ciav[0]:.2f},{ciav[1]:.2f}]  "

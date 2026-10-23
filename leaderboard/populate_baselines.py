@@ -997,6 +997,10 @@ def eval_track_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[dict[
     with open(h2h_path, "rb") as f:
         h2h_data = pickle.load(f)
     cheb_map = {int(item[0]): item for item in h2h_data["cheb95"]}
+    # Per-trial maximum circuit depth (deepest single Grover circuit), stored
+    # separately from the summed sequential depth; produced by
+    # `python mlqae/head_to_head.py --chebae-only`.
+    cheb_maxdepth = h2h_data.get("cheb95_maxdepth", {})
 
     fae_scales: dict[str, dict[str, Any]] = {}
     iqae_ch_scales: dict[str, dict[str, Any]] = {}
@@ -1080,10 +1084,16 @@ def eval_track_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[dict[
         # 2E. chebAE (Rall & Fuller 2023)
         err_c = np.asarray(err_cheb, dtype=float)
         q_c = np.asarray(q_cheb, dtype=float)
-        md_c = np.asarray(md_cheb, dtype=float)
+        sd_c = np.asarray(md_cheb, dtype=float)  # summed sequential depth
+        if nmax not in cheb_maxdepth:
+            raise RuntimeError(
+                f"head_to_head.pkl has no per-trial max circuit depth for chebAE at "
+                f"nmax={nmax}; run `python mlqae/head_to_head.py --chebae-only` first."
+            )
+        mx_c = np.asarray(cheb_maxdepth[nmax], dtype=float)
         a_dummy = np.zeros_like(err_c)
         m_cheb = compute_metrics(
-            a_dummy, err_c, q_c, max_depths=md_c, seq_depths=md_c, boot_B=boot_B
+            a_dummy, err_c, q_c, max_depths=mx_c, seq_depths=sd_c, boot_B=boot_B
         )
         cheb_scales[str(nmax)] = _clean_scale_dict(
             m_cheb, nmax, num_rounds_mean=15.0,

@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "updated_at": "2026-10-23T10:55:49.708848+00:00",
+  "updated_at": "2026-10-23T13:28:13.823484+00:00",
   "evaluation_protocol": {
     "ntrials_holdout": 20000,
     "boot_B": 1000,
@@ -1048,7 +1048,7 @@
         31.5243
       ],
       "C95_seq": 2.9054,
-      "C95_par": 2.9054,
+      "C95_par": 0.1717,
       "headline_C95_ave": 3.1414,
       "headline_C95_max": 4.8328,
       "headline_C99_ave": 9.9728,
@@ -1062,7 +1062,7 @@
           "q_std": 252.985,
           "query_spread": 0.23331,
           "q_spread": 0.23331,
-          "max_depth_mean": 1023.61,
+          "max_depth_mean": 59.17,
           "seq_depth_mean": 1023.61,
           "num_rounds_mean": 15.0,
           "eps50": 0.0007996265,
@@ -1113,7 +1113,7 @@
             15.0256
           ],
           "C95_seq": 2.8307,
-          "C95_par": 2.8307,
+          "C95_par": 0.1636,
           "target_eps95": 0.003503534
         },
         "125": {
@@ -1125,7 +1125,7 @@
           "q_std": 537.5384,
           "query_spread": 0.23098,
           "q_spread": 0.23098,
-          "max_depth_mean": 2152.32,
+          "max_depth_mean": 124.56,
           "seq_depth_mean": 2152.32,
           "num_rounds_mean": 15.0,
           "eps50": 0.0004080738,
@@ -1176,7 +1176,7 @@
             41.733
           ],
           "C95_seq": 2.9781,
-          "C95_par": 2.9781,
+          "C95_par": 0.1723,
           "target_eps95": 0.001695783
         },
         "260": {
@@ -1188,7 +1188,7 @@
           "q_std": 773.032,
           "query_spread": 0.22492,
           "q_spread": 0.22492,
-          "max_depth_mean": 3163.55,
+          "max_depth_mean": 191.62,
           "seq_depth_mean": 3163.55,
           "num_rounds_mean": 15.0,
           "eps50": 0.0002665576,
@@ -1239,7 +1239,7 @@
             40.7013
           ],
           "C95_seq": 2.9694,
-          "C95_par": 2.9694,
+          "C95_par": 0.1799,
           "target_eps95": 0.001167154
         },
         "540": {
@@ -1251,7 +1251,7 @@
           "q_std": 1575.7163,
           "query_spread": 0.21477,
           "q_spread": 0.21477,
-          "max_depth_mean": 6684.87,
+          "max_depth_mean": 401.49,
           "seq_depth_mean": 6684.87,
           "num_rounds_mean": 15.0,
           "eps50": 0.0001267404,
@@ -1302,7 +1302,7 @@
             89.4362
           ],
           "C95_seq": 2.8434,
-          "C95_par": 2.8434,
+          "C95_par": 0.1708,
           "target_eps95": 0.0005619548
         }
       },
