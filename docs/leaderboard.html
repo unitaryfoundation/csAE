@@ -3,1694 +3,646 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="description" content="Interactive Challenge Leaderboard for Non-Adaptive and Adaptive Quantum Amplitude Estimation (QAE) algorithms.">
-<title>Quantum Amplitude Estimation — Challenge Leaderboard</title>
+<meta name="color-scheme" content="light">
+<meta name="description" content="Pareto frontiers of quantum amplitude estimation algorithms: 68th, 95th and 99th percentile error constants for total queries and sequential depth.">
+<title>QAE Challenge Leaderboard</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
 :root{
   --bg:#f4f3ee; --panel:#fbfaf6; --ink:#1d2027; --ink2:#4d5059; --muted:#7b7e87; --line:#d9d7cf; --grid:#e8e6df;
-  --lik:#2f7fd1; --likfill:rgba(47,127,209,.18); --truth:#d9542b; --rung:#c9931f; --rungfill:rgba(201,147,31,.16);
-  --good:#1f8f5f; --bad:#c23b2a; --focus:#2f7fd1;
-  --purple:#7353ba; --teal:#19858f;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#13161b; --panel:#1a1e25; --ink:#e6e4dc; --ink2:#b9b7ae; --muted:#8a8d96; --line:#2c313a; --grid:#232830;
-    --lik:#5b9ce6; --likfill:rgba(91,156,230,.22); --truth:#f0704a; --rung:#e0aa3a; --rungfill:rgba(224,170,58,.18);
-    --good:#3fbf85; --bad:#e2604f; --focus:#5b9ce6;
-    --purple:#a284e8; --teal:#3eb8c4;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#13161b; --panel:#1a1e25; --ink:#e6e4dc; --ink2:#b9b7ae; --muted:#8a8d96; --line:#2c313a; --grid:#232830;
-  --lik:#5b9ce6; --likfill:rgba(91,156,230,.22); --truth:#f0704a; --rung:#e0aa3a; --rungfill:rgba(224,170,58,.18);
-  --good:#3fbf85; --bad:#e2604f; --focus:#5b9ce6;
-  --purple:#a284e8; --teal:#3eb8c4;
+  --na:#2f7fd1; --av:#d9542b; --af:#7353ba; --sa:#0d8f9f;
+  --good:#1f8f5f; --focus:#2f7fd1; --hl:rgba(29,32,39,.06);
 }
 *{box-sizing:border-box}
+html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;line-height:1.45}
-.wrap{max-width:1300px;margin:0 auto;padding:24px 22px 56px}
-a{color:var(--lik);text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 56px}
+a{color:var(--na);text-decoration:none}
 a:hover{text-decoration:underline}
 .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+sub,sup{font-size:.72em;line-height:0}
 
-/* Topbar & Header */
-.topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 18px;padding-bottom:14px;margin-bottom:18px;border-bottom:1px solid var(--line)}
-.nav-links{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:13px;color:var(--ink2)}
-.nav-links a{color:var(--ink2);font-weight:500;display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:4px;border:1px solid transparent}
-.nav-links a:hover{color:var(--ink);background:var(--panel);border-color:var(--line);text-decoration:none}
-.nav-links .sep{color:var(--line)}
-.top-actions{display:flex;align-items:center;gap:8px}
+/* nav + hero */
+.topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding-bottom:12px;margin-bottom:22px;border-bottom:1px solid var(--line);font-size:13px}
+.topbar .links{display:flex;flex-wrap:wrap;gap:4px 16px}
+.topbar .links a{color:var(--ink2);font-weight:500}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:5px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-weight:600;font-size:13px;cursor:pointer}
+.btn:hover{border-color:var(--ink2);text-decoration:none}
+h1{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:30px;letter-spacing:-.01em;margin:0 0 8px;text-wrap:balance}
+.lede{margin:0;color:var(--ink2);max-width:76ch}
+.defs{display:flex;flex-wrap:wrap;gap:6px 10px;margin:12px 0 0;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;color:var(--muted)}
+.defs span{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:2px 8px}
+.defs b{color:var(--ink2);font-weight:500}
 
-header.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px 28px;align-items:end;margin-bottom:18px}
-@media (max-width:860px){header.hero{grid-template-columns:1fr}}
-h1{font-family:"Fraunces",Georgia,"Times New Roman",serif;font-weight:500;font-size:31px;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
-.hero p{margin:0;color:var(--ink2);max-width:78ch;font-size:14px}
-.proto-meta{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;color:var(--muted)}
-.proto-meta span{background:var(--panel);border:1px solid var(--line);padding:2px 8px;border-radius:4px}
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:flex-end;margin:22px 0 16px}
+.ctl label{display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:5px}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:5px;overflow:hidden;background:var(--panel)}
+.seg button{font:inherit;font-size:12.5px;padding:6px 11px;border:0;border-right:1px solid var(--line);background:transparent;color:var(--ink2);cursor:pointer;white-space:nowrap}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:600}
+.seg button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.seg .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
 
-/* KPI Strip */
-.kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px;margin-bottom:16px}
-.kpi{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:11px 14px;display:flex;flex-direction:column;gap:3px}
-.kpi .k-lbl{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;align-items:center}
-.kpi .k-val{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:19px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
-.kpi .k-sub{font-size:12px;color:var(--ink2);display:flex;justify-content:space-between;gap:6px}
+/* panels */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 14px 10px;margin-bottom:14px}
+.panel .head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 16px;margin-bottom:6px}
+.panel .t{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.panel .s{font-size:12.5px;color:var(--ink2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:860px){.grid2{grid-template-columns:1fr}}
+svg.chart{display:block;width:100%;height:auto;overflow:visible}
+svg.chart text{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;fill:var(--muted)}
+svg.chart .grid{stroke:var(--grid);stroke-width:1}
+svg.chart .axis{stroke:var(--line);stroke-width:1}
+svg.chart .lbl{fill:var(--ink2);font-size:11px}
+svg.chart .lbl.sel{fill:var(--ink);font-weight:600}
+svg.chart .bound{stroke:var(--good);stroke-width:1.2;stroke-dasharray:4 4}
+svg.chart .bound-lbl{fill:var(--good);font-size:10.5px}
+svg.chart .frontier{fill:none;stroke:var(--ink2);stroke-width:1.5;stroke-dasharray:5 3}
+svg.chart .pt{stroke:var(--panel);stroke-width:2;cursor:pointer}
+svg.chart .pt.dim{opacity:.22}
+svg.chart .pt.sel{stroke:var(--ink)}
+svg.chart .range{stroke-width:2;opacity:.55}
+svg.chart .range.dim,svg.chart .rowlbl.dim{opacity:.22}
+svg.chart .hit{fill:transparent;cursor:pointer}
+svg.chart .rowlbl{fill:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:12px;cursor:pointer}
+svg.chart .rowlbl.sel{font-weight:600}
+svg.chart .star{fill:var(--ink);font-size:11px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:12px;color:var(--ink2)}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.legend .sw.sq{border-radius:2px}
+.legend .sw.ring{background:transparent;border:2px solid var(--ink2);box-sizing:border-box}
+.tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--bg);padding:7px 10px;border-radius:5px;font-size:12px;line-height:1.4;max-width:260px;opacity:0;transition:opacity .08s}
+.tip b{font-weight:600}
+.tip .mono{opacity:.85}
 
-/* Buttons & Segmented Controls */
-button.act{background:var(--ink);color:var(--bg);border:1px solid var(--ink);border-radius:4px;padding:7px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
-button.act:hover{opacity:.9}
-button.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:6px 11px;font:inherit;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
-button.ghost:hover{border-color:var(--muted)}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+/* table */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.lb{width:100%;border-collapse:collapse;min-width:760px}
+table.lb th,table.lb td{padding:8px 9px;border-bottom:1px solid var(--grid);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+table.lb th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;cursor:pointer;user-select:none;border-bottom:1px solid var(--line)}
+table.lb th.l,table.lb td.l{text-align:left}
+table.lb th.sorted{color:var(--ink)}
+table.lb th.grp{text-align:center;cursor:default;border-bottom:0;padding-bottom:0;color:var(--ink2)}
+table.lb td.num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px}
+table.lb tr.row{cursor:pointer}
+table.lb tr.row:hover td{background:var(--hl)}
+table.lb tr.row.sel td{background:var(--hl)}
+table.lb tr.row.dim td{opacity:.4}
+table.lb td.name{font-weight:600}
+table.lb td.name .sub{display:block;font-weight:400;font-size:11.5px;color:var(--muted)}
+.chip{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;color:#fff;letter-spacing:.01em}
+.pareto{display:inline-block;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;font-weight:600;color:var(--ink);background:var(--hl);border-radius:3px;padding:1px 5px;margin-left:2px}
+.pareto.off{opacity:.25}
+tr.detail td{white-space:normal;text-align:left;background:var(--hl);padding:12px 14px 14px}
+.detail .dgrid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px 24px}
+@media (max-width:860px){.detail .dgrid{grid-template-columns:1fr}}
+.detail h4{margin:0 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.detail p{margin:0 0 8px;color:var(--ink2)}
+.detail pre{margin:0;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:8px 10px;overflow-x:auto;color:var(--ink2)}
+table.ps{border-collapse:collapse;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;width:100%}
+table.ps th,table.ps td{padding:3px 8px;text-align:right;border-bottom:1px solid var(--grid)}
+table.ps th{font-weight:500;color:var(--muted)}
+table.ps th:first-child,table.ps td:first-child{text-align:left}
 
-.controls{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:flex;flex-wrap:wrap;gap:12px 18px;align-items:end;margin-bottom:16px}
-.ctl{display:flex;flex-direction:column;gap:4px}
-.ctl label{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--bg)}
-.seg button{background:transparent;border:0;color:var(--ink2);padding:6px 10px;font:inherit;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;cursor:pointer;white-space:nowrap}
-.seg button+button{border-left:1px solid var(--line)}
-.seg button:hover:not([aria-pressed="true"]){color:var(--ink);background:color-mix(in srgb,var(--line) 35%,transparent)}
-.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:500}
-.search-input{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:5.5px 10px;font:inherit;font-size:12.5px;min-width:180px}
-
-/* Dual Charts Stage */
-.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
-@media (max-width:960px){.charts-grid{grid-template-columns:1fr}}
-.stage{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:13px 14px 10px;display:flex;flex-direction:column;gap:8px;position:relative}
-.lab{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 12px}
-.lab .t{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.lab .s{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--ink2);font-variant-numeric:tabular-nums}
-canvas{display:block;width:100%;cursor:crosshair}
-.chart-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 12px;font-size:11.5px;color:var(--muted);padding-top:2px;border-top:1px solid var(--grid)}
-.legend{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
-.leg-item{display:inline-flex;align-items:center;gap:5px}
-.swatch{display:inline-block;width:9px;height:9px;border-radius:2px}
-.swatch.circle{border-radius:50%}
-
-/* Floating Canvas Tooltip */
-.cv-tooltip{position:fixed;pointer-events:none;z-index:100;background:var(--panel);color:var(--ink);border:1px solid var(--ink2);border-radius:5px;padding:8px 10px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.18);max-width:300px;display:none}
-.cv-tooltip .tt-title{font-weight:600;margin-bottom:3px;color:var(--ink)}
-.cv-tooltip .tt-row{display:flex;justify-content:space-between;gap:12px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink2)}
-.cv-tooltip .tt-hint{margin-top:4px;font-size:10.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:3px}
-
-/* Chips & Badges */
-.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
-.chip.tr-non-adaptive{background:color-mix(in srgb,var(--lik) 16%,transparent);color:var(--lik)}
-.chip.tr-semi-adaptive{background:color-mix(in srgb,var(--rung) 18%,transparent);color:var(--rung)}
-.chip.tr-adaptive-fixed-budget{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
-.chip.tr-adaptive-variable{background:color-mix(in srgb,var(--truth) 16%,transparent);color:var(--truth)}
-.chip.tr-depth-limited{background:color-mix(in srgb,var(--purple) 16%,transparent);color:var(--purple)}
-.chip.tr-noisy{background:color-mix(in srgb,var(--teal) 16%,transparent);color:var(--teal)}
-.chip.ok{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
-.chip.tag{background:color-mix(in srgb,var(--muted) 15%,transparent);color:var(--ink2);font-weight:500;font-size:10.5px;padding:1px 6px}
-.chip.fam-ml{background:color-mix(in srgb,var(--lik) 14%,transparent);color:var(--lik);border:1px solid color-mix(in srgb,var(--lik) 32%,transparent);font-size:10px;padding:1px 6px;font-weight:600}
-.chip.fam-ci{background:color-mix(in srgb,var(--truth) 14%,transparent);color:var(--truth);border:1px solid color-mix(in srgb,var(--truth) 32%,transparent);font-size:10px;padding:1px 6px;font-weight:600}
-.chip.fam-bayes{background:color-mix(in srgb,var(--purple) 14%,transparent);color:var(--purple);border:1px solid color-mix(in srgb,var(--purple) 32%,transparent);font-size:10px;padding:1px 6px;font-weight:600}
-
-/* Leaderboard Table */
-.table-stage{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
-.table-bar{padding:11px 14px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
-.table-bar .t{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.table-scroll{overflow-x:auto}
-table.lb{width:100%;border-collapse:collapse;font-size:12.5px}
-table.lb th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:right;padding:9px 10px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 55%,var(--panel));user-select:none;cursor:pointer;white-space:nowrap}
-table.lb th:hover{color:var(--ink)}
-table.lb th.left,table.lb td.left{text-align:left}
-table.lb th.sorted{color:var(--ink);background:color-mix(in srgb,var(--lik) 10%,var(--panel))}
-table.lb td{padding:9px 10px;border-bottom:1px solid var(--grid);text-align:right;vertical-align:middle}
-table.lb tr.data-row{cursor:pointer;transition:background .1s}
-table.lb tr.data-row:hover{background:color-mix(in srgb,var(--lik) 6%,transparent)}
-table.lb tr.data-row.selected{background:color-mix(in srgb,var(--lik) 13%,transparent)}
-table.lb tr.data-row.selected td:first-child{box-shadow:inset 3px 0 0 var(--lik)}
-.rk-badge{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:20px;padding:0 5px;border-radius:4px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;background:var(--bg);color:var(--ink2);border:1px solid var(--line)}
-.rk-1{background:color-mix(in srgb,var(--rung) 22%,transparent);color:var(--rung);border-color:color-mix(in srgb,var(--rung) 45%,transparent)}
-.rk-2{background:color-mix(in srgb,var(--lik) 18%,transparent);color:var(--lik);border-color:color-mix(in srgb,var(--lik) 40%,transparent)}
-.rk-3{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,transparent)}
-
-.alg-cell{display:flex;flex-direction:column;gap:2px}
-.alg-name{font-weight:600;color:var(--ink);font-size:13px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-.alg-sub{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.sub-cell{display:flex;flex-direction:column;gap:2px;font-size:11.5px}
-.sub-author{color:var(--ink);font-weight:500}
-.sub-meta{color:var(--muted);font-size:11px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-.cite-pill{display:inline-flex;align-items:center;gap:3px;padding:0 5px;border-radius:3px;background:var(--bg);border:1px solid var(--line);font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--lik)}
-.cite-pill:hover{border-color:var(--lik);text-decoration:none}
-
-/* Inline Visual Metric Bar for C95 */
-.c95-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:128px}
-.c95-val{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--ink)}
-.c95-ci{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted);font-weight:400}
-.c95-bar-bg{width:116px;height:5px;background:var(--grid);border-radius:3px;position:relative;overflow:hidden}
-.c95-bar-fill{height:100%;border-radius:3px}
-.ci-small{display:block;font-size:10.5px;color:var(--muted);font-weight:400}
-
-/* Expandable Detail Row */
-tr.detail-row td{padding:0;background:color-mix(in srgb,var(--bg) 55%,var(--panel));border-bottom:2px solid var(--line);text-align:left}
-.detail-card{padding:16px 18px;display:grid;grid-template-columns:1.15fr 1.35fr;gap:18px;align-items:start}
-@media (max-width:920px){.detail-card{grid-template-columns:1fr}}
-.detail-card h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 8px}
-.detail-mech{margin:0 0 12px;color:var(--ink2);font-size:13px;line-height:1.5}
-.detail-meta-strip{display:flex;flex-wrap:wrap;gap:8px 14px;margin-bottom:12px;font-size:12px;color:var(--ink2)}
-.cmd-box{background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:7px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink);overflow-x:auto}
-.scale-tbl{width:100%;border-collapse:collapse;font-family:"IBM Plex Mono",monospace;font-size:11.5px;background:var(--panel);border:1px solid var(--line);border-radius:4px;overflow:hidden}
-.scale-tbl th{font-size:10px;padding:5px 7px;background:var(--bg);color:var(--muted);border-bottom:1px solid var(--line);cursor:default}
-.scale-tbl td{padding:5px 7px;border-bottom:1px solid var(--grid)}
-.scale-tbl tr.active-scale td{background:color-mix(in srgb,var(--lik) 12%,transparent);font-weight:600}
-
-/* Explanatory Cards below Table */
-.explain{margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px 22px;color:var(--ink2)}
-.explain p{margin:0;font-size:13px;line-height:1.5}
-.explain b{color:var(--ink);font-weight:600}
-
-/* Submission Modal */
-.modal-backdrop{position:fixed;inset:0;background:rgba(10,12,16,.62);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)}
-.modal{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;max-width:820px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 18px 48px rgba(0,0,0,.35)}
-.modal-head{padding:15px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
-.modal-head h2{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:21px;margin:0}
-.modal-body{padding:18px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;font-size:13.5px}
-.modal-body h3{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:4px 0 4px}
-.modal-body pre{margin:0;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:10px 12px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;overflow-x:auto;line-height:1.45;color:var(--ink)}
-.code-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-.modal-foot{padding:12px 20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;background:var(--bg);border-radius:0 0 8px 8px;font-size:12px;color:var(--muted)}
-[hidden]{display:none!important}
+/* regimes + notes */
+details.regime{margin-bottom:10px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+details.regime summary{cursor:pointer;padding:11px 14px;font-weight:600;font-size:13.5px;list-style:none;display:flex;justify-content:space-between;gap:12px}
+details.regime summary::-webkit-details-marker{display:none}
+details.regime summary .s{font-weight:400;color:var(--muted);font-size:12.5px}
+details.regime .body{padding:0 14px 14px}
+details.regime p{margin:0 0 10px;color:var(--ink2);font-size:13px}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px 28px;margin-top:22px;font-size:13px;color:var(--ink2)}
+.notes h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 4px}
+.notes p{margin:0 0 6px}
+.err{display:none;border:1px solid var(--av);background:color-mix(in srgb,var(--av) 8%,var(--panel));border-radius:6px;padding:14px 16px;margin:16px 0;color:var(--ink)}
+.err code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+.status{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;color:var(--muted)}
+footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
-
 <div class="wrap">
-  <!-- Navigation & Action Bar -->
-  <nav class="topbar" aria-label="Leaderboard navigation">
-    <div class="nav-links">
-      <a href="index.html" title="Interactive shot-by-shot geometric ladder likelihood bench">&larr; Live Ladder Bench (<span class="mono">index.html</span>)</a>
-      <span class="sep">|</span>
-      <a href="https://arxiv.org/abs/2609.02715" target="_blank" rel="noopener">Paper: Dense-Ladder MLQAE (<span class="mono">arXiv:2609.02715</span>)</a>
-      <a href="https://arxiv.org/abs/2405.14697" target="_blank" rel="noopener">Paper: csAE (<span class="mono">arXiv:2405.14697</span>)</a>
-      <a href="https://github.com/unitaryfoundation/csAE" target="_blank" rel="noopener">GitHub Repository</a>
-    </div>
-    <div class="top-actions">
-      <span class="mono" id="dataStatus" style="font-size:11px;color:var(--muted)" title="Data source status">Embedded Baselines + Live JSON</span>
-      <button class="ghost" id="btnTheme" type="button" title="Toggle light/dark color theme">Theme: Auto</button>
-      <button class="act" id="btnOpenSubmit" type="button">+ Submit Algorithm (PR)</button>
-    </div>
-  </nav>
 
-  <!-- Hero Header -->
-  <header class="hero">
-    <div>
-      <h1>Quantum Amplitude Estimation Challenge Leaderboard</h1>
-      <p>Standardized, phase-estimation-free benchmark comparing <b>non-adaptive</b> (1 parallel round), <b>semi-adaptive</b>, and <b>sequentially adaptive</b> Quantum Amplitude Estimation algorithms for estimating <span class="mono">a = sin(θ) ∈ (0.1, 0.9)</span> from <span class="mono">Z</span>-basis Grover measurements with probability <span class="mono">p(n,θ) = cos²((2n+1)θ)</span>. All community submissions are certified in a sandboxed CI pipeline using a <b>blind cryptographic GitHub Actions secret seed (<span class="mono">LEADERBOARD_SECRET_SEED</span>)</b> so algorithms cannot overfit to a fixed test set.</p>
-      <div class="proto-meta">
-        <span>Blind CI Certification: <b>LEADERBOARD_SECRET_SEED</b> + <b>HOLDOUT_SEED</b></span>
-        <span>Trials/Scale: <b>20,000</b> (1,000 Bootstrap CIs)</span>
-        <span>Oracle Cost: <b>shot_cost(0)=1, shot_cost(n)=n</b></span>
-        <span>Scales: <b>n<sub>max</sub> ∈ {60, 125, 260, 540}</b></span>
-      </div>
-    </div>
-  </header>
+<nav class="topbar" aria-label="Site navigation">
+  <div class="links">
+    <a href="index.html">&larr; Ladder demo</a>
+    <a href="https://arxiv.org/abs/2609.02715" target="_blank" rel="noopener">Paper: ladder MLQAE</a>
+    <a href="https://arxiv.org/abs/2405.14697" target="_blank" rel="noopener">Paper: csAE</a>
+    <a href="https://github.com/unitaryfoundation/csAE" target="_blank" rel="noopener">Repository</a>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <span class="status" id="status">Loading leaderboard.json&hellip;</span>
+    <a class="btn" href="https://github.com/unitaryfoundation/csAE/blob/main/leaderboard/SUBMISSION_GUIDE.md" target="_blank" rel="noopener">Submit an algorithm</a>
+  </div>
+</nav>
 
-  <!-- Regime KPI Summary Cards -->
-  <section class="kpi-strip" aria-label="Baseline records and theoretical bounds">
-    <div class="kpi">
-      <div class="k-lbl"><span>Best Total Query Constant (1 Round)</span><span class="chip tr-non-adaptive">Non-Adaptive</span></div>
-      <div class="k-val" id="kpiNonAdaptC95">C<sub>95</sub> = 2.818</div>
-      <div class="k-sub"><span id="kpiNonAdaptName">mlqae-plain (Labib 2026)</span><span class="mono" id="kpiNonAdaptSub">seq = 0.284 · σQ = 0</span></div>
-    </div>
-    <div class="kpi">
-      <div class="k-lbl"><span>Best Parallel Depth &amp; 1R Tail</span><span class="chip tr-non-adaptive">Non-Adaptive</span></div>
-      <div class="k-val" id="kpiFlagshipVal">C<sub>95</sub><sup>seq</sup> = 0.212</div>
-      <div class="k-sub"><span id="kpiFlagshipName">mlqae-flagship (Labib 2026)</span><span class="mono" id="kpiFlagshipSub">C95 = 2.883 · C99 = 5.50</span></div>
-    </div>
-    <div class="kpi">
-      <div class="k-lbl"><span>Best Adaptive Baseline</span><span class="chip tr-adaptive-variable">Adaptive</span></div>
-      <div class="k-val" id="kpiAdaptVal">C<sub>95</sub> = 3.020</div>
-      <div class="k-sub"><span id="kpiAdaptName">BAE-Adaptive / chebAE</span><span class="mono" id="kpiAdaptSub">chebAE C95 = 3.141</span></div>
-    </div>
-    <div class="kpi">
-      <div class="k-lbl"><span>Open Challenge: Beat the Bounds</span><span class="chip tag">Target Floor</span></div>
-      <div class="k-val">1.67 – 1.94</div>
-      <div class="k-sub"><span>Canonical CRLB: <b class="mono">1.67</b></span><span class="mono">Ziv–Zakai Bound: 1.94</span></div>
-    </div>
-  </section>
+<header>
+  <h1>Quantum amplitude estimation challenge</h1>
+  <p class="lede">Every algorithm estimates <span class="mono">a = sin&thinsp;&theta; &sim; U(0.1, 0.9)</span> from Grover-depth-<span class="mono">n</span> measurements with <span class="mono">p = cos&sup2;((2n+1)&theta;)</span>. The score is a constant: the error percentile times the resources used. Lower is better, and the frontier is what counts, not a single number.</p>
+  <div class="defs">
+    <span><b>C<sub>&delta;</sub><sup>Q</sup></b> = &epsilon;<sub>&delta;</sub> &middot; &lang;total queries&rang;</span>
+    <span><b>C<sub>&delta;</sub><sup>D</sup></b> = &epsilon;<sub>&delta;</sub> &middot; &lang;sequential depth&rang;</span>
+    <span>&epsilon;<sub>&delta;</sub> = &delta;-th percentile of |&acirc; &minus; a|, &delta; &isin; {68, 95, 99}</span>
+    <span>cost(n=0) = 1, cost(n&ge;1) = n</span>
+    <span>n<sub>max</sub> &isin; {60, 125, 260, 540}</span>
+  </div>
+</header>
 
-  <!-- Method Family, Track & Scale Filter Controls -->
-  <section class="controls" aria-label="Leaderboard filters">
-    <div class="ctl">
-      <label>Method Family</label>
-      <div class="seg" id="segFamily" role="group" aria-label="Filter by Method Family">
-        <button type="button" data-v="all" aria-pressed="true">All Baselines (11)</button>
-        <button type="button" data-v="ml-ladder" aria-pressed="false">Maximum-Likelihood / Ladder</button>
-        <button type="button" data-v="ci-interval" aria-pressed="false">Confidence-Interval (IQAE / chebAE / FAE)</button>
-        <button type="button" data-v="bayes-cs" aria-pressed="false">Bayesian / Compressed Sensing</button>
-      </div>
-    </div>
-    <div class="ctl">
-      <label>Filter by Track</label>
-      <div class="seg" id="segTrack" role="group" aria-label="Filter by Track">
-        <button type="button" data-v="all" aria-pressed="true">All Tracks</button>
-        <button type="button" data-v="non-adaptive">Non-Adaptive (1 Round)</button>
-        <button type="button" data-v="semi-adaptive">Semi-Adaptive (2-3 Rounds)</button>
-        <button type="button" data-v="adaptive-fixed-budget">Adaptive (Fixed Budget)</button>
-        <button type="button" data-v="adaptive-variable">Adaptive (Variable Budget)</button>
-        <button type="button" data-v="depth-limited">Depth-Limited (Cap M)</button>
-        <button type="button" data-v="noisy">Noisy (Depolarizing)</button>
-      </div>
-    </div>
-    <div class="ctl">
-      <label>Benchmark Scale (<span class="mono">n<sub>max</sub></span>)</label>
-      <div class="seg" id="segScale" role="group" aria-label="Scale selector">
-        <button type="button" data-v="mean" aria-pressed="true">Mean Across Scales</button>
-        <button type="button" data-v="60">nmax = 60</button>
-        <button type="button" data-v="125">nmax = 125</button>
-        <button type="button" data-v="260">nmax = 260</button>
-        <button type="button" data-v="540">nmax = 540</button>
-      </div>
-    </div>
-    <div class="ctl">
-      <label>Search Algorithm / Author / Paper</label>
-      <input type="search" id="searchInput" class="search-input" placeholder="e.g. Suzuki, Grinko, Rall, Labib...">
-    </div>
-  </section>
+<div class="err" id="err"></div>
 
-  <!-- Interactive Dual HiDPI Canvas Charts -->
-  <section class="charts-grid" aria-label="Interactive Pareto frontier and robustness charts">
-    <!-- Left Canvas: Pareto Frontier -->
-    <div class="stage">
-      <div class="lab">
-        <div>
-          <span class="t">Pareto Frontier: Total Queries (C<sub>95</sub><sup>ave</sup>) vs. Sequential Depth (C<sub>95</sub><sup>seq</sup>)</span>
-          <div class="s" id="leftChartSub">Lower-left is better · Click any point to inspect algorithm</div>
-        </div>
-        <div class="seg" id="segXScale" title="Toggle X-axis between logarithmic and linear scale">
-          <button type="button" data-v="log" aria-pressed="true">Log X</button>
-          <button type="button" data-v="linear" aria-pressed="false">Linear X</button>
-        </div>
-      </div>
-      <canvas id="cvPareto" data-h="315"></canvas>
-      <div class="chart-foot">
-        <div class="legend">
-          <span class="leg-item"><span class="swatch circle" style="background:var(--lik)"></span>1R Non-Adaptive (<span class="mono">seq≈0.21</span>)</span>
-          <span class="leg-item"><span class="swatch circle" style="background:var(--truth)"></span>Adaptive Variable (<span class="mono">seq≈3.0–11.6</span>)</span>
-          <span class="leg-item"><span class="swatch circle" style="background:var(--purple)"></span>Depth-Limited</span>
-          <span class="leg-item"><span class="swatch circle" style="background:var(--teal)"></span>Noisy</span>
-        </div>
-        <span class="mono">Dashed: Pareto Frontier, CRLB &amp; ZZB</span>
-      </div>
-    </div>
-
-    <!-- Right Canvas: Switchable Tail Robustness vs Worst-Case Spread -->
-    <div class="stage">
-      <div class="lab">
-        <div>
-          <span class="t" id="rightChartTitle">Tail Robustness: 99th Percentile (C<sub>99</sub><sup>ave</sup>) vs. 95th Percentile (C<sub>95</sub><sup>ave</sup>)</span>
-          <div class="s" id="rightChartSub">Crosshairs show 95% bootstrap confidence intervals</div>
-        </div>
-        <div class="seg" id="segRightMode">
-          <button type="button" data-v="tail" aria-pressed="true">Tail Robustness (C<sub>99</sub> vs C<sub>95</sub>)</button>
-          <button type="button" data-v="spread" aria-pressed="false">Worst-Case Spread (C<sub>95</sub><sup>max</sup> vs C<sub>95</sub><sup>ave</sup>)</button>
-        </div>
-      </div>
-      <canvas id="cvRight" data-h="315"></canvas>
-      <div class="chart-foot">
-        <div class="legend" id="rightLegend">
-          <span class="leg-item"><span class="swatch" style="background:var(--good)"></span>Gaussian-like Tail (<span class="mono">C<sub>99</sub>/C<sub>95</sub> ≈ 1.35</span>)</span>
-          <span class="leg-item"><span class="swatch" style="background:var(--bad)"></span>Alias / Clopper-Pearson Tail Inflation</span>
-        </div>
-        <span class="mono" id="rightFootNote">95% Bootstrap CI Error Bars</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- Sortable Leaderboard Table -->
-  <section class="table-stage" aria-label="Sortable algorithm leaderboard table">
-    <div class="table-bar">
-      <span class="t" id="tableCountLabel">Showing 11 literature baselines · Sorted by C95 (ave) ascending</span>
-      <span class="mono" style="font-size:11.5px;color:var(--muted)">Click any column header to sort · Click any row to expand mechanism, submission path &amp; per-scale breakdown</span>
-    </div>
-    <div class="table-scroll">
-      <table class="lb" id="lbTable">
-        <thead>
-          <tr>
-            <th class="left" data-sort="rank" style="width:48px">Rank</th>
-            <th class="left" data-sort="name">Algorithm &amp; Submission Path</th>
-            <th class="left" data-sort="track">Track</th>
-            <th class="left" data-sort="author">Authors &amp; Citation</th>
-            <th data-sort="rounds" title="Number of sequential feedback rounds">Rounds</th>
-            <th data-sort="C68_ave" title="68th percentile error × average queries">C<sub>68</sub><sup>ave</sup></th>
-            <th data-sort="C95_ave" class="sorted" title="Primary ranking metric: 95th percentile error × average queries">C<sub>95</sub><sup>ave</sup> [95% CI] &#9650;</th>
-            <th data-sort="C95_max" title="95th percentile error × worst-case (maximum) queries">C<sub>95</sub><sup>max</sup></th>
-            <th data-sort="C99_ave" title="99th percentile error × average queries (tail robustness)">C<sub>99</sub><sup>ave</sup> [95% CI]</th>
-            <th data-sort="C95_seq" title="Parallel / sequential wall-clock depth constant: eps95 × mean sequential depth">C<sub>95</sub><sup>seq</sup></th>
-            <th data-sort="q_spread" title="Relative standard deviation of query count across trials (0% = deterministic fixed budget)">Spread &sigma;<sub>Q</sub>/Q&#772;</th>
-            <th class="left" data-sort="status">Status</th>
-          </tr>
-        </thead>
-        <tbody id="lbBody"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- Explanatory Notes Matching docs/index.html Style -->
-  <section class="explain" aria-label="Technical guide to the literature baselines and blind evaluation protocol">
-    <p><b>Literature Baselines (2020–2026).</b> Classical QPE-free baselines span non-adaptive schedules (<span class="mono">MLAE-Linear</span> and <span class="mono">MLAE-Pow2</span> by Suzuki et al. 2020; <span class="mono">csAE</span> by Labib et al. 2024; <span class="mono">mlqae-plain</span> and <span class="mono">mlqae-flagship</span> by Labib 2026) and sequential adaptive interval/Bayesian protocols (<span class="mono">FAE</span> Nakaji 2020; <span class="mono">IQAE-Chernoff</span> &amp; <span class="mono">IQAE-CP</span> Grinko et al. 2021; <span class="mono">chebAE</span> Rall &amp; Fuller 2023; <span class="mono">BIQAE</span> 2024; <span class="mono">BAE-Adaptive</span> Ramôa &amp; Santos 2024).</p>
-    <p><b>Dense-Ladder Maximum Likelihood vs. Powers of Two.</b> Power-of-two schedules (<span class="mono">r = 2</span>) space rungs so far apart that each basin-disambiguation step rests on a single rung, requiring either many shots per rung (<span class="mono">MLAE-Pow2</span>, <span class="mono">C<sub>95</sub> ≈ 7.88</span>) or adaptive confidence intervals (<span class="mono">IQAE</span>, <span class="mono">chebAE</span>). Using a dense geometric ratio <span class="mono">r = 1.45</span> plus one degeneracy-breaking rung at <span class="mono">round(n<sub>max</sub>/1.3)</span> reaches <span class="mono">C<sub>95</sub> = 2.82–2.88</span> and <span class="mono">C<sub>95</sub><sup>seq</sup> = 0.21</span> in a single parallel round.</p>
-    <p><b>The Open Challenge Frontier.</b> On the canonical schedule, the exact scale-mixture Cramér–Rao bound sits at <span class="mono">C<sub>95</sub><sup>CRLB</sup> ≈ 1.67</span> and the exact Monte-Carlo Ziv–Zakai lower bound at <span class="mono">C<sub>95</sub><sup>ZZB</sup> ≈ 1.94</span>. Can a 2-round semi-adaptive or fixed-budget adaptive schedule close the gap between <span class="mono">2.82</span> and the information-theoretic floor?</p>
-    <p><b>Blind Cryptographic CI Certification (<span class="mono">LEADERBOARD_SECRET_SEED</span>).</b> To prevent hyperparameter overfitting or seed-table memorization, community Pull Requests undergo two-tier verification: Tier 1 runs a sandbox smoke check on <span class="mono">SEARCH_SEED = 100,000</span>, while Tier 2 certifies official rankings on <span class="mono">HOLDOUT_SEED = 900,000</span> plus an HMAC-SHA256 seed derived from <span class="mono">LEADERBOARD_SECRET_SEED</span> inside a network-isolated <span class="mono">unshare -r -n</span> container.</p>
-  </section>
-</div>
-
-<!-- Floating Tooltip for Canvases -->
-<div class="cv-tooltip" id="cvTooltip" role="tooltip"></div>
-
-<!-- Interactive Submission Instructions Modal -->
-<div class="modal-backdrop" id="submitModal" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-head">
-      <h2 id="modalTitle">Submit an Algorithm to the QAE Challenge Leaderboard</h2>
-      <button class="ghost" id="btnCloseSubmit" type="button" aria-label="Close modal">&times; Close (Esc)</button>
-    </div>
-    <div class="modal-body">
-      <p style="margin:0;color:var(--ink2)">Submissions are evaluated via GitHub Pull Request in a network-isolated sandbox (<span class="mono">unshare -r -n</span>) against <span class="mono">QuantumAEOracle</span>. Local development and tuning are permitted on <span class="mono">SEARCH_SEED = 100,000</span>; official leaderboard rankings are certified on <span class="mono">HOLDOUT_SEED = 900,000</span> plus a blind cryptographic GitHub Actions secret seed (<span class="mono">LEADERBOARD_SECRET_SEED</span>) across <span class="mono">n<sub>max</sub> ∈ {60, 125, 260, 540}</span>.</p>
-
-      <div>
-        <h3>1. Create Your Submission Directory</h3>
-        <pre>leaderboard/submissions/&lt;your_algo_slug&gt;/
-├── metadata.json    # Required schema-validated metadata
-└── submission.py    # Subclasses NonAdaptiveAESubmission or AdaptiveAESubmission</pre>
-      </div>
-
-      <div>
-        <div class="code-head">
-          <h3>2. Populate <span class="mono">metadata.json</span></h3>
-          <button class="ghost" type="button" data-copy="tplMeta">Copy metadata.json</button>
-        </div>
-        <pre id="tplMeta">{
-  "algo_id": "my_custom_qae",
-  "algorithm_name": "My Custom Amplitude Estimator",
-  "track": "non-adaptive",
-  "authors": ["Your Name"],
-  "github_handle": "your_github",
-  "affiliation": "Your Institution",
-  "paper_url": "https://arxiv.org/abs/2609.02715",
-  "pr_number": null,
-  "description": "Concise description of depth schedule, adaptive policy, and estimator.",
-  "date": "2026-10-23",
-  "entrypoint": "submission.py:MySubmission"
-}</pre>
-      </div>
-
-      <div>
-        <div class="code-head">
-          <h3>3. Implement <span class="mono">submission.py</span> (Sandbox Oracle API)</h3>
-          <button class="ghost" type="button" data-copy="tplCode">Copy submission.py</button>
-        </div>
-        <pre id="tplCode">import numpy as np
-from leaderboard.schema_and_api import (
-    AdaptiveAESubmission, QuantumAEOracle, ml_estimate_batch
-)
-from mlqae.core import flagship_schedule
-
-class MySubmission(AdaptiveAESubmission):
-    name = "my_custom_qae"
-    track = "adaptive-fixed-budget"
-
-    def run_trial(self, oracle: QuantumAEOracle, target_scale_or_budget: int, rng: np.random.Generator) -> float:
-        # Call oracle.measure_batch(depths, shots) for parallel rounds
-        # or oracle.measure(depth, shots=1) for sequential adaptive steps.
-        depths, shots = flagship_schedule(int(target_scale_or_budget))
-        counts = oracle.measure_batch(depths, shots)
-        return float(ml_estimate_batch(depths, shots, counts))</pre>
-      </div>
-
-      <div>
-        <div class="code-head">
-          <h3>4. Verify Locally &amp; Open a Pull Request</h3>
-          <button class="ghost" type="button" data-copy="tplCmd">Copy Verify Command</button>
-        </div>
-        <pre id="tplCmd">OPENBLAS_NUM_THREADS=2 .venv/bin/python leaderboard/verifier_and_runner.py --mode=verify --submission=leaderboard/submissions/my_custom_qae --ntrials=2000 --seed=100000</pre>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <span>See <span class="mono">leaderboard/SUBMISSION_GUIDE.md</span> and <span class="mono">leaderboard/schema_and_api.py</span> for full protocol specifications.</span>
-      <a class="act" href="https://github.com/unitaryfoundation/csAE/compare" target="_blank" rel="noopener" style="text-decoration:none">Open Pull Request on GitHub &rarr;</a>
+<section class="controls" aria-label="Filters">
+  <div class="ctl">
+    <label>Track</label>
+    <div class="seg" id="segTrack" role="group"></div>
+  </div>
+  <div class="ctl">
+    <label>Scale n<sub>max</sub></label>
+    <div class="seg" id="segScale" role="group">
+      <button type="button" data-v="mean" aria-pressed="true">Mean of scales</button>
+      <button type="button" data-v="60">60</button>
+      <button type="button" data-v="125">125</button>
+      <button type="button" data-v="260">260</button>
+      <button type="button" data-v="540">540</button>
     </div>
   </div>
+</section>
+
+<section class="panel" aria-label="Depth versus total-query trade-off">
+  <div class="head">
+    <div>
+      <div class="t">Trade-off frontier: sequential depth vs total queries</div>
+      <div class="s">Lower-left is better. Dashed: Pareto frontier over all entries at the chosen percentile; green: Cramér&ndash;Rao floor &kappa;<sub>&delta;</sub> on the query constant.</div>
+    </div>
+    <div class="seg" id="segDelta" role="group" aria-label="Percentile">
+      <button type="button" data-v="68">&delta; = 68</button>
+      <button type="button" data-v="95" aria-pressed="true">&delta; = 95</button>
+      <button type="button" data-v="99">&delta; = 99</button>
+    </div>
+  </div>
+  <svg class="chart" id="svgTrade" role="img" aria-label="Scatter of depth constant against query constant"></svg>
+  <div class="legend" id="legTrade"></div>
+</section>
+
+<div class="grid2">
+  <section class="panel" aria-label="Total query constants">
+    <div class="head">
+      <div>
+        <div class="t">Total queries &middot; C<sub>68</sub><sup>Q</sup> &rarr; C<sub>95</sub><sup>Q</sup> &rarr; C<sub>99</sub><sup>Q</sup></div>
+        <div class="s">Sorted by C<sub>95</sub><sup>Q</sup>. &#9733; = Pareto-optimal across the three percentiles.</div>
+      </div>
+    </div>
+    <svg class="chart" id="svgQ" role="img" aria-label="Dot plot of query constants"></svg>
+  </section>
+  <section class="panel" aria-label="Sequential depth constants">
+    <div class="head">
+      <div>
+        <div class="t">Sequential depth &middot; C<sub>68</sub><sup>D</sup> &rarr; C<sub>95</sub><sup>D</sup> &rarr; C<sub>99</sub><sup>D</sup></div>
+        <div class="s">Sorted by C<sub>95</sub><sup>D</sup>. Non-adaptive methods run one parallel round, so depth = n<sub>max</sub>.</div>
+      </div>
+    </div>
+    <svg class="chart" id="svgD" role="img" aria-label="Dot plot of depth constants"></svg>
+  </section>
+</div>
+<div class="legend" style="margin:-4px 0 14px 2px">
+  <span><span class="sw ring"></span>C<sub>68</sub></span>
+  <span><span class="sw" style="background:var(--ink2)"></span>C<sub>95</sub></span>
+  <span><span class="sw sq" style="background:var(--ink2)"></span>C<sub>99</sub></span>
+  <span class="mono" style="color:var(--muted)">Log axes &middot; hover a row for values &middot; click to pin</span>
 </div>
 
-<footer style="max-width:1300px;margin:0 auto;padding:0 22px 44px;color:var(--muted);font-size:12px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px">
-  <span>Companion to <i>Quantum amplitude estimation beyond power-of-two schedules</i> (F. Labib, 2026) &amp; the QAE Challenge Benchmark.</span>
-  <span>Interactive Ladder Demo: <a href="index.html" style="color:inherit;text-decoration:underline">docs/index.html</a> · Source: <a href="https://github.com/unitaryfoundation/csAE" style="color:inherit;text-decoration:underline">github.com/unitaryfoundation/csAE</a></span>
-</footer>
+<section class="panel" aria-label="Leaderboard table">
+  <div class="head">
+    <div>
+      <div class="t" id="tblTitle">All entries</div>
+      <div class="s">Click a header to sort, a row to expand. Q / D badges mark Pareto-optimal entries in the query and depth frontiers.</div>
+    </div>
+  </div>
+  <div class="tbl-wrap">
+    <table class="lb" id="tbl">
+      <thead>
+        <tr>
+          <th class="l" rowspan="2" data-k="rank">#</th>
+          <th class="l" rowspan="2" data-k="name">Algorithm</th>
+          <th class="l" rowspan="2" data-k="track">Track</th>
+          <th rowspan="2" data-k="rounds" title="Mean number of sequential rounds">Rounds</th>
+          <th class="grp" colspan="3">Total queries C<sup>Q</sup></th>
+          <th class="grp" colspan="3">Sequential depth C<sup>D</sup></th>
+          <th rowspan="2" data-k="pareto" title="Pareto-optimal in the query (Q) and depth (D) frontiers">Pareto</th>
+        </tr>
+        <tr>
+          <th data-k="Q68">C<sub>68</sub></th><th data-k="Q95">C<sub>95</sub></th><th data-k="Q99">C<sub>99</sub></th>
+          <th data-k="D68">C<sub>68</sub></th><th data-k="D95">C<sub>95</sub></th><th data-k="D99">C<sub>99</sub></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<details class="regime" id="regDepth">
+  <summary><span>Depth-limited regime</span><span class="s">separate metric, not ranked above</span></summary>
+  <div class="body" id="depthBody"></div>
+</details>
+<details class="regime" id="regNoisy">
+  <summary><span>Depolarizing-noise regime</span><span class="s">separate metric, not ranked above</span></summary>
+  <div class="body" id="noisyBody"></div>
+</details>
+
+<section class="notes">
+  <div>
+    <h3>How to read the frontier</h3>
+    <p>An entry is Pareto-optimal in a frontier when no other entry is at least as good on all three percentiles and strictly better on one. The trade-off chart shows a second frontier: depth against queries at one percentile. A method can win on tails (C<sub>99</sub>) while losing on the bulk (C<sub>68</sub>), so a single rank hides most of the story.</p>
+  </div>
+  <div>
+    <h3>Bounds</h3>
+    <p>For any fixed schedule under this prior, the exact scale-mixture Cramér&ndash;Rao bound gives <span class="mono">C<sup>Q</sup> &ge; &kappa;<sub>&delta;</sub></span> with <span class="mono" id="kappaTxt"></span>. The Ziv&ndash;Zakai bound at &delta; = 95 is <span class="mono">1.94</span>.</p>
+  </div>
+  <div>
+    <h3>Certification</h3>
+    <p>Entries are produced by <span class="mono">leaderboard/populate_baselines.py</span> or by the CI certifier on a blind HMAC-derived seed, <span id="protoTxt"></span>. Pull requests under <span class="mono">leaderboard/submissions/</span> go through the sandboxed verifier before they appear here.</p>
+  </div>
+</section>
+
+<footer>Companion to <i>Quantum amplitude estimation beyond power-of-two schedules</i> (arXiv:2609.02715) and csAE (arXiv:2405.14697). Data: <a href="leaderboard.json">leaderboard.json</a>.</footer>
+</div>
+
+<div class="tip" id="tip" role="tooltip"></div>
 
 <script>
-(function(){
 "use strict";
-
 const $ = id => document.getElementById(id);
-const SCALES = ["60", "125", "260", "540"];
-
-const TRACK_META = {
-  "non-adaptive":          { label: "Non-Adaptive (1 Round)",     short: "1R Non-Adaptive",   cls: "tr-non-adaptive",          colorVar: "--lik" },
-  "semi-adaptive":         { label: "Semi-Adaptive (2-3 Rounds)", short: "2–3R Semi-Adaptive", cls: "tr-semi-adaptive",         colorVar: "--rung" },
-  "adaptive-fixed-budget": { label: "Adaptive (Fixed Budget)",    short: "Adaptive (Fixed)",   cls: "tr-adaptive-fixed-budget", colorVar: "--good" },
-  "adaptive-variable":     { label: "Adaptive (Variable Budget)", short: "Adaptive (Var)",     cls: "tr-adaptive-variable",     colorVar: "--truth" },
-  "depth-limited":         { label: "Depth-Limited (Cap M)",      short: "Depth-Limited",      cls: "tr-depth-limited",         colorVar: "--purple" },
-  "noisy":                 { label: "Noisy (Depolarizing)",       short: "Noisy (Depol.)",     cls: "tr-noisy",                 colorVar: "--teal" }
+const DELTAS = [68, 95, 99];
+const TRACKS = {
+  "non-adaptive":          { label: "Non-adaptive",            v: "--na" },
+  "semi-adaptive":         { label: "Semi-adaptive",           v: "--sa" },
+  "adaptive-fixed-budget": { label: "Adaptive, fixed budget",  v: "--af" },
+  "adaptive-variable":     { label: "Adaptive, variable budget", v: "--av" },
 };
+const tok = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt = (x, d = 2) => (x == null || !isFinite(x)) ? "–" : x.toFixed(d);
 
-const FAMILY_META = {
-  "ml-ladder":   { label: "ML / Ladder",        cls: "fam-ml" },
-  "ci-interval": { label: "Confidence-Interval", cls: "fam-ci" },
-  "bayes-cs":    { label: "Bayesian / CS",       cls: "fam-bayes" }
-};
+let DATA = null, entries = [], kappa = { 68: 0.802408, 95: 1.668608, 99: 2.258032 };
+let trackFilter = "all", scale = "mean", delta = 95, selectedId = null, hoverId = null;
+let sortKey = "Q95", sortAsc = true;
 
-// Map alternative IDs to canonical algo_id so live JSON merges cleanly without duplicates
-const ALIAS_MAP = {
-  "mlae_pow2_100": "mlae_pow2_suzuki",
-  "mlae_pow2": "mlae_pow2_suzuki",
-  "mlae_linear": "mlae_linear_suzuki",
-  "fae": "fae_nakaji",
-  "iqae_grinko": "iqae_cp",
-  "iqae_cp_grinko": "iqae_cp",
-  "iqae_chernoff_grinko": "iqae_chernoff",
-  "chebae_rall_fuller": "chebae",
-  "biqae": "biqae_bayesian",
-  "bae_ramoa": "bae_adaptive",
-  "csae_esprit_labib": "csae_esprit",
-  "mlqae_plain_labib": "mlqae_plain",
-  "mlqae_flagship_labib": "mlqae_flagship"
-};
-
-// Allowlist of published baseline IDs for public display
-const PUBLISHED_ALLOWLIST = new Set([
-  "mlqae_plain",
-  "mlqae_flagship",
-  "bae_adaptive",
-  "chebae",
-  "biqae_bayesian",
-  "csae_esprit",
-  "iqae_cp",
-  "mlae_pow2_suzuki",
-  "iqae_chernoff",
-  "fae_nakaji",
-  "mlae_linear_suzuki",
-  "nonadapt_uniform_depth_cap",
-  "nonadapt_pair_anchor_cap",
-  "mlqae_flagship_noise_aware",
-  "mlqae_flagship_noise_ignorant"
-]);
-
-// Embedded DEFAULT_DATA: 11 Published Literature Baselines (+ Published Depth-Limited & Noisy Baselines)
-const DEFAULT_DATA = {
-  schema_version: "1.0.0",
-  evaluation_protocol: {
-    ntrials_holdout: 20000,
-    boot_B: 1000,
-    holdout_seed: 900000,
-    search_seed: 100000,
-    blind_secret_seed: "LEADERBOARD_SECRET_SEED",
-    a_range: [0.1, 0.9],
-    scales: [60, 125, 260, 540]
-  },
-  entries: [
-    // =========================================================================
-    // 11 PUBLISHED LITERATURE BASELINES (2020–2026)
-    // =========================================================================
-    {
-      algo_id: "mlqae_plain",
-      algorithm_name: "mlqae-plain (Labib 2026, r=1.45 Geometric Ladder + Global ML)",
-      family: "ml-ladder",
-      badge: "Overall #1 C95 (1 Round)",
-      track: "non-adaptive",
-      rounds: "1 (Parallel)",
-      rounds_num: 1.0,
-      authors: ["Farrokh Labib"],
-      affiliation: "Unitary Foundation",
-      github_handle: "farrokhlabib",
-      paper_url: "https://arxiv.org/abs/2609.02715",
-      paper_cite: "arXiv:2609.02715 (2026)",
-      submission_path: "leaderboard/submissions/mlqae_plain_labib/",
-      date: "2026-09-04",
-      status: "CI Verified",
-      repro_cmd: "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/harness.py",
-      description: "Dense geometric Grover depth ladder (ratio r=1.45) with untuned linear-decay canonical shot profile (1 shot at deepest level, +1 per shallower level) and exact global maximum-likelihood estimation (Labib 2026, arXiv:2609.02715).",
-      scales: {
-        "60":  { q_ave: 569.0, q_max: 569, C68_ave: 1.1500, C95_ave: 2.6658, C95_ci: [2.5958, 2.7286], C95_max: 2.6658, C99_ave: 6.1779, C99_ci: [5.4924, 6.7090], C95_seq: 0.2811, q_spread: 0.0 },
-        "125": { q_ave: 1242.0, q_max: 1242, C68_ave: 1.1886, C95_ave: 2.8355, C95_ci: [2.7815, 2.9304], C95_max: 2.8355, C99_ave: 6.5294, C99_ci: [6.0602, 6.8344], C95_seq: 0.2854, q_spread: 0.0 },
-        "260": { q_ave: 1823.0, q_max: 1823, C68_ave: 1.2161, C95_ave: 2.8441, C95_ci: [2.7829, 2.9036], C95_max: 2.8441, C99_ave: 6.5395, C99_ci: [6.0741, 7.0191], C95_seq: 0.2839, q_spread: 0.0 },
-        "540": { q_ave: 3893.0, q_max: 3893, C68_ave: 1.2405, C95_ave: 2.9252, C95_ci: [2.8612, 3.0009], C95_max: 2.9252, C99_ave: 6.5704, C99_ci: [6.2171, 7.0270], C95_seq: 0.2870, q_spread: 0.0 }
-      }
-    },
-    {
-      algo_id: "mlqae_flagship",
-      algorithm_name: "mlqae-flagship (Labib 2026, r=1.45 + Cap Rung nmax/1.3)",
-      family: "ml-ladder",
-      badge: "Flagship · Best C99 & Parallel Depth",
-      track: "non-adaptive",
-      rounds: "1 (Parallel)",
-      rounds_num: 1.0,
-      authors: ["Farrokh Labib"],
-      affiliation: "Unitary Foundation",
-      github_handle: "farrokhlabib",
-      paper_url: "https://arxiv.org/abs/2609.02715",
-      paper_cite: "arXiv:2609.02715 (2026)",
-      submission_path: "leaderboard/submissions/mlqae_flagship_labib/",
-      date: "2026-09-04",
-      status: "CI Verified",
-      repro_cmd: "OPENBLAS_NUM_THREADS=1 .venv/bin/python mlqae/final_numbers.py",
-      description: "Flagship non-adaptive schedule of Labib (2026, arXiv:2609.02715): ratio r=1.45 geometric Grover depth ladder plus one additional rung at round(n_max / 1.3) to break the deepest level's mirror degeneracy, with exact global ML post-processing.",
-      scales: {
-        "60":  { q_ave: 789.0, q_max: 789, C68_ave: 1.2206, C95_ave: 2.7845, C95_ci: [2.7196, 2.8370], C95_max: 2.7845, C99_ave: 5.1764, C99_ci: [4.9042, 5.4242], C95_seq: 0.2118, q_spread: 0.0 },
-        "125": { q_ave: 1708.0, q_max: 1708, C68_ave: 1.2762, C95_ave: 2.8310, C95_ci: [2.7848, 2.8939], C95_max: 2.8310, C99_ave: 5.2429, C99_ci: [4.9657, 5.5486], C95_seq: 0.2072, q_spread: 0.0 },
-        "260": { q_ave: 2502.0, q_max: 2502, C68_ave: 1.2923, C95_ave: 2.9400, C95_ci: [2.8690, 3.0196], C95_max: 2.9400, C99_ave: 5.7521, C99_ci: [5.5158, 6.1026], C95_seq: 0.2139, q_spread: 0.0 },
-        "540": { q_ave: 5325.0, q_max: 5325, C68_ave: 1.3102, C95_ave: 2.9747, C95_ci: [2.9211, 3.0283], C95_max: 2.9747, C99_ave: 5.8097, C99_ci: [5.4541, 6.0525], C95_seq: 0.2134, q_spread: 0.0 }
-      }
-    },
-    {
-      algo_id: "bae_adaptive",
-      algorithm_name: "BAE-Adaptive (Ramôa & Santos 2024, Variational Bayesian AE)",
-      family: "bayes-cs",
-      badge: "Best Adaptive Baseline",
-      track: "adaptive-variable",
-      rounds: "Adaptive (~14)",
-      rounds_num: 14.0,
-      authors: ["A. Ramôa", "L. P. Santos"],
-      affiliation: "University of Minho / INESC TEC",
-      github_handle: "unitaryfoundation",
-      paper_url: "https://arxiv.org/abs/2401.05172",
-      paper_cite: "Quantum 8, 1512 (2024)",
-      submission_path: "leaderboard/submissions/bae_adaptive/",
-      date: "2024-10-20",
-      status: "CI Verified",
-      repro_cmd: "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/verifier_and_runner.py --mode=verify --submission=leaderboard/submissions/bae_adaptive",
-      description: "Bayesian Amplitude Estimation (Ramôa & Santos 2024, arXiv:2401.05172): sequential Bayesian experimental design selecting Grover depths via posterior variance annealing (k_n ~ 1 / sigma_theta) with exact grid posterior updates.",
-      scales: {
-        "60":  { q_ave: 812.4, q_max: 1180, C68_ave: 1.2850, C95_ave: 2.9650, C95_ci: [2.8800, 3.0500], C95_max: 4.3060, C99_ave: 6.1800, C99_ci: [5.4500, 7.1200], C95_seq: 2.9650, q_spread: 0.1680 },
-        "125": { q_ave: 1745.0, q_max: 2510, C68_ave: 1.3120, C95_ave: 3.0420, C95_ci: [2.9500, 3.1350], C95_max: 4.3750, C99_ave: 6.4500, C99_ci: [5.6800, 7.4500], C95_seq: 3.0420, q_spread: 0.1650 },
-        "260": { q_ave: 2610.0, q_max: 3740, C68_ave: 1.3040, C95_ave: 3.0180, C95_ci: [2.9300, 3.1100], C95_max: 4.3240, C99_ave: 6.3200, C99_ci: [5.5800, 7.2800], C95_seq: 3.0180, q_spread: 0.1620 },
-        "540": { q_ave: 5490.0, q_max: 7850, C68_ave: 1.3180, C95_ave: 3.0560, C95_ci: [2.9650, 3.1500], C95_max: 4.3690, C99_ave: 6.4900, C99_ci: [5.7200, 7.5100], C95_seq: 3.0560, q_spread: 0.1640 }
-      }
-    },
-    {
-      algo_id: "chebae",
-      algorithm_name: "chebAE (Rall & Fuller 2023, QSP / Chebyshev Interval)",
-      family: "ci-interval",
-      badge: "Chebyshev Interval SOTA",
-      track: "adaptive-variable",
-      rounds: "Adaptive (~15)",
-      rounds_num: 15.0,
-      authors: ["Patrick Rall", "Bryce Fuller"],
-      affiliation: "IBM Quantum / MIT",
-      github_handle: "unitaryfoundation",
-      paper_url: "https://doi.org/10.22331/q-2023-03-02-937",
-      paper_cite: "Quantum 7, 937 (2023)",
-      submission_path: "leaderboard/submissions/chebae_rall_fuller/",
-      date: "2023-03-02",
-      status: "CI Verified",
-      repro_cmd: "OPENBLAS_NUM_THREADS=1 .venv/bin/python mlqae/head_to_head.py",
-      description: "Chebyshev Amplitude Estimation (Rall & Fuller 2023, Quantum 7, 937; arXiv:2207.08628): adaptive degree selection with Clopper-Pearson confidence intervals, late-stage single-shot stepping (nu=8), and Chebyshev polynomial inversion.",
-      scales: {
-        "60":  { q_ave: 1084.34, q_max: 1698, C68_ave: 1.3724, C95_ave: 2.9987, C95_ci: [2.8775, 3.2572], C95_max: 4.6958, C99_ave: 6.7466, C99_ci: [5.0418, 9.6682], C95_seq: 2.8307, q_spread: 0.23331 },
-        "125": { q_ave: 2327.26, q_max: 3592, C68_ave: 1.4319, C95_ave: 3.2201, C95_ci: [2.9662, 3.3561], C95_max: 4.9701, C99_ave: 12.4097, C99_ci: [6.2387, 27.0217], C95_seq: 2.9781, q_spread: 0.23098 },
-        "260": { q_ave: 3436.89, q_max: 5326, C68_ave: 1.3845, C95_ave: 3.2260, C95_ci: [2.9921, 3.6741], C95_max: 4.9992, C99_ave: 9.2758, C99_ci: [6.4281, 27.3170], C95_seq: 2.9694, q_spread: 0.22492 },
-        "540": { q_ave: 7336.84, q_max: 10970, C68_ave: 1.3751, C95_ave: 3.1207, C95_ci: [2.8873, 3.3747], C95_max: 4.6661, C99_ave: 11.4591, C99_ci: [6.6826, 62.0904], C95_seq: 2.8434, q_spread: 0.21477 }
-      }
-    },
-    {
-      algo_id: "biqae_bayesian",
-      algorithm_name: "BIQAE (Bayesian IQAE 2024, Beta-Posterior Interval)",
-      family: "bayes-cs",
-      badge: "Bayesian IQAE",
-      track: "adaptive-variable",
-      rounds: "Adaptive (~6)",
-      rounds_num: 6.0,
-      authors: ["Q. Li et al."],
-      affiliation: "Bayesian IQAE Reference",
-      github_handle: "unitaryfoundation",
-      paper_url: "https://arxiv.org/abs/2401.10291",
-      paper_cite: "arXiv:2401.10291 (2024)",
-      submission_path: "leaderboard/submissions/biqae_bayesian/",
-      date: "2024-01-18",
-      status: "CI Verified",
-      repro_cmd: "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/verifier_and_runner.py --mode=verify --submission=leaderboard/submissions/biqae_bayesian",
-      description: "Bayesian Iterative Quantum Amplitude Estimation (BIQAE 2024): replaces frequentist Clopper-Pearson intervals in IQAE with conjugate Beta(k+1, N-k+1) credible intervals and normal-approximation stage transitions.",
-      scales: {
-        "60":  { q_ave: 2410.0, q_max: 5200, C68_ave: 1.8400, C95_ave: 4.4200, C95_ci: [4.1800, 4.6900], C95_max: 9.5360, C99_ave: 9.1500, C99_ci: [7.8000, 11.4000], C95_seq: 4.4200, q_spread: 0.3650 },
-        "125": { q_ave: 5180.0, q_max: 11100, C68_ave: 1.8900, C95_ave: 4.5600, C95_ci: [4.3100, 4.8300], C95_max: 9.7720, C99_ave: 9.6400, C99_ci: [8.2000, 12.1000], C95_seq: 4.5600, q_spread: 0.3710 },
-        "260": { q_ave: 7620.0, q_max: 16200, C68_ave: 1.8600, C95_ave: 4.4900, C95_ci: [4.2500, 4.7600], C95_max: 9.5450, C99_ave: 9.3800, C99_ci: [8.0000, 11.8000], C95_seq: 4.4900, q_spread: 0.3620 },
-        "540": { q_ave: 15840.0, q_max: 33800, C68_ave: 1.8750, C95_ave: 4.5100, C95_ci: [4.2700, 4.7800], C95_max: 9.6230, C99_ave: 9.5200, C99_ci: [8.1000, 12.0000], C95_seq: 4.5100, q_spread: 0.3680 }
-      }
-    },
-    {
-      algo_id: "csae_esprit",
-      algorithm_name: "csAE (Labib et al. 2024, Pow2 + Virtual Array ESPRIT)",
-      family: "bayes-cs",
-      badge: "Compressed Sensing 1R",
-      track: "non-adaptive",
-      rounds: "1 (Parallel)",
-      rounds_num: 1.0,
-      authors: ["Farrokh Labib", "B. D. Clader", "R. Kirby et al."],
-      affiliation: "Tufts / IBM / Unitary Foundation",
-      github_handle: "unitaryfoundation",
-      paper_url: "https://arxiv.org/abs/2405.14697",
-      paper_cite: "arXiv:2405.14697 (2024)",
-      submission_path: "leaderboard/submissions/csae_esprit_labib/",
-      date: "2024-05-23",
-      status: "CI Verified",
-      repro_cmd: "OPENBLAS_NUM_THREADS=1 .venv/bin/python mlqae/compare_to_csae.py",
-      description: "Compressed-Sensing Amplitude Estimation (Labib et al. 2024, arXiv:2405.14697): power-of-two Grover depth schedule with sliding-window sign recovery, 2q-th order virtual uniform linear array (ULA) covariance construction, and ESPRIT frequency estimation.",
-      scales: {
-        "60":  { q_ave: 536.0, q_max: 536, C68_ave: 1.6792, C95_ave: 4.2710, C95_ci: [3.8759, 5.9763], C95_max: 4.2710, C99_ave: 12.2096, C99_ci: [7.5625, 19.0521], C95_seq: 0.2550, q_spread: 0.0 },
-        "125": { q_ave: 2080.0, q_max: 2080, C68_ave: 1.7524, C95_ave: 4.3656, C95_ci: [3.8200, 5.8608], C95_max: 4.3656, C99_ave: 12.3343, C99_ci: [7.0810, 21.4208], C95_seq: 0.2687, q_spread: 0.0 },
-        "260": { q_ave: 8232.0, q_max: 8232, C68_ave: 1.6635, C95_ave: 4.9814, C95_ci: [4.1286, 5.7805], C95_max: 4.9814, C99_ave: 16.2465, C99_ci: [8.8573, 51.1386], C95_seq: 0.3098, q_spread: 0.0 },
-        "540": { q_ave: 32816.0, q_max: 32816, C68_ave: 1.9440, C95_ave: 5.6428, C95_ci: [4.8000, 6.8388], C95_max: 5.6428, C99_ave: 21.7713, C99_ci: [9.5017, 65.0000], C95_seq: 0.3522, q_spread: 0.0 }
-      }
-    },
-    {
-      algo_id: "iqae_cp",
-      algorithm_name: "IQAE-CP (Grinko et al. 2021, Clopper-Pearson Interval)",
-      family: "ci-interval",
-      badge: "Iterative AE Reference",
-      track: "adaptive-variable",
-      rounds: "Adaptive (~5.2)",
-      rounds_num: 5.21,
-      authors: ["D. Grinko", "J. Gacon", "C. Zoufal", "S. Woerner"],
-      affiliation: "ETH Zurich / IBM Quantum",
-      github_handle: "unitaryfoundation",
-      paper_url: "https://doi.org/10.1038/s41534-021-00379-1",
-      paper_cite: "npj Quantum Inf. 7, 52 (2021)",
-      submission_path: "leaderboard/submissions/iqae_grinko/",
-      date: "2021-03-25",
-      status: "CI Verified",
-      repro_cmd: "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/populate_baselines.py",
-      description: "Iterative Quantum Amplitude Estimation (Grinko et al. 2021, npj Quantum Inf. 7, 52; arXiv:1912.05559): adaptive odd-degree Chebyshev interval shrinking with Clopper-Pearson exact Beta confidence intervals (N_shots=100, r=2, alpha=delta/T).",
-      scales: {
-        "60":  { q_ave: 3952.11, q_max: 8700, C68_ave: 2.7002, C95_ave: 6.9483, C95_ci: [6.4616, 7.3932], C95_max: 15.2957, C99_ave: 11.0672, C99_ci: [9.5397, 14.6023], C95_seq: 6.9483, q_spread: 0.41889 },
-        "125": { q_ave: 8652.76, q_max: 17700, C68_ave: 2.7861, C95_ave: 7.0832, C95_ci: [6.5826, 7.5723], C95_max: 14.4894, C99_ave: 20.5578, C99_ci: [12.3254, 42.0000], C95_seq: 7.0832, q_spread: 0.42649 },
-        "260": { q_ave: 12206.69, q_max: 25400, C68_ave: 2.6528, C95_ave: 6.8031, C95_ci: [6.4261, 7.2312], C95_max: 14.1560, C99_ave: 16.0060, C99_ci: [9.9278, 33.9937], C95_seq: 6.8031, q_spread: 0.41171 },
-        "540": { q_ave: 24922.19, q_max: 53000, C68_ave: 2.6091, C95_ave: 6.3709, C95_ci: [6.0453, 6.9450], C95_max: 13.5485, C99_ave: 28.5000, C99_ci: [10.6106, 52.0000], C95_seq: 6.3709, q_spread: 0.44140 }
-      }
-    },
-    {
-      algo_id: "mlae_pow2_suzuki",
-      algorithm_name: "MLAE-Pow2 (Suzuki et al. 2020, Exponential Schedule)",
-      family: "ml-ladder",
-      badge: "Exponential MLAE",
-      track: "non-adaptive",
-      rounds: "1 (Parallel)",
-      rounds_num: 1.0,
-      authors: ["Y. Suzuki", "S. Uno", "R. Raymond", "T. Tanaka", "T. Onodera", "N. Yamamoto"],
-      affiliation: "Keio University / IBM Quantum",
-      github_handle: "unitaryfoundation",
-      paper_url: "https://doi.org/10.1007/s42484-020-00003-z",
-      paper_cite: "Quantum Inf. Process. 19, 75 (2020)",
-      submission_path: "leaderboard/submissions/mlae_pow2_suzuki/",
-      date: "2020-01-15",
-      status: "CI Verified",
-      repro_cmd: "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/populate_baselines.py",
-      description: "Maximum-Likelihood Amplitude Estimation (Suzuki et al. 2020, arXiv:1904.10246) using an exponential power-of-two Grover depth schedule (r=2.0) with uniform shots per rung and exact global ML post-processing.",
-      scales: {
-        "60":  { q_ave: 6400.0, q_max: 6400, C68_ave: 3.5341, C95_ave: 7.7714, C95_ci: [7.6355, 7.9090], C95_max: 7.7714, C99_ave: 13.1059, C99_ci: [12.4479, 13.7994], C95_seq: 0.0777, q_spread: 0.0 },
-        "125": { q_ave: 12800.0, q_max: 12800, C68_ave: 3.6357, C95_ave: 7.9748, C95_ci: [7.7870, 8.0967], C95_max: 7.9748, C99_ave: 13.2034, C99_ci: [12.6076, 14.0774], C95_seq: 0.0797, q_spread: 0.0 },
-        "260": { q_ave: 25600.0, q_max: 25600, C68_ave: 3.5860, C95_ave: 7.8397, C95_ci: [7.6626, 7.9859], C95_max: 7.8397, C99_ave: 13.5858, C99_ci: [12.9008, 14.4720], C95_seq: 0.0784, q_spread: 0.0 },
-        "540": { q_ave: 51200.0, q_max: 51200, C68_ave: 3.6124, C95_ave: 7.9354, C95_ci: [7.7888, 8.0814], C95_max: 7.9354, C99_ave: 13.7724, C99_ci: [13.0033, 14.9232], C95_seq: 0.0794, q_spread: 0.0 }
-      }
-    },
-    {
-      algo_id: "iqae_chernoff",
-      algorithm_name: "IQAE-Chernoff (Grinko et al. 2021, Hoeffding-Chernoff Bound)",
-      family: "ci-interval",
-      badge: "Chernoff IQAE",
-      track: "adaptive-variable",
-      rounds: "Adaptive (~5.8)",
-      rounds_num: 5.8,
-      authors: ["D. Grinko", "J. Gacon", "C. Zoufal", "S. Woerner"],
-      affiliation: "ETH Zurich / IBM Quantum",
-      github_handle: "unitaryfoundation",
-      paper_url: "https://doi.org/10.1038/s41534-021-00379-1",
-      paper_cite: "npj Quantum Inf. 7, 52 (2021)",
-      submission_path: "leaderboard/submissions/iqae_grinko/",
-      date: "2021-03-25",
-      status: "CI Verified",
-      repro_cmd: "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/verifier_and_runner.py --mode=verify --submission=leaderboard/submissions/iqae_grinko",
-      description: "Original analytical Chernoff-Hoeffding confidence interval variant of Iterative Quantum Amplitude Estimation (Grinko et al. 2021, Sec. II): guarantees rigorous union-bound coverage via epsilon_p = sqrt(ln(2T/alpha) / (2 N_shots)).",
-      scales: {
-        "60":  { q_ave: 5840.0, q_max: 12400, C68_ave: 4.1200, C95_ave: 9.8500, C95_ci: [9.3200, 10.4200], C95_max: 20.9100, C99_ave: 15.8000, C99_ci: [14.1000, 18.2000], C95_seq: 9.8500, q_spread: 0.4020 },
-        "125": { q_ave: 12650.0, q_max: 26800, C68_ave: 4.2400, C95_ave: 10.1200, C95_ci: [9.5800, 10.7100], C95_max: 21.4400, C99_ave: 16.4000, C99_ci: [14.6000, 19.1000], C95_seq: 10.1200, q_spread: 0.4110 },
-        "260": { q_ave: 18420.0, q_max: 38900, C68_ave: 4.1800, C95_ave: 9.9400, C95_ci: [9.4100, 10.5200], C95_max: 20.9900, C99_ave: 16.1000, C99_ci: [14.3000, 18.7000], C95_seq: 9.9400, q_spread: 0.4050 },
-        "540": { q_ave: 38100.0, q_max: 80400, C68_ave: 4.2100, C95_ave: 10.0500, C95_ci: [9.5200, 10.6300], C95_max: 21.2100, C99_ave: 16.3000, C99_ci: [14.5000, 18.9000], C95_seq: 10.0500, q_spread: 0.4080 }
-      }
-    },
-    {
-      algo_id: "fae_nakaji",
-      algorithm_name: "FAE (Nakaji 2020, Faster Amplitude Estimation)",
-      family: "ci-interval",
-      badge: "Two-Stage Cosine AE",
-      track: "adaptive-variable",
-      rounds: "Adaptive (~7)",
-      rounds_num: 7.0,
-      authors: ["Kouhei Nakaji"],
-      affiliation: "Keio University",
-      github_handle: "unitaryfoundation",
-      paper_url: "https://arxiv.org/abs/2003.02417",
-      paper_cite: "Quantum Inf. Comput. 20, 1109 (2020)",
-      submission_path: "leaderboard/submissions/fae_nakaji/",
-      date: "2020-03-05",
-      status: "CI Verified",
-      repro_cmd: "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/verifier_and_runner.py --mode=verify --submission=leaderboard/submissions/fae_nakaji",
-      description: "Faster Amplitude Estimation (Nakaji 2020, arXiv:2003.02417): two-stage power-of-two iterative cosine estimation using direct arccos inversion in Stage 1 while monotone, followed by two-depth quadrant disambiguation in Stage 2.",
-      scales: {
-        "60":  { q_ave: 7120.0, q_max: 14200, C68_ave: 5.1500, C95_ave: 11.4500, C95_ci: [10.8000, 12.1500], C95_max: 22.8400, C99_ave: 19.4000, C99_ci: [17.1000, 22.8000], C95_seq: 11.4500, q_spread: 0.3450 },
-        "125": { q_ave: 15200.0, q_max: 30100, C68_ave: 5.2800, C95_ave: 11.7800, C95_ci: [11.1200, 12.4800], C95_max: 23.3300, C99_ave: 20.1000, C99_ci: [17.7000, 23.6000], C95_seq: 11.7800, q_spread: 0.3510 },
-        "260": { q_ave: 22400.0, q_max: 44200, C68_ave: 5.2100, C95_ave: 11.6200, C95_ci: [10.9600, 12.3100], C95_max: 22.9300, C99_ave: 19.8000, C99_ci: [17.4000, 23.2000], C95_seq: 11.6200, q_spread: 0.3480 },
-        "540": { q_ave: 46800.0, q_max: 92400, C68_ave: 5.2400, C95_ave: 11.7100, C95_ci: [11.0500, 12.4100], C95_max: 23.1200, C99_ave: 19.9500, C99_ci: [17.5000, 23.4000], C95_seq: 11.7100, q_spread: 0.3490 }
-      }
-    },
-    {
-      algo_id: "mlae_linear_suzuki",
-      algorithm_name: "MLAE-Linear (Suzuki et al. 2020, Linear Schedule m_k = k)",
-      family: "ml-ladder",
-      badge: "O(1/ε^(4/3)) Schedule",
-      track: "non-adaptive",
-      rounds: "1 (Parallel)",
-      rounds_num: 1.0,
-      authors: ["Y. Suzuki", "S. Uno", "R. Raymond", "T. Tanaka", "T. Onodera", "N. Yamamoto"],
-      affiliation: "Keio University / IBM Quantum",
-      github_handle: "unitaryfoundation",
-      paper_url: "https://doi.org/10.1007/s42484-020-00003-z",
-      paper_cite: "Quantum Inf. Process. 19, 75 (2020)",
-      submission_path: "leaderboard/submissions/mlae_linear_suzuki/",
-      date: "2020-01-15",
-      status: "CI Verified",
-      repro_cmd: "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/verifier_and_runner.py --mode=verify --submission=leaderboard/submissions/mlae_linear_suzuki",
-      description: "Linear Grover depth schedule m_k = k (k = 0, 1, ..., M) with uniform shots per rung and exact global ML estimation (Suzuki et al. 2020). Suppresses aliasing without adaptivity, but total queries scale sub-Heisenberg as O(M^2) -> O(1/eps^(4/3)).",
-      scales: {
-        "60":  { q_ave: 3662.0, q_max: 3662, C68_ave: 5.4200, C95_ave: 11.8400, C95_ci: [11.4200, 12.2800], C95_max: 11.8400, C99_ave: 15.9200, C99_ci: [15.1000, 16.8000], C95_seq: 0.1940, q_spread: 0.0 },
-        "125": { q_ave: 15752.0, q_max: 15752, C68_ave: 7.6800, C95_ave: 16.7500, C95_ci: [16.1500, 17.3800], C95_max: 16.7500, C99_ave: 22.4000, C99_ci: [21.2000, 23.7000], C95_seq: 0.1329, q_spread: 0.0 },
-        "260": { q_ave: 67862.0, q_max: 67862, C68_ave: 10.9500, C95_ave: 23.8500, C95_ci: [23.0100, 24.7200], C95_max: 23.8500, C99_ave: 31.9000, C99_ci: [30.2000, 33.7000], C95_seq: 0.0914, q_spread: 0.0 },
-        "540": { q_ave: 292142.0, q_max: 292142, C68_ave: 15.6200, C95_ave: 34.1200, C95_ci: [32.9000, 35.3800], C95_max: 34.1200, C99_ave: 45.6000, C99_ci: [43.2000, 48.1000], C95_seq: 0.0631, q_spread: 0.0 }
-      }
-    },
-
-    // =========================================================================
-    // PUBLISHED DEPTH-LIMITED & DEPOLARIZING NOISY BASELINES (arXiv:2609.02715)
-    // =========================================================================
-    {
-      algo_id: "nonadapt_uniform_depth_cap",
-      algorithm_name: "mlqae-UniformCap (Labib 2026, Capped Uniform Scaling)",
-      family: "ml-ladder",
-      badge: "1R Depth-Cap Baseline",
-      track: "depth-limited",
-      rounds: "1 (Parallel)",
-      rounds_num: 1.0,
-      authors: ["Farrokh Labib"],
-      affiliation: "Unitary Foundation",
-      github_handle: "farrokhlabib",
-      paper_url: "https://arxiv.org/abs/2609.02715",
-      paper_cite: "arXiv:2609.02715 (2026)",
-      submission_path: "leaderboard/submissions/mlqae_flagship_labib/",
-      date: "2026-09-04",
-      status: "CI Verified",
-      repro_cmd: "OPENBLAS_NUM_THREADS=1 .venv/bin/python mlqae/depth_tradeoff.py 4",
-      description: "Non-adaptive depth-limited schedule capping the r=1.45 ladder at M and scaling all canonical shots uniformly by s. Achieves exponentially clean tails and Ctilde95 = eps95^2*M*Ntot = 0.39–0.58 (Table III of arXiv:2609.02715).",
-      scales: {
-        "60":  { q_ave: 2440.0, q_max: 2440, C68_ave: 1.3800, C95_ave: 2.9400, C95_ci: [2.8600, 3.0200], C95_max: 2.9400, C99_ave: 4.1200, C99_ci: [3.9200, 4.3400], C95_seq: 0.2140, q_spread: 0.0 },
-        "125": { q_ave: 4968.0, q_max: 4968, C68_ave: 1.3950, C95_ave: 2.9750, C95_ci: [2.8900, 3.0600], C95_max: 2.9750, C99_ave: 4.1800, C99_ci: [3.9700, 4.4000], C95_seq: 0.2150, q_spread: 0.0 },
-        "260": { q_ave: 9760.0, q_max: 9760, C68_ave: 1.4020, C95_ave: 2.9900, C95_ci: [2.9100, 3.0700], C95_max: 2.9900, C99_ave: 4.2100, C99_ci: [4.0000, 4.4300], C95_seq: 0.2160, q_spread: 0.0 },
-        "540": { q_ave: 19872.0, q_max: 19872, C68_ave: 1.4100, C95_ave: 3.0120, C95_ci: [2.9300, 3.0900], C95_max: 3.0120, C99_ave: 4.2400, C99_ci: [4.0300, 4.4600], C95_seq: 0.2170, q_spread: 0.0 }
-      }
-    },
-    {
-      algo_id: "mlqae_flagship_noise_aware",
-      algorithm_name: "mlqae-flagship (Labib 2026, Noise-Aware Likelihood)",
-      family: "ml-ladder",
-      badge: "1R Noisy Baseline",
-      track: "noisy",
-      rounds: "1 (Parallel)",
-      rounds_num: 1.0,
-      authors: ["Farrokh Labib"],
-      affiliation: "Unitary Foundation",
-      github_handle: "farrokhlabib",
-      paper_url: "https://arxiv.org/abs/2609.02715",
-      paper_cite: "arXiv:2609.02715 (2026)",
-      submission_path: "leaderboard/submissions/mlqae_flagship_labib/",
-      date: "2026-09-04",
-      status: "CI Verified",
-      repro_cmd: "OPENBLAS_NUM_THREADS=1 .venv/bin/python mlqae/final_numbers.py",
-      description: "Non-adaptive flagship schedule evaluated under per-oracle depolarizing noise using the exact damped-visibility likelihood p_eta(n,theta) = V_n cos^2((2n+1)theta) + (1-V_n)/2 (Table IV of arXiv:2609.02715).",
-      scales: {
-        "60":  { q_ave: 1823.0, q_max: 1823, C68_ave: 1.4800, C95_ave: 3.2800, C95_ci: [3.1900, 3.3700], C95_max: 3.2800, C99_ave: 6.1200, C99_ci: [5.7500, 6.5200], C95_seq: 0.2540, q_spread: 0.0 },
-        "125": { q_ave: 2502.0, q_max: 2502, C68_ave: 1.6400, C95_ave: 3.6500, C95_ci: [3.5500, 3.7500], C95_max: 3.6500, C99_ave: 6.9500, C99_ci: [6.5000, 7.4200], C95_seq: 0.2680, q_spread: 0.0 },
-        "260": { q_ave: 3893.0, q_max: 3893, C68_ave: 1.8200, C95_ave: 4.0400, C95_ci: [3.9300, 4.1500], C95_max: 4.0400, C99_ave: 7.8400, C99_ci: [7.3500, 8.3800], C95_seq: 0.2850, q_spread: 0.0 },
-        "540": { q_ave: 5325.0, q_max: 5325, C68_ave: 2.0100, C95_ave: 4.4600, C95_ci: [4.3400, 4.5800], C95_max: 4.4600, C99_ave: 8.7600, C99_ci: [8.2000, 9.3500], C95_seq: 0.3040, q_spread: 0.0 }
-      }
+// ---------- data ----------
+function constantsFor(e, sc){
+  // returns {Q68,Q95,Q99,D68,D95,D99,q,depth,rounds,ci95} for one scale or the mean of scales
+  const scales = sc === "mean" ? Object.keys(e.scales) : [sc];
+  const acc = { Q68: [], Q95: [], Q99: [], D68: [], D95: [], D99: [], q: [], depth: [], rounds: [], lo: [], hi: [] };
+  for(const k of scales){
+    const s = e.scales[k]; if(!s) continue;
+    const q = s.q_mean ?? s.q_ave, dep = s.seq_depth_mean ?? s.max_depth_mean ?? s.scale_nmax;
+    for(const d of DELTAS){
+      const eps = s["eps" + d];
+      acc["Q" + d].push(s["C" + d + "_ave"] ?? eps * q);
+      acc["D" + d].push(eps * dep);
     }
-  ]
-};
-
-let entries = [];
-let familyFilter = "all";
-let trackFilter = "all";
-let scaleFilter = "mean";
-let searchQuery = "";
-let xAxisMode = "log";
-let rightChartMode = "tail";
-let sortCol = "C95_ave";
-let sortAsc = true;
-let selectedId = "mlqae_flagship";
-let hoveredId = null;
-let paretoPoints = [];
-let rightPoints = [];
-
-function tok(name){
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
-
-function normalizeTrack(t){
-  if(!t) return "non-adaptive";
-  const s = String(t).toLowerCase().trim();
-  if(s.includes("semi") || s.includes("2-3") || s.includes("two")) return "semi-adaptive";
-  if(s.includes("fixed")) return "adaptive-fixed-budget";
-  if(s.includes("var") || s === "adaptive_heisenberg" || s === "adaptive") return "adaptive-variable";
-  if(s.includes("depth")) return "depth-limited";
-  if(s.includes("nois")) return "noisy";
-  return "non-adaptive";
-}
-
-function inferFamily(item){
-  if(item.family && FAMILY_META[item.family]) return item.family;
-  const id = String(item.algo_id || "").toLowerCase();
-  if(id.includes("iqae") || id.includes("cheb") || id.includes("fae")) return "ci-interval";
-  if(id.includes("bae") || id.includes("biqae") || id.includes("csae")) return "bayes-cs";
-  return "ml-ladder";
-}
-
-function inferPaperCite(item){
-  if(item.paper_cite) return item.paper_cite;
-  const u = String(item.paper_url || "");
-  if(u.includes("2609.02715")) return "arXiv:2609.02715 (2026)";
-  if(u.includes("2405.14697")) return "arXiv:2405.14697 (2024)";
-  if(u.includes("1904.10246") || u.includes("s42484-020")) return "QIP 19, 75 (2020)";
-  if(u.includes("s41534-021") || u.includes("1912.05559")) return "npj QI 7, 52 (2021)";
-  if(u.includes("q-2023-03-02-937") || u.includes("2207.08628")) return "Quantum 7, 937 (2023)";
-  if(u.includes("2003.02417")) return "QIC 20, 1109 (2020)";
-  if(u.includes("2401.10291")) return "arXiv:2401.10291 (2024)";
-  if(u.includes("2401.05172")) return "Quantum 8, 1512 (2024)";
-  return "arXiv:2609.02715";
-}
-
-function computeMeanMetrics(scalesObj){
-  const keys = SCALES.filter(k => scalesObj && scalesObj[k]);
-  if(!keys.length) return null;
-  const avg = fn => keys.reduce((acc, k) => acc + fn(scalesObj[k]), 0) / keys.length;
-  return {
-    q_ave: avg(s => s.q_ave ?? s.q_mean ?? 0),
-    q_max: avg(s => s.q_max ?? s.q_ave ?? s.q_mean ?? 0),
-    C68_ave: avg(s => s.C68_ave),
-    C95_ave: avg(s => s.C95_ave),
-    C95_ci: [
-      avg(s => ((s.C95_ci || s.C95_ave_ci) ? (s.C95_ci || s.C95_ave_ci)[0] : s.C95_ave * 0.975)),
-      avg(s => ((s.C95_ci || s.C95_ave_ci) ? (s.C95_ci || s.C95_ave_ci)[1] : s.C95_ave * 1.025))
-    ],
-    C95_max: avg(s => s.C95_max ?? s.C95_ave),
-    C99_ave: avg(s => s.C99_ave),
-    C99_ci: [
-      avg(s => ((s.C99_ci || s.C99_ave_ci) ? (s.C99_ci || s.C99_ave_ci)[0] : s.C99_ave * 0.94)),
-      avg(s => ((s.C99_ci || s.C99_ave_ci) ? (s.C99_ci || s.C99_ave_ci)[1] : s.C99_ave * 1.06))
-    ],
-    C95_seq: avg(s => s.C95_seq ?? s.C95_par ?? s.C95_ave),
-    q_spread: avg(s => s.q_spread ?? s.query_spread ?? 0)
-  };
-}
-
-function hydrateEntries(rawList){
-  return rawList.map(item => {
-    const copy = Object.assign({}, item);
-    const rawId = copy.algo_id || copy.id || "";
-    copy.algo_id = ALIAS_MAP[rawId] || rawId;
-    copy.track = normalizeTrack(copy.track);
-    copy.family = inferFamily(copy);
-    copy.paper_cite = inferPaperCite(copy);
-    if(!copy.paper_url) copy.paper_url = "https://arxiv.org/abs/2609.02715";
-    if(!copy.submission_path) copy.submission_path = `leaderboard/submissions/${copy.algo_id}/`;
-    if(copy.scales){
-      const normScales = {};
-      for(const k of Object.keys(copy.scales)){
-        const s = Object.assign({}, copy.scales[k]);
-        if(s.q_ave === undefined && s.q_mean !== undefined) s.q_ave = s.q_mean;
-        if(s.q_max === undefined) s.q_max = s.q_ave || 0;
-        if(!s.C95_ci && s.C95_ave_ci) s.C95_ci = s.C95_ave_ci;
-        if(!s.C99_ci && s.C99_ave_ci) s.C99_ci = s.C99_ave_ci;
-        if(s.q_spread === undefined && s.query_spread !== undefined) s.q_spread = s.query_spread;
-        if(s.C95_seq === undefined && s.C95_par !== undefined) s.C95_seq = s.C95_par;
-        normScales[String(k)] = s;
-      }
-      copy.scales = normScales;
-    }
-    if(!copy.rounds){
-      const rn = copy.num_rounds_mean ?? copy.rounds_num ?? 1;
-      copy.rounds_num = rn;
-      copy.rounds = rn === 1 ? "1 (Parallel)" : (Number.isInteger(rn) ? `${rn} Rounds` : `~${rn.toFixed(1)} Rnds`);
-    }
-    if(!copy.repro_cmd){
-      copy.repro_cmd = "OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/populate_baselines.py";
-    }
-    copy.mean = computeMeanMetrics(copy.scales);
-    return copy;
-  });
-}
-
-function getActiveMetrics(entry){
-  if(scaleFilter === "mean" || !entry.scales || !entry.scales[scaleFilter]){
-    return entry.mean;
+    acc.q.push(q); acc.depth.push(dep); acc.rounds.push(s.num_rounds_mean ?? 1);
+    const ci = s.C95_ave_ci || s.C95_ci; if(ci){ acc.lo.push(ci[0]); acc.hi.push(ci[1]); }
   }
-  return entry.scales[scaleFilter];
+  const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN;
+  const out = {};
+  for(const k in acc) out[k] = mean(acc[k]);
+  out.n = acc.q.length;
+  return out;
 }
 
-function getFilteredAndSorted(){
-  const q = searchQuery.toLowerCase().trim();
-  const filtered = entries.filter(e => {
-    if(familyFilter !== "all" && e.family !== familyFilter) return false;
-    if(trackFilter !== "all" && e.track !== trackFilter) return false;
-    if(q){
-      const hay = `${e.algorithm_name} ${e.algo_id} ${(e.authors||[]).join(" ")} ${e.affiliation||""} ${e.paper_cite||""} ${e.badge||""} ${e.description||""}`.toLowerCase();
-      if(!hay.includes(q)) return false;
+function paretoSet(list, keys){
+  // ids not dominated by any other entry on the given keys (all <=, one <)
+  const ids = new Set();
+  for(const a of list){
+    let dominated = false;
+    for(const b of list){
+      if(a === b) continue;
+      const le = keys.every(k => b.m[k] <= a.m[k] + 1e-9);
+      const lt = keys.some(k => b.m[k] < a.m[k] - 1e-9);
+      if(le && lt){ dominated = true; break; }
     }
-    return true;
-  });
-
-  // Compute rank by C95_ave ascending first
-  const byC95 = [...filtered].sort((a, b) => getActiveMetrics(a).C95_ave - getActiveMetrics(b).C95_ave);
-  const rankMap = new Map();
-  byC95.forEach((e, idx) => rankMap.set(e.algo_id, idx + 1));
-
-  filtered.sort((a, b) => {
-    const ma = getActiveMetrics(a), mb = getActiveMetrics(b);
-    let va, vb;
-    switch(sortCol){
-      case "rank": va = rankMap.get(a.algo_id); vb = rankMap.get(b.algo_id); break;
-      case "name": va = a.algorithm_name.toLowerCase(); vb = b.algorithm_name.toLowerCase(); break;
-      case "track": va = a.track; vb = b.track; break;
-      case "author": va = (a.authors||[""])[0].toLowerCase(); vb = (b.authors||[""])[0].toLowerCase(); break;
-      case "rounds": va = a.rounds_num || 1; vb = b.rounds_num || 1; break;
-      case "C68_ave": va = ma.C68_ave; vb = mb.C68_ave; break;
-      case "C95_ave": va = ma.C95_ave; vb = mb.C95_ave; break;
-      case "C95_max": va = ma.C95_max; vb = mb.C95_max; break;
-      case "C99_ave": va = ma.C99_ave; vb = mb.C99_ave; break;
-      case "C95_seq": va = ma.C95_seq; vb = mb.C95_seq; break;
-      case "q_spread": va = ma.q_spread; vb = mb.q_spread; break;
-      default: va = ma.C95_ave; vb = mb.C95_ave;
-    }
-    if(va < vb) return sortAsc ? -1 : 1;
-    if(va > vb) return sortAsc ? 1 : -1;
-    return 0;
-  });
-
-  return { list: filtered, rankMap };
-}
-
-function computeParetoSet(list){
-  const pts = list.map(e => {
-    const m = getActiveMetrics(e);
-    return { id: e.algo_id, seq: m.C95_seq, c95: m.C95_ave, entry: e, m };
-  }).sort((a, b) => a.seq - b.seq || a.c95 - b.c95);
-
-  const frontier = [];
-  let bestC95 = Infinity;
-  for(const p of pts){
-    if(p.c95 < bestC95 - 1e-6){
-      frontier.push(p);
-      bestC95 = p.c95;
-    }
+    if(!dominated) ids.add(a.algo_id);
   }
-  return frontier;
+  return ids;
 }
 
-function sizeCanvas(cv){
-  const dpr = window.devicePixelRatio || 1;
-  const H = +cv.dataset.h;
-  cv.style.height = H + "px";
-  const W = cv.clientWidth || 540;
-  cv.width = Math.round(W * dpr);
-  cv.height = Math.round(H * dpr);
-  const ctx = cv.getContext("2d");
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  return { ctx, W, H };
+function prepare(){
+  entries = DATA.entries.filter(e => e.scales && TRACKS[e.track]).map(e => Object.assign({}, e));
+  for(const e of entries){
+    e.m = constantsFor(e, scale);
+    e.short = (e.algorithm_name || e.algo_id).split(" (")[0];
+    e.col = tok(TRACKS[e.track].v);
+  }
+  const Q = paretoSet(entries, ["Q68", "Q95", "Q99"]);
+  const D = paretoSet(entries, ["D68", "D95", "D99"]);
+  for(const e of entries){ e.pQ = Q.has(e.algo_id); e.pD = D.has(e.algo_id); e.visible = trackFilter === "all" || e.track === trackFilter; }
+  const byQ95 = entries.slice().sort((a, b) => a.m.Q95 - b.m.Q95);
+  byQ95.forEach((e, i) => e.rank = i + 1);
 }
 
-function drawParetoChart(list){
-  const cv = $("cvPareto");
-  const { ctx, W, H } = sizeCanvas(cv);
-  ctx.clearRect(0, 0, W, H);
-  const pad = { l: 48, r: 22, t: 18, b: 34 };
-  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
-
-  const xMin = 0.06, xMax = 12.5;
-  const yMin = 1.45, yMax = 12.5;
-
-  const mapX = v => {
-    const vc = Math.min(Math.max(v, xMin), xMax);
-    if(xAxisMode === "log"){
-      return pad.l + ((Math.log(vc) - Math.log(xMin)) / (Math.log(xMax) - Math.log(xMin))) * pw;
-    }
-    return pad.l + ((vc - xMin) / (xMax - xMin)) * pw;
-  };
-  const mapY = v => pad.t + (1 - (Math.min(Math.max(v, yMin), yMax) - yMin) / (yMax - yMin)) * ph;
-
-  ctx.strokeStyle = tok("--grid");
-  ctx.lineWidth = 1;
-  const xTicks = xAxisMode === "log" ? [0.08, 0.2, 0.5, 1.0, 3.0, 10.0] : [0.2, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0];
-  ctx.font = '11px "IBM Plex Mono", monospace';
-  ctx.fillStyle = tok("--muted");
-
-  for(const xt of xTicks){
-    const X = Math.round(mapX(xt)) + 0.5;
-    ctx.beginPath(); ctx.moveTo(X, pad.t); ctx.lineTo(X, H - pad.b); ctx.stroke();
-    ctx.textAlign = "center";
-    ctx.fillText(xt < 1 ? xt.toFixed(2) : xt.toFixed(1), X, H - pad.b + 14);
+// ---------- svg helpers ----------
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, text){
+  const n = document.createElementNS(NS, tag);
+  for(const k in attrs) n.setAttribute(k, attrs[k]);
+  if(text != null) n.textContent = text;
+  return n;
+}
+function logTicks(lo, hi, px){
+  // fewer ticks when the axis is short (px = pixel length of the axis)
+  const decades = Math.log10(hi) - Math.log10(lo);
+  const mults = (px / decades) > 150 ? [1, 2, 5] : ((px / decades) > 80 ? [1, 3] : [1]);
+  const t = [];
+  for(let p = Math.floor(Math.log10(lo)); p <= Math.ceil(Math.log10(hi)); p++)
+    for(const m of mults){ const v = m * Math.pow(10, p); if(v >= lo && v <= hi) t.push(v); }
+  return t;
+}
+// text with sub/superscripts: "C{95}^{Q}" -> C<sub>95</sub><sup>Q</sup>
+function richText(attrs, str){
+  const t = el("text", attrs);
+  const re = /\{([^}]*)\}(\^\{([^}]*)\})?/g; let last = 0, m;
+  while((m = re.exec(str))){
+    if(m.index > last) t.appendChild(document.createTextNode(str.slice(last, m.index)));
+    const sb = el("tspan", { dy: "3", "font-size": "8.5px" }, m[1]); t.appendChild(sb);
+    if(m[3]){ const sp = el("tspan", { dy: "-7", "font-size": "8.5px" }, m[3]); t.appendChild(sp); t.appendChild(el("tspan", { dy: "4" }, "")); }
+    else t.appendChild(el("tspan", { dy: "-3" }, ""));
+    last = re.lastIndex;
   }
-  const yTicks = [2.0, 4.0, 6.0, 8.0, 10.0, 12.0];
-  for(const yt of yTicks){
-    const Y = Math.round(mapY(yt)) + 0.5;
-    ctx.beginPath(); ctx.moveTo(pad.l, Y); ctx.lineTo(W - pad.r, Y); ctx.stroke();
-    ctx.textAlign = "right";
-    ctx.fillText(yt.toFixed(1), pad.l - 6, Y + 3.5);
-  }
+  if(last < str.length) t.appendChild(document.createTextNode(str.slice(last)));
+  return t;
+}
+const tickFmt = v => v >= 10 ? String(Math.round(v)) : (v >= 1 ? v.toFixed(0) : v.toFixed(v >= 0.1 ? 1 : 2));
 
-  // Theoretical Bound Horizontal Lines (CRLB & Ziv-Zakai)
-  const bounds = [
-    { y: 1.668, label: "Canonical CRLB (1.67)", color: tok("--good") },
-    { y: 1.940, label: "Ziv–Zakai Bound (1.94)", color: tok("--muted") }
-  ];
+const tip = $("tip");
+function showTip(html, x, y){
+  tip.innerHTML = html; tip.style.opacity = 1;
+  const r = tip.getBoundingClientRect();
+  tip.style.left = Math.min(x + 14, innerWidth - r.width - 8) + "px";
+  tip.style.top = Math.max(8, Math.min(y - 10, innerHeight - r.height - 8)) + "px";
+}
+function hideTip(){ tip.style.opacity = 0; }
+function tipHtml(e){
+  const m = e.m;
+  return `<b>${e.algorithm_name}</b><br><span class="mono">${TRACKS[e.track].label} · ${m.rounds <= 1.0001 ? "1 round" : "~" + m.rounds.toFixed(1) + " rounds"}</span><br>` +
+    `<span class="mono">Q: ${fmt(m.Q68)} / ${fmt(m.Q95)} / ${fmt(m.Q99)}</span><br>` +
+    `<span class="mono">D: ${fmt(m.D68, 3)} / ${fmt(m.D95, 3)} / ${fmt(m.D99, 3)}</span><br>` +
+    `<span class="mono">⟨queries⟩ ${Math.round(m.q)} · ⟨depth⟩ ${Math.round(m.depth)}</span>`;
+}
+function bindHover(node, e){
+  node.addEventListener("mousemove", ev => { hoverId = e.algo_id; showTip(tipHtml(e), ev.clientX, ev.clientY); });
+  node.addEventListener("mouseleave", () => { hoverId = null; hideTip(); });
+  node.addEventListener("click", () => { selectedId = selectedId === e.algo_id ? null : e.algo_id; render(); scrollRowIntoView(); });
+}
+
+// ---------- trade-off scatter ----------
+function drawTrade(){
+  const svg = $("svgTrade"); svg.innerHTML = "";
+  const W = Math.max(520, svg.clientWidth || 900), H = 360;
+  const pad = { l: 52, r: 24, t: 14, b: 40 };
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const kx = "D" + delta, ky = "Q" + delta;
+  const xs = entries.map(e => e.m[kx]), ys = entries.map(e => e.m[ky]);
+  const xlo = Math.min(...xs) / 1.6, xhi = Math.max(...xs) * 1.6;
+  const ylo = Math.min(kappa[delta] / 1.25, Math.min(...ys) / 1.2), yhi = Math.max(...ys) * 1.3;
+  const X = v => pad.l + (Math.log(v) - Math.log(xlo)) / (Math.log(xhi) - Math.log(xlo)) * (W - pad.l - pad.r);
+  const Y = v => pad.t + (1 - (Math.log(v) - Math.log(ylo)) / (Math.log(yhi) - Math.log(ylo))) * (H - pad.t - pad.b);
+
+  for(const v of logTicks(xlo, xhi, W - pad.l - pad.r)){
+    svg.appendChild(el("line", { class: "grid", x1: X(v), x2: X(v), y1: pad.t, y2: H - pad.b }));
+    svg.appendChild(el("text", { x: X(v), y: H - pad.b + 14, "text-anchor": "middle" }, tickFmt(v)));
+  }
+  for(const v of logTicks(ylo, yhi, H - pad.t - pad.b)){
+    svg.appendChild(el("line", { class: "grid", x1: pad.l, x2: W - pad.r, y1: Y(v), y2: Y(v) }));
+    svg.appendChild(el("text", { x: pad.l - 7, y: Y(v) + 4, "text-anchor": "end" }, tickFmt(v)));
+  }
+  svg.appendChild(el("line", { class: "axis", x1: pad.l, x2: W - pad.r, y1: H - pad.b, y2: H - pad.b }));
+  svg.appendChild(el("line", { class: "axis", x1: pad.l, x2: pad.l, y1: pad.t, y2: H - pad.b }));
+  svg.appendChild(richText({ x: pad.l + (W - pad.l - pad.r) / 2, y: H - 6, "text-anchor": "middle" }, `Depth constant C{${delta}}^{D} = ε{${delta}} · ⟨sequential depth⟩`));
+  svg.appendChild(richText({ x: 12, y: pad.t + (H - pad.t - pad.b) / 2, "text-anchor": "middle", transform: `rotate(-90 12 ${pad.t + (H - pad.t - pad.b) / 2})` }, `Query constant C{${delta}}^{Q} = ε{${delta}} · ⟨total queries⟩`));
+
+  // bounds
+  const bounds = [{ y: kappa[delta], label: `CRLB κ${delta} = ${kappa[delta].toFixed(2)}` }];
+  if(delta === 95) bounds.push({ y: 1.94, label: "Ziv–Zakai 1.94" });
   for(const b of bounds){
-    const Y = mapY(b.y);
-    ctx.save();
-    ctx.strokeStyle = b.color;
-    ctx.lineWidth = 1.2;
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.moveTo(pad.l, Y); ctx.lineTo(W - pad.r, Y); ctx.stroke();
-    ctx.fillStyle = b.color;
-    ctx.textAlign = "right";
-    ctx.font = '10.5px "IBM Plex Mono", monospace';
-    ctx.fillText(b.label, W - pad.r - 4, Y - 3);
-    ctx.restore();
+    if(b.y < ylo || b.y > yhi) continue;
+    svg.appendChild(el("line", { class: "bound", x1: pad.l, x2: W - pad.r, y1: Y(b.y), y2: Y(b.y) }));
+    svg.appendChild(el("text", { class: "bound-lbl", x: W - pad.r - 4, y: Y(b.y) - 4, "text-anchor": "end" }, b.label));
   }
 
-  // Pareto frontier curve
-  const frontier = computeParetoSet(list);
-  if(frontier.length > 1){
-    ctx.save();
-    ctx.strokeStyle = tok("--ink2");
-    ctx.lineWidth = 1.6;
-    ctx.setLineDash([5, 3]);
-    ctx.beginPath();
-    frontier.forEach((p, idx) => {
-      const X = mapX(p.seq), Y = mapY(p.c95);
-      if(idx === 0) ctx.moveTo(X, Y);
-      else ctx.lineTo(X, Y);
-    });
-    ctx.stroke();
-    ctx.restore();
+  // 2-D frontier over ALL entries (filter only dims)
+  const pts = entries.slice().sort((a, b) => a.m[kx] - b.m[kx] || a.m[ky] - b.m[ky]);
+  const front = []; let best = Infinity;
+  for(const p of pts){ if(p.m[ky] < best - 1e-9){ front.push(p); best = p.m[ky]; } }
+  if(front.length > 1){
+    svg.appendChild(el("path", { class: "frontier", d: front.map((p, i) => (i ? "L" : "M") + X(p.m[kx]) + " " + Y(p.m[ky])).join(" ") }));
   }
+  const frontIds = new Set(front.map(p => p.algo_id));
 
-  paretoPoints = [];
-  for(const e of list){
-    const m = getActiveMetrics(e);
-    const X = mapX(m.C95_seq);
-    const Y = mapY(m.C95_ave);
-    const tmeta = TRACK_META[e.track] || TRACK_META["non-adaptive"];
-    const col = tok(tmeta.colorVar);
-    const isSel = e.algo_id === selectedId;
-    const isHov = e.algo_id === hoveredId;
-
-    paretoPoints.push({ id: e.algo_id, x: X, y: Y, entry: e, m });
-
-    if(isSel || isHov){
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(X, Y, isSel ? 10 : 8, 0, Math.PI * 2);
-      ctx.fillStyle = col;
-      ctx.globalAlpha = 0.22;
-      ctx.fill();
-      ctx.restore();
+  // points, labels with simple collision nudging
+  const placed = [];
+  const ordered = entries.slice().sort((a, b) => (a.algo_id === selectedId) - (b.algo_id === selectedId));
+  for(const e of ordered){
+    const cx = X(e.m[kx]), cy = Y(e.m[ky]);
+    const sel = e.algo_id === selectedId || e.algo_id === hoverId;
+    const dim = !e.visible;
+    const g = el("g", {});
+    g.appendChild(el("circle", { class: "pt" + (dim ? " dim" : "") + (sel ? " sel" : ""), cx, cy, r: sel ? 7 : 5.5, fill: e.col }));
+    if(!dim){
+      let lx = cx + 9, ly = cy + 4, anchor = "start";
+      if(cx > W - pad.r - 110){ lx = cx - 9; anchor = "end"; }
+      for(let tries = 0; tries < 6; tries++){
+        const clash = placed.some(p => Math.abs(p.y - ly) < 12 && Math.abs(p.x - lx) < 95);
+        if(!clash) break;
+        ly += 12;
+      }
+      placed.push({ x: lx, y: ly });
+      g.appendChild(el("text", { class: "lbl" + (sel ? " sel" : ""), x: lx, y: ly, "text-anchor": anchor }, e.short + (frontIds.has(e.algo_id) ? " ★" : "")));
     }
-
-    ctx.beginPath();
-    ctx.arc(X, Y, isSel ? 6 : (isHov ? 5.5 : 4.5), 0, Math.PI * 2);
-    ctx.fillStyle = col;
-    ctx.fill();
-    ctx.lineWidth = isSel ? 2 : 1.2;
-    ctx.strokeStyle = isSel ? tok("--ink") : tok("--panel");
-    ctx.stroke();
-
-    if(isSel || isHov || ["mlqae_plain", "mlqae_flagship", "bae_adaptive", "chebae", "csae_esprit", "iqae_cp", "mlae_pow2_suzuki", "fae_nakaji"].includes(e.algo_id)){
-      ctx.save();
-      ctx.font = (isSel ? '600 ' : '400 ') + '10.5px "IBM Plex Mono", monospace';
-      ctx.fillStyle = isSel ? tok("--ink") : tok("--ink2");
-      ctx.textAlign = X > W - 135 ? "right" : "left";
-      const dx = X > W - 135 ? -8 : 8;
-      const shortName = e.algorithm_name.split(" (")[0];
-      ctx.fillText(shortName, X + dx, Y + 3);
-      ctx.restore();
-    }
+    g.appendChild(el("circle", { class: "hit", cx, cy, r: 14 }));
+    bindHover(g, e);
+    svg.appendChild(g);
   }
 
-  ctx.fillStyle = tok("--muted");
-  ctx.font = '11px "IBM Plex Mono", monospace';
-  ctx.textAlign = "center";
-  ctx.fillText("Sequential Depth Constant C95_seq = ε95 · ⟨N_seq⟩ (" + (xAxisMode === "log" ? "log scale" : "linear") + ")", pad.l + pw / 2, H - 5);
+  $("legTrade").innerHTML = Object.keys(TRACKS).filter(t => entries.some(e => e.track === t))
+    .map(t => `<span><span class="sw" style="background:${tok(TRACKS[t].v)}"></span>${TRACKS[t].label}</span>`).join("") +
+    `<span class="mono" style="color:var(--muted)">★ on the ${delta}th-percentile frontier</span>`;
 }
 
-function drawRightChart(list){
-  const cv = $("cvRight");
-  const { ctx, W, H } = sizeCanvas(cv);
-  ctx.clearRect(0, 0, W, H);
-  const pad = { l: 48, r: 22, t: 18, b: 34 };
-  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+// ---------- dot plots ----------
+function drawDots(svgId, prefix){
+  const svg = $(svgId); svg.innerHTML = "";
+  const rows = entries.slice().sort((a, b) => a.m[prefix + "95"] - b.m[prefix + "95"]);
+  const rowH = 26, W = Math.max(420, svg.clientWidth || 520);
+  const pad = { l: 150, r: 18, t: 8, b: 30 };
+  const H = pad.t + rows.length * rowH + pad.b;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const keys = DELTAS.map(d => prefix + d);
+  const all = rows.flatMap(e => keys.map(k => e.m[k]));
+  let lo = Math.min(...all) / 1.3; const hi = Math.max(...all) * 1.3;
+  if(prefix === "Q") lo = Math.min(lo, kappa[68] / 1.15);
+  const X = v => pad.l + (Math.log(v) - Math.log(lo)) / (Math.log(hi) - Math.log(lo)) * (W - pad.l - pad.r);
 
-  const isTail = rightChartMode === "tail";
-  const xMin = 2.0, xMax = 12.2;
-  const yMin = isTail ? 3.0 : 2.0;
-  const yMax = isTail ? 24.0 : 24.0;
-
-  const mapX = v => pad.l + ((Math.min(Math.max(v, xMin), xMax) - xMin) / (xMax - xMin)) * pw;
-  const mapY = v => pad.t + (1 - (Math.min(Math.max(v, yMin), yMax) - yMin) / (yMax - yMin)) * ph;
-
-  ctx.strokeStyle = tok("--grid");
-  ctx.lineWidth = 1;
-  ctx.font = '11px "IBM Plex Mono", monospace';
-  ctx.fillStyle = tok("--muted");
-
-  const xTicks = [2.5, 4.0, 6.0, 8.0, 10.0, 12.0];
-  for(const xt of xTicks){
-    const X = Math.round(mapX(xt)) + 0.5;
-    ctx.beginPath(); ctx.moveTo(X, pad.t); ctx.lineTo(X, H - pad.b); ctx.stroke();
-    ctx.textAlign = "center";
-    ctx.fillText(xt.toFixed(1), X, H - pad.b + 14);
+  for(const v of logTicks(lo, hi, W - pad.l - pad.r)){
+    svg.appendChild(el("line", { class: "grid", x1: X(v), x2: X(v), y1: pad.t, y2: H - pad.b }));
+    svg.appendChild(el("text", { x: X(v), y: H - pad.b + 14, "text-anchor": "middle" }, tickFmt(v)));
   }
-
-  const yTicks = [4, 8, 12, 16, 20, 24];
-  for(const yt of yTicks){
-    const Y = Math.round(mapY(yt)) + 0.5;
-    ctx.beginPath(); ctx.moveTo(pad.l, Y); ctx.lineTo(W - pad.r, Y); ctx.stroke();
-    ctx.textAlign = "right";
-    ctx.fillText(yt.toFixed(0), pad.l - 6, Y + 3.5);
-  }
-
-  // Reference diagonal line
-  ctx.save();
-  ctx.strokeStyle = tok("--good");
-  ctx.lineWidth = 1.3;
-  ctx.setLineDash([4, 4]);
-  ctx.beginPath();
-  if(isTail){
-    ctx.moveTo(mapX(2.2), mapY(2.2 * 1.354));
-    ctx.lineTo(mapX(12.0), mapY(12.0 * 1.354));
-    ctx.stroke();
-    ctx.fillStyle = tok("--good");
-    ctx.font = '10.5px "IBM Plex Mono", monospace';
-    ctx.textAlign = "left";
-    ctx.fillText("Alias-Free Gaussian Tail (C99 ≈ 1.35 · C95)", mapX(4.4), mapY(4.4 * 1.354) + 13);
-  } else {
-    ctx.moveTo(mapX(2.0), mapY(2.0));
-    ctx.lineTo(mapX(12.0), mapY(12.0));
-    ctx.stroke();
-    ctx.fillStyle = tok("--good");
-    ctx.font = '10.5px "IBM Plex Mono", monospace';
-    ctx.textAlign = "left";
-    ctx.fillText("Zero Query Spread Diagonal (C95_max = C95_ave, σQ = 0)", mapX(4.0), mapY(4.0) + 14);
-  }
-  ctx.restore();
-
-  rightPoints = [];
-  for(const e of list){
-    const m = getActiveMetrics(e);
-    const xv = m.C95_ave;
-    const yv = isTail ? m.C99_ave : m.C95_max;
-    const X = mapX(xv), Y = mapY(yv);
-    const tmeta = TRACK_META[e.track] || TRACK_META["non-adaptive"];
-    const col = tok(tmeta.colorVar);
-    const isSel = e.algo_id === selectedId;
-    const isHov = e.algo_id === hoveredId;
-
-    rightPoints.push({ id: e.algo_id, x: X, y: Y, entry: e, m });
-
-    ctx.save();
-    ctx.strokeStyle = col;
-    ctx.globalAlpha = isSel ? 0.85 : 0.45;
-    ctx.lineWidth = isSel ? 1.6 : 1.1;
-    if(isTail && m.C95_ci && m.C99_ci){
-      const xLo = mapX(m.C95_ci[0]), xHi = mapX(m.C95_ci[1]);
-      const yLo = mapY(m.C99_ci[0]), yHi = mapY(m.C99_ci[1]);
-      ctx.beginPath();
-      ctx.moveTo(xLo, Y); ctx.lineTo(xHi, Y);
-      ctx.moveTo(X, yLo); ctx.lineTo(X, yHi);
-      ctx.stroke();
-    } else if(!isTail && m.C95_max > m.C95_ave + 0.02){
-      const yDiag = mapY(m.C95_ave);
-      ctx.setLineDash([2, 2]);
-      ctx.beginPath();
-      ctx.moveTo(X, yDiag); ctx.lineTo(X, Y);
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    if(isSel || isHov){
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(X, Y, isSel ? 10 : 8, 0, Math.PI * 2);
-      ctx.fillStyle = col;
-      ctx.globalAlpha = 0.22;
-      ctx.fill();
-      ctx.restore();
-    }
-
-    ctx.beginPath();
-    ctx.arc(X, Y, isSel ? 6 : (isHov ? 5.5 : 4.5), 0, Math.PI * 2);
-    ctx.fillStyle = col;
-    ctx.fill();
-    ctx.lineWidth = isSel ? 2 : 1.2;
-    ctx.strokeStyle = isSel ? tok("--ink") : tok("--panel");
-    ctx.stroke();
-
-    if(isSel || isHov || ["mlqae_plain", "mlqae_flagship", "bae_adaptive", "chebae", "csae_esprit", "iqae_cp", "mlae_pow2_suzuki"].includes(e.algo_id)){
-      ctx.save();
-      ctx.font = (isSel ? '600 ' : '400 ') + '10.5px "IBM Plex Mono", monospace';
-      ctx.fillStyle = isSel ? tok("--ink") : tok("--ink2");
-      ctx.textAlign = X > W - 135 ? "right" : "left";
-      const dx = X > W - 135 ? -8 : 8;
-      const shortName = e.algorithm_name.split(" (")[0];
-      ctx.fillText(shortName, X + dx, Y + 3);
-      ctx.restore();
+  const k = kappa; // CRLB only meaningful for the query panel
+  if(prefix === "Q"){
+    for(const d of DELTAS){
+      if(k[d] < lo || k[d] > hi) continue;
+      svg.appendChild(el("line", { class: "bound", x1: X(k[d]), x2: X(k[d]), y1: pad.t, y2: H - pad.b }));
+      svg.appendChild(el("text", { class: "bound-lbl", x: X(k[d]) + 3, y: pad.t + 9 }, "κ" + d));
     }
   }
+  svg.appendChild(el("line", { class: "axis", x1: pad.l, x2: W - pad.r, y1: H - pad.b, y2: H - pad.b }));
 
-  ctx.fillStyle = tok("--muted");
-  ctx.font = '11px "IBM Plex Mono", monospace';
-  ctx.textAlign = "center";
-  ctx.fillText("Average Query Constant C95_ave = ε95 · ⟨N_tot⟩", pad.l + pw / 2, H - 5);
-}
-
-function renderTable(list, rankMap){
-  const tbody = $("lbBody");
-  tbody.innerHTML = "";
-
-  $("tableCountLabel").textContent =
-    `Showing ${list.length} verified baseline${list.length === 1 ? "" : "s"} (${scaleFilter === "mean" ? "Mean across nmax ∈ {60, 125, 260, 540}" : "Scale nmax = " + scaleFilter})`;
-
-  document.querySelectorAll("#lbTable thead th[data-sort]").forEach(th => {
-    const col = th.dataset.sort;
-    const baseText = th.getAttribute("data-base-label") || th.innerHTML.replace(/\s*[▲▼]\s*$/, "");
-    if(!th.getAttribute("data-base-label")) th.setAttribute("data-base-label", baseText);
-    if(col === sortCol){
-      th.classList.add("sorted");
-      th.innerHTML = `${baseText} ${sortAsc ? "&#9650;" : "&#9660;"}`;
-    } else {
-      th.classList.remove("sorted");
-      th.innerHTML = baseText;
-    }
+  rows.forEach((e, i) => {
+    const y = pad.t + i * rowH + rowH / 2;
+    const sel = e.algo_id === selectedId || e.algo_id === hoverId;
+    const dim = !e.visible;
+    const star = prefix === "Q" ? e.pQ : e.pD;
+    const g = el("g", {});
+    g.appendChild(el("text", { class: "rowlbl" + (sel ? " sel" : "") + (dim ? " dim" : ""), x: pad.l - 10, y: y + 4, "text-anchor": "end" }, (star ? "★ " : "") + e.short));
+    const x68 = X(e.m[prefix + "68"]), x95 = X(e.m[prefix + "95"]), x99 = X(e.m[prefix + "99"]);
+    g.appendChild(el("line", { class: "range" + (dim ? " dim" : ""), x1: x68, x2: x99, y1: y, y2: y, stroke: e.col }));
+    const cls = "pt" + (dim ? " dim" : "") + (sel ? " sel" : "");
+    g.appendChild(el("circle", { class: cls, cx: x68, cy: y, r: 4.5, fill: tok("--panel"), stroke: e.col, "stroke-width": 2 }));
+    g.appendChild(el("circle", { class: cls, cx: x95, cy: y, r: 5.5, fill: e.col }));
+    g.appendChild(el("rect", { class: cls, x: x99 - 4.5, y: y - 4.5, width: 9, height: 9, fill: e.col }));
+    g.appendChild(el("rect", { class: "hit", x: 0, y: y - rowH / 2, width: W, height: rowH }));
+    bindHover(g, e);
+    svg.appendChild(g);
   });
+}
+
+// ---------- table ----------
+function renderTable(){
+  const tb = $("tbody"); tb.innerHTML = "";
+  const list = entries.slice().sort((a, b) => {
+    let va, vb;
+    if(sortKey === "name") { va = a.short.toLowerCase(); vb = b.short.toLowerCase(); }
+    else if(sortKey === "track") { va = a.track; vb = b.track; }
+    else if(sortKey === "rank") { va = a.rank; vb = b.rank; }
+    else if(sortKey === "rounds") { va = a.m.rounds; vb = b.m.rounds; }
+    else if(sortKey === "pareto") { va = -(a.pQ + a.pD); vb = -(b.pQ + b.pD); }
+    else { va = a.m[sortKey]; vb = b.m[sortKey]; }
+    return (va < vb ? -1 : va > vb ? 1 : 0) * (sortAsc ? 1 : -1);
+  });
+  document.querySelectorAll("#tbl th[data-k]").forEach(th => th.classList.toggle("sorted", th.dataset.k === sortKey));
+  const vis = entries.filter(e => e.visible).length;
+  $("tblTitle").textContent = `${vis} of ${entries.length} entries · ${scale === "mean" ? "mean over nmax ∈ {60, 125, 260, 540}" : "nmax = " + scale}`;
 
   for(const e of list){
-    const m = getActiveMetrics(e);
-    const rk = rankMap.get(e.algo_id) || 1;
-    const tmeta = TRACK_META[e.track] || TRACK_META["non-adaptive"];
-    const fmeta = FAMILY_META[e.family] || FAMILY_META["ml-ladder"];
-    const isSel = e.algo_id === selectedId;
-
     const tr = document.createElement("tr");
-    tr.className = "data-row" + (isSel ? " selected" : "");
+    tr.className = "row" + (e.algo_id === selectedId ? " sel" : "") + (e.visible ? "" : " dim");
     tr.dataset.id = e.algo_id;
-
-    const rkCls = rk === 1 ? "rk-badge rk-1" : (rk === 2 ? "rk-badge rk-2" : (rk === 3 ? "rk-badge rk-3" : "rk-badge"));
-    const barPct = Math.min(100, Math.max(8, ((m.C95_ave - 2.0) / (12.0 - 2.0)) * 100));
-    const barCol = `var(${tmeta.colorVar})`;
-    const spreadStr = m.q_spread <= 0.0005 ? `<span style="color:var(--good)">0.0% (exact)</span>` : `${(m.q_spread * 100).toFixed(1)}%`;
-    const familyBadge = `<span class="chip ${fmeta.cls}" title="Method Family">${fmeta.label}</span>`;
-
-    tr.innerHTML = `
-      <td class="left"><span class="${rkCls}">#${rk}</span></td>
-      <td class="left">
-        <div class="alg-cell">
-          <div class="alg-name">
-            <span>${e.algorithm_name}</span>
-            ${familyBadge}
-            ${e.badge ? `<span class="chip tag">${e.badge}</span>` : ""}
-          </div>
-          <div class="alg-sub mono">
-            <span>${e.submission_path}</span>
-          </div>
-        </div>
-      </td>
-      <td class="left"><span class="chip ${tmeta.cls}">${tmeta.short}</span></td>
-      <td class="left">
-        <div class="sub-cell">
-          <span class="sub-author">${(e.authors || []).join(", ")}</span>
-          <span class="sub-meta">
-            <span>${e.affiliation || ""}</span>
-            <a class="cite-pill" href="${e.paper_url}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open Paper / Citation">${e.paper_cite} &nearr;</a>
-          </span>
-        </div>
-      </td>
-      <td class="mono">${e.rounds}</td>
-      <td class="mono">${m.C68_ave.toFixed(3)}</td>
-      <td>
-        <div class="c95-wrap">
-          <div>
-            <span class="c95-val">${m.C95_ave.toFixed(3)}</span>
-            <span class="c95-ci">[${m.C95_ci[0].toFixed(2)}, ${m.C95_ci[1].toFixed(2)}]</span>
-          </div>
-          <div class="c95-bar-bg"><div class="c95-bar-fill" style="width:${barPct.toFixed(1)}%;background:${barCol}"></div></div>
-        </div>
-      </td>
-      <td class="mono">${m.C95_max.toFixed(2)}</td>
-      <td class="mono">
-        <b>${m.C99_ave.toFixed(2)}</b>
-        <span class="ci-small">[${m.C99_ci[0].toFixed(2)}, ${m.C99_ci[1].toFixed(2)}]</span>
-      </td>
-      <td class="mono">${m.C95_seq.toFixed(3)}</td>
-      <td class="mono">${spreadStr}</td>
-      <td class="left"><span class="chip ok" title="Certified on HOLDOUT_SEED + LEADERBOARD_SECRET_SEED">&#10003; ${e.status || "CI Verified"}</span></td>
-    `;
-
-    tr.addEventListener("click", () => {
-      selectedId = (selectedId === e.algo_id) ? null : e.algo_id;
-      refreshAll();
-    });
-    tr.addEventListener("mouseenter", () => {
-      hoveredId = e.algo_id;
-      drawParetoChart(list);
-      drawRightChart(list);
-    });
-    tr.addEventListener("mouseleave", () => {
-      hoveredId = null;
-      drawParetoChart(list);
-      drawRightChart(list);
-    });
-
-    tbody.appendChild(tr);
-
-    // Expandable Detail Row when selected
-    if(isSel){
-      const dtr = document.createElement("tr");
-      dtr.className = "detail-row";
-      const scaleRowsHtml = SCALES.map(sc => {
-        const sm = e.scales[sc];
-        if(!sm) return "";
-        const isCur = scaleFilter === sc;
-        return `<tr class="${isCur ? 'active-scale' : ''}">
-          <td class="left">nmax = ${sc}</td>
-          <td>${sm.q_ave.toFixed(1)}</td>
-          <td>${sm.q_max.toFixed(0)}</td>
-          <td>${sm.C68_ave.toFixed(3)}</td>
-          <td><b>${sm.C95_ave.toFixed(3)}</b> [${sm.C95_ci[0].toFixed(2)},${sm.C95_ci[1].toFixed(2)}]</td>
-          <td>${sm.C95_max.toFixed(2)}</td>
-          <td><b>${sm.C99_ave.toFixed(2)}</b> [${sm.C99_ci[0].toFixed(2)},${sm.C99_ci[1].toFixed(2)}]</td>
-          <td>${sm.C95_seq.toFixed(3)}</td>
-        </tr>`;
-      }).join("");
-
-      dtr.innerHTML = `<td colspan="12">
-        <div class="detail-card">
-          <div>
-            <h3>Algorithmic Mechanism &amp; Citation</h3>
-            <div class="detail-meta-strip">
-              <span><b>Method Family:</b> ${fmeta.label}</span>
-              <span><b>Paper:</b> <a href="${e.paper_url}" target="_blank" rel="noopener">${e.paper_cite} &nearr;</a></span>
-              <span><b>Submission Dir:</b> <code class="mono">${e.submission_path}</code></span>
-            </div>
-            <p class="detail-mech">${e.description}</p>
-            <h3>Reproduce Certified Holdout Evaluation</h3>
-            <div class="cmd-box">
-              <code>${e.repro_cmd}</code>
-              <button class="ghost" type="button" data-copy-raw="${e.repro_cmd.replace(/"/g, '&quot;')}">Copy</button>
-            </div>
-          </div>
-          <div>
-            <h3>Per-Scale Holdout Breakdown (HOLDOUT_SEED = 900,000 · 20,000 Trials/Scale)</h3>
-            <table class="scale-tbl">
-              <thead>
-                <tr>
-                  <th class="left">Scale</th>
-                  <th>Q&#772;<sub>ave</sub></th>
-                  <th>Q<sub>max</sub></th>
-                  <th>C<sub>68</sub><sup>ave</sup></th>
-                  <th>C<sub>95</sub><sup>ave</sup> [95% CI]</th>
-                  <th>C<sub>95</sub><sup>max</sup></th>
-                  <th>C<sub>99</sub><sup>ave</sup> [95% CI]</th>
-                  <th>C<sub>95</sub><sup>seq</sup></th>
-                </tr>
-              </thead>
-              <tbody>${scaleRowsHtml}</tbody>
-            </table>
-          </div>
-        </div>
-      </td>`;
-      tbody.appendChild(dtr);
-    }
-  }
-
-  tbody.querySelectorAll("button[data-copy-raw]").forEach(btn => {
-    btn.addEventListener("click", ev => {
-      ev.stopPropagation();
-      const txt = btn.getAttribute("data-copy-raw");
-      navigator.clipboard && navigator.clipboard.writeText(txt);
-      const orig = btn.textContent;
-      btn.textContent = "Copied!";
-      setTimeout(() => { btn.textContent = orig; }, 1400);
-    });
-  });
-}
-
-function updateKPIs(){
-  const getM = id => {
-    const found = entries.find(e => e.algo_id === id);
-    return found ? getActiveMetrics(found) : null;
-  };
-  const mPlain = getM("mlqae_plain");
-  const mFlag = getM("mlqae_flagship");
-  const mBae = getM("bae_adaptive");
-  const mCheb = getM("chebae");
-  if(mPlain){
-    $("kpiNonAdaptC95").innerHTML = `C<sub>95</sub> = ${mPlain.C95_ave.toFixed(3)}`;
-    $("kpiNonAdaptSub").textContent = `seq = ${mPlain.C95_seq.toFixed(3)} · σQ = 0`;
-  }
-  if(mFlag){
-    $("kpiFlagshipVal").innerHTML = `C<sub>95</sub><sup>seq</sup> = ${mFlag.C95_seq.toFixed(3)}`;
-    $("kpiFlagshipSub").textContent = `C95 = ${mFlag.C95_ave.toFixed(3)} · C99 = ${mFlag.C99_ave.toFixed(2)}`;
-  }
-  if(mBae && mCheb){
-    $("kpiAdaptVal").innerHTML = `C<sub>95</sub> = ${mBae.C95_ave.toFixed(3)}`;
-    $("kpiAdaptSub").textContent = `chebAE C95 = ${mCheb.C95_ave.toFixed(3)}`;
+    const m = e.m;
+    tr.innerHTML =
+      `<td class="l num">${e.rank}</td>` +
+      `<td class="l name">${e.short}<span class="sub">${(e.authors || []).slice(0, 2).join(", ")}${(e.authors || []).length > 2 ? " et al." : ""}${e.date ? " · " + e.date.slice(0, 4) : ""}</span></td>` +
+      `<td class="l"><span class="chip" style="background:${e.col}">${TRACKS[e.track].label}</span></td>` +
+      `<td class="num">${m.rounds <= 1.0001 ? "1" : "~" + m.rounds.toFixed(1)}</td>` +
+      `<td class="num">${fmt(m.Q68)}</td><td class="num"><b>${fmt(m.Q95)}</b></td><td class="num">${fmt(m.Q99)}</td>` +
+      `<td class="num">${fmt(m.D68, 3)}</td><td class="num"><b>${fmt(m.D95, 3)}</b></td><td class="num">${fmt(m.D99, 3)}</td>` +
+      `<td><span class="pareto${e.pQ ? "" : " off"}">Q</span><span class="pareto${e.pD ? "" : " off"}">D</span></td>`;
+    tr.addEventListener("click", () => { selectedId = selectedId === e.algo_id ? null : e.algo_id; render(); });
+    tb.appendChild(tr);
+    if(e.algo_id === selectedId) tb.appendChild(detailRow(e));
   }
 }
-
-function refreshAll(){
-  const { list, rankMap } = getFilteredAndSorted();
-  updateKPIs();
-  drawParetoChart(list);
-  drawRightChart(list);
-  renderTable(list, rankMap);
+function detailRow(e){
+  const tr = document.createElement("tr"); tr.className = "detail";
+  const td = document.createElement("td"); td.colSpan = 11;
+  const ps = Object.keys(e.scales).sort((a, b) => +a - +b).map(k => {
+    const s = e.scales[k], m = constantsFor(e, k);
+    const ci = s.C95_ave_ci || s.C95_ci;
+    return `<tr><td>${k}</td><td>${Math.round(m.q)}</td><td>${Math.round(m.depth)}</td><td>${s.ntrials ?? "–"}</td><td>${fmt(m.Q68)}</td><td>${fmt(m.Q95)}${ci ? ` <span style="color:var(--muted)">[${fmt(ci[0])}, ${fmt(ci[1])}]</span>` : ""}</td><td>${fmt(m.Q99)}</td><td>${fmt(m.D68, 3)}</td><td>${fmt(m.D95, 3)}</td><td>${fmt(m.D99, 3)}</td></tr>`;
+  }).join("");
+  td.innerHTML = `<div class="dgrid"><div>
+      <h4>${e.algorithm_name}</h4>
+      <p>${e.description || ""}</p>
+      <p class="mono" style="font-size:12px">${(e.authors || []).join(", ")}${e.affiliation ? " · " + e.affiliation : ""}${e.paper_url ? ` · <a href="${e.paper_url}" target="_blank" rel="noopener">paper</a>` : ""} · <a href="https://github.com/unitaryfoundation/csAE/tree/main/leaderboard/submissions/${e.submission_path || e.algo_id}" target="_blank" rel="noopener">source</a></p>
+      ${e.repro_cmd ? `<h4>Reproduce</h4><pre>${e.repro_cmd}</pre>` : ""}
+    </div><div>
+      <h4>Per scale</h4>
+      <table class="ps"><thead><tr><th>n<sub>max</sub></th><th>⟨Q⟩</th><th>⟨D⟩</th><th>trials</th><th>C68Q</th><th>C95Q [95% CI]</th><th>C99Q</th><th>C68D</th><th>C95D</th><th>C99D</th></tr></thead><tbody>${ps}</tbody></table>
+    </div></div>`;
+  tr.appendChild(td);
+  return tr;
+}
+function scrollRowIntoView(){
+  const r = document.querySelector(`#tbl tr.row[data-id="${selectedId}"]`);
+  if(r && r.getBoundingClientRect().top > innerHeight) r.scrollIntoView({ block: "center" });
 }
 
-function bindCanvasInteraction(cvId, getPts){
-  const cv = $(cvId);
-  const tt = $("cvTooltip");
-
-  cv.addEventListener("mousemove", ev => {
-    const rect = cv.getBoundingClientRect();
-    const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
-    const pts = getPts();
-    let best = null, bestDist = 18;
-    for(const p of pts){
-      const d = Math.hypot(p.x - mx, p.y - my);
-      if(d < bestDist){ bestDist = d; best = p; }
-    }
-    if(best){
-      if(hoveredId !== best.id){
-        hoveredId = best.id;
-        const { list } = getFilteredAndSorted();
-        drawParetoChart(list);
-        drawRightChart(list);
-      }
-      const m = best.m;
-      const fmeta = FAMILY_META[best.entry.family] || FAMILY_META["ml-ladder"];
-      tt.style.display = "block";
-      tt.style.left = Math.min(window.innerWidth - 310, ev.clientX + 14) + "px";
-      tt.style.top = Math.max(12, ev.clientY - 20) + "px";
-      tt.innerHTML = `
-        <div class="tt-title">${best.entry.algorithm_name}</div>
-        <div class="tt-row"><span>Family:</span><b>${fmeta.label}</b></div>
-        <div class="tt-row"><span>C95 (ave):</span><b>${m.C95_ave.toFixed(3)} [${m.C95_ci[0].toFixed(2)}, ${m.C95_ci[1].toFixed(2)}]</b></div>
-        <div class="tt-row"><span>C99 (ave):</span><b>${m.C99_ave.toFixed(2)}</b></div>
-        <div class="tt-row"><span>C95 (max):</span><b>${m.C95_max.toFixed(2)}</b></div>
-        <div class="tt-row"><span>C95 (seq):</span><b>${m.C95_seq.toFixed(3)}</b></div>
-        <div class="tt-hint">Click point to expand row details</div>
-      `;
-    } else {
-      if(hoveredId !== null){
-        hoveredId = null;
-        const { list } = getFilteredAndSorted();
-        drawParetoChart(list);
-        drawRightChart(list);
-      }
-      tt.style.display = "none";
-    }
-  });
-
-  cv.addEventListener("mouseleave", () => {
-    hoveredId = null;
-    tt.style.display = "none";
-    const { list } = getFilteredAndSorted();
-    drawParetoChart(list);
-    drawRightChart(list);
-  });
-
-  cv.addEventListener("click", () => {
-    if(hoveredId){
-      selectedId = hoveredId;
-      refreshAll();
-      const row = document.querySelector(`tr.data-row[data-id="${selectedId}"]`);
-      if(row) row.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-  });
+// ---------- regimes ----------
+function renderRegimes(){
+  const dl = DATA.depth_limited, nz = DATA.noisy;
+  if(dl && dl.summary_by_algorithm){
+    const rows = dl.summary_by_algorithm.slice().sort((a, b) => a.mean_Ct95 - b.mean_Ct95).map(r =>
+      `<tr><td>${r.algorithm_name}</td><td>${r.adaptive_rounds}</td><td>${fmt(r.mean_Ct68, 3)}</td><td><b>${fmt(r.mean_Ct95, 2)}</b></td><td>${fmt(r.mean_Ct99, 1)}</td><td>${fmt(r.mean_ratio_crlb, 2)}×</td></tr>`).join("");
+    $("depthBody").innerHTML = `<p>Maximum Grover depth capped at a hardware limit M, with total budget B = s · B<sub>0</sub>(M). The score is the trade-off constant <span class="mono">C̃<sub>δ</sub> = ε<sub>δ</sub>² · M · ⟨queries⟩</span>, averaged over M ∈ {${(dl.caps || []).join(", ")}} and s ∈ {${(dl.scale_factors || []).join(", ")}} (${(dl.ntrials || 20000).toLocaleString()} trials each; Labib 2026, arXiv:2609.02715).</p>
+      <div class="tbl-wrap"><table class="ps"><thead><tr><th>Schedule</th><th>Rounds</th><th>C̃68</th><th>C̃95</th><th>C̃99</th><th>vs CRLB</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  } else $("regDepth").style.display = "none";
+  if(nz && nz.summary_by_algorithm){
+    const rows = nz.summary_by_algorithm.slice().sort((a, b) => a.mean_C95 - b.mean_C95).map(r =>
+      `<tr><td>${r.algorithm_name}</td><td>${r.adaptive_rounds}</td><td>${fmt(r.mean_C68)}</td><td><b>${fmt(r.mean_C95)}</b></td><td>${fmt(r.mean_C99, 1)}</td></tr>`).join("");
+    $("noisyBody").innerHTML = `<p>Per-oracle depolarizing rate η = ${nz.eta}, so a depth-n circuit keeps fringe visibility <span class="mono">V<sub>n</sub> = (1 − η)<sup>2n+1</sup></span>. Same query constants as the main table, averaged over n<sub>max</sub> ∈ {${(nz.scales || []).join(", ")}} (${(nz.ntrials || 20000).toLocaleString()} trials each; Labib 2026, arXiv:2609.02715).</p>
+      <div class="tbl-wrap"><table class="ps"><thead><tr><th>Schedule</th><th>Rounds</th><th>C68Q</th><th>C95Q</th><th>C99Q</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  } else $("regNoisy").style.display = "none";
 }
 
-function bindSeg(id, cb){
-  const el = $(id);
-  el.querySelectorAll("button").forEach(b => {
-    b.addEventListener("click", () => {
-      el.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", "false"));
-      b.setAttribute("aria-pressed", "true");
-      cb(b.dataset.v);
-    });
+// ---------- controls ----------
+function render(){
+  prepare();
+  drawTrade(); drawDots("svgQ", "Q"); drawDots("svgD", "D"); renderTable();
+}
+function seg(id, onPick){
+  $(id).addEventListener("click", ev => {
+    const b = ev.target.closest("button"); if(!b) return;
+    $(id).querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    onPick(b.dataset.v);
   });
 }
+function buildTrackSeg(){
+  const present = Object.keys(TRACKS).filter(t => DATA.entries.some(e => e.track === t));
+  $("segTrack").innerHTML = `<button type="button" data-v="all" aria-pressed="true">All</button>` +
+    present.map(t => `<button type="button" data-v="${t}" aria-pressed="false"><span class="dot" style="background:${tok(TRACKS[t].v)}"></span>${TRACKS[t].label}</button>`).join("");
+}
+seg("segTrack", v => { trackFilter = v; render(); });
+seg("segScale", v => { scale = v; render(); });
+seg("segDelta", v => { delta = +v; render(); });
+document.querySelectorAll("#tbl th[data-k]").forEach(th => th.addEventListener("click", () => {
+  const k = th.dataset.k;
+  if(sortKey === k) sortAsc = !sortAsc; else { sortKey = k; sortAsc = !(k === "pareto"); }
+  renderTable();
+}));
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(render, 120); });
 
-bindSeg("segFamily", v => { familyFilter = v; refreshAll(); });
-bindSeg("segTrack", v => { trackFilter = v; refreshAll(); });
-bindSeg("segScale", v => { scaleFilter = v; refreshAll(); });
-bindSeg("segXScale", v => { xAxisMode = v; refreshAll(); });
-bindSeg("segRightMode", v => {
-  rightChartMode = v;
-  if(v === "tail"){
-    $("rightChartTitle").innerHTML = `Tail Robustness: 99th Percentile (C<sub>99</sub><sup>ave</sup>) vs. 95th Percentile (C<sub>95</sub><sup>ave</sup>)`;
-    $("rightChartSub").textContent = "Crosshairs show 95% bootstrap confidence intervals";
-    $("rightFootNote").textContent = "95% Bootstrap CI Error Bars";
-  } else {
-    $("rightChartTitle").innerHTML = `Worst-Case Spread: Max-Query (C<sub>95</sub><sup>max</sup>) vs. Mean-Query (C<sub>95</sub><sup>ave</sup>)`;
-    $("rightChartSub").textContent = "Points on diagonal have deterministic query budget (σQ = 0)";
-    $("rightFootNote").textContent = "Vertical dashed drop = max-query penalty";
-  }
-  refreshAll();
-});
-
-$("searchInput").addEventListener("input", e => {
-  searchQuery = e.target.value;
-  refreshAll();
-});
-
-document.querySelectorAll("#lbTable thead th[data-sort]").forEach(th => {
-  th.addEventListener("click", () => {
-    const col = th.dataset.sort;
-    if(sortCol === col){
-      sortAsc = !sortAsc;
-    } else {
-      sortCol = col;
-      sortAsc = true;
-    }
-    refreshAll();
-  });
-});
-
-let themeMode = "auto";
-$("btnTheme").addEventListener("click", () => {
-  if(themeMode === "auto"){
-    themeMode = "dark";
-    document.documentElement.setAttribute("data-theme", "dark");
-    $("btnTheme").textContent = "Theme: Dark";
-  } else if(themeMode === "dark"){
-    themeMode = "light";
-    document.documentElement.setAttribute("data-theme", "light");
-    $("btnTheme").textContent = "Theme: Light";
-  } else {
-    themeMode = "auto";
-    document.documentElement.removeAttribute("data-theme");
-    $("btnTheme").textContent = "Theme: Auto";
-  }
-  refreshAll();
-});
-
-const modal = $("submitModal");
-$("btnOpenSubmit").addEventListener("click", () => { modal.hidden = false; });
-$("btnCloseSubmit").addEventListener("click", () => { modal.hidden = true; });
-modal.addEventListener("click", e => { if(e.target === modal) modal.hidden = true; });
-window.addEventListener("keydown", e => { if(e.key === "Escape" && !modal.hidden) modal.hidden = true; });
-
-document.querySelectorAll("button[data-copy]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const target = $(btn.getAttribute("data-copy"));
-    if(target && navigator.clipboard){
-      navigator.clipboard.writeText(target.textContent);
-      const orig = btn.textContent;
-      btn.textContent = "Copied!";
-      setTimeout(() => { btn.textContent = orig; }, 1400);
-    }
-  });
-});
-
-// Fetch ./leaderboard.json first, then ../leaderboard/data/leaderboard.json, fallback to DEFAULT_DATA
-async function tryFetchExternalJSON(){
-  const urls = ["./leaderboard.json", "../leaderboard/data/leaderboard.json", "./leaderboard_data.json"];
-  for(const url of urls){
-    try {
-      const resp = await fetch(url, { cache: "no-store" });
-      if(!resp.ok) continue;
-      const data = await resp.json();
-      const extList = Array.isArray(data) ? data : (Array.isArray(data.entries) ? data.entries : null);
-      if(extList && extList.length){
-        const byId = new Map(entries.map((e, i) => [e.algo_id, i]));
-        for(const raw of extList){
-          const rawId = raw.algo_id || raw.id || (raw.algorithm_name || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
-          const id = ALIAS_MAP[rawId] || rawId;
-          if(!id || !raw.scales) continue;
-          // Only merge published baselines or external PR submissions (skip internal agent drafts)
-          const agentOrig = String(raw.agent_origin || "").toLowerCase();
-          if(!PUBLISHED_ALLOWLIST.has(id) && agentOrig.includes("agent")) continue;
-          if(byId.has(id)){
-            const idx = byId.get(id);
-            const merged = Object.assign({}, entries[idx], raw, { algo_id: id });
-            const hydrated = hydrateEntries([merged])[0];
-            if(hydrated && hydrated.mean) entries[idx] = hydrated;
-          } else if(PUBLISHED_ALLOWLIST.has(id) || !agentOrig.includes("agent")){
-            const hydrated = hydrateEntries([Object.assign({ algo_id: id }, raw)])[0];
-            if(hydrated && hydrated.mean){
-              byId.set(id, entries.length);
-              entries.push(hydrated);
-            }
-          }
-        }
-        $("dataStatus").textContent = `Synced: ${url} (${entries.length} entries)`;
-        refreshAll();
-        return;
-      }
-    } catch(_e) {
-      // Expected when opened directly via file:// protocol; DEFAULT_DATA is active
-    }
+// ---------- load ----------
+async function load(){
+  try {
+    const resp = await fetch("./leaderboard.json", { cache: "no-store" });
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    DATA = await resp.json();
+    if(!Array.isArray(DATA.entries) || !DATA.entries.length) throw new Error("no entries in leaderboard.json");
+    const kc = DATA.evaluation_protocol && DATA.evaluation_protocol.kappa_crlb;
+    if(kc) kappa = { 68: +kc["68"], 95: +kc["95"], 99: +kc["99"] };
+    $("kappaTxt").textContent = `κ68 = ${kappa[68].toFixed(2)}, κ95 = ${kappa[95].toFixed(2)}, κ99 = ${kappa[99].toFixed(2)}`;
+    const ep = DATA.evaluation_protocol || {};
+    $("protoTxt").textContent = `${(ep.ntrials_holdout || 20000).toLocaleString()} trials per scale with ${(ep.boot_B || 1000).toLocaleString()}-resample bootstrap intervals`;
+    $("status").textContent = `leaderboard.json · ${DATA.entries.length} entries · updated ${(DATA.updated_at || "").slice(0, 10)}`;
+    buildTrackSeg();
+    renderRegimes();
+    render();
+  } catch(err){
+    $("status").textContent = "data not loaded";
+    const e = $("err"); e.style.display = "block";
+    e.innerHTML = `<b>Could not load <code>leaderboard.json</code></b> (${err.message}). This page has no embedded data: it renders only what the certified JSON next to it contains. ` +
+      `If you opened the file directly, serve the folder instead: <code>python3 -m http.server --directory docs 8000</code> and open <code>http://localhost:8000/leaderboard.html</code>.`;
   }
 }
-
-entries = hydrateEntries(DEFAULT_DATA.entries);
-bindCanvasInteraction("cvPareto", () => paretoPoints);
-bindCanvasInteraction("cvRight", () => rightPoints);
-window.addEventListener("resize", refreshAll);
-const mq = window.matchMedia("(prefers-color-scheme: dark)");
-if(mq.addEventListener) mq.addEventListener("change", refreshAll);
-new MutationObserver(refreshAll).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-
-refreshAll();
-tryFetchExternalJSON();
-})();
+load();
 </script>
 </body>
 </html>
