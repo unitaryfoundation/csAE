@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "updated_at": "2026-10-27T17:37:14.987956+00:00",
+  "updated_at": "2026-10-27T17:51:55.573624+00:00",
   "evaluation_protocol": {
     "ntrials_holdout": 20000,
     "boot_B": 1000,
@@ -389,6 +389,335 @@
       "runtime_per_trial_ms": 4.638217098487501,
       "commit_sha": "c6ebf5f2587c39094a94e7b735d4018830701dc7",
       "certified_at": "2026-10-27T17:37:14.987956+00:00"
+    },
+    {
+      "algo_id": "bayesoed_grid",
+      "algorithm_name": "BayesOED-Grid (Fractional-Moment OED)",
+      "name": "BayesOED-Grid (Fractional-Moment OED)",
+      "category": "challenge",
+      "badge": "Challenge submission",
+      "track": "adaptive-fixed-budget",
+      "track_category": "adaptive-fixed-budget",
+      "authors": [
+        "Farrokh Labib"
+      ],
+      "github_handle": "FarLab",
+      "affiliation": "Unitary Foundation",
+      "paper_url": null,
+      "pr_number": 9,
+      "description": "Exact discrete Bayesian optimal experimental design over a dense theta grid using a fractional-moment (p=1.5) step-efficiency utility, tempered-mixture active set for side-lobe tracking, two-stage endgame allocation, and posterior-mean/MAP continuous MLE refinement.",
+      "date": "2026-04-20",
+      "source": "challenge",
+      "status": "Certified",
+      "repro_cmd": "python3 leaderboard/verifier_and_runner.py --mode=certify --submission=leaderboard/submissions/bayesoed_grid --ntrials=20000",
+      "agent_origin": "Challenge submission",
+      "is_baseline": false,
+      "verified": true,
+      "deterministic_budget": false,
+      "rounds": "Adaptive (~53.4)",
+      "rounds_num": 53.4237,
+      "num_rounds_mean": 53.4237,
+      "query_spread": 0.022499125429630694,
+      "q_spread": 0.0225,
+      "C68_ave": 0.7672,
+      "C68_max": 0.7801,
+      "C68_ave_ci": [
+        0.7557,
+        0.7775
+      ],
+      "C95_ave": 1.5733,
+      "C95_max": 1.5997,
+      "C95_ave_ci": [
+        1.5502,
+        1.5965
+      ],
+      "C95_ci": [
+        1.5502,
+        1.5965
+      ],
+      "C99_ave": 2.3263,
+      "C99_max": 2.3674,
+      "C99_ave_ci": [
+        2.2176,
+        2.411
+      ],
+      "C99_ci": [
+        2.2176,
+        2.411
+      ],
+      "C95_seq": 1.5702,
+      "C95_par": 0.2252,
+      "headline_C95_ave": 1.5732776883879285,
+      "headline_C95_max": 1.5997187966499509,
+      "headline_C99_ave": 2.326281078640214,
+      "scales": {
+        "125": {
+          "scale_nmax": 125,
+          "ntrials": 20000,
+          "q_mean": 1231.35,
+          "q_ave": 1231.35,
+          "q_max": 1242.0,
+          "q_std": 13.5442,
+          "query_spread": 0.011,
+          "q_spread": 0.011,
+          "max_depth_mean": 123.42,
+          "seq_depth_mean": 1228.35,
+          "num_rounds_mean": 52.25,
+          "eps50": 0.0004498055,
+          "eps68": 0.0006745353,
+          "eps95": 0.001377588,
+          "eps99": 0.001893746,
+          "C50_ave": 0.5539,
+          "C68_ave": 0.8306,
+          "C68_max": 0.8378,
+          "C68_ave_ci": [
+            0.8189,
+            0.8392
+          ],
+          "C68_ci": [
+            0.8189,
+            0.8392
+          ],
+          "C68_max_ci": [
+            0.8259,
+            0.8465
+          ],
+          "C95_ave": 1.6963,
+          "C95_max": 1.711,
+          "C95_ave_ci": [
+            1.6682,
+            1.7184
+          ],
+          "C95_ci": [
+            1.6682,
+            1.7184
+          ],
+          "C95_max_ci": [
+            1.6826,
+            1.7333
+          ],
+          "C99_ave": 2.3319,
+          "C99_max": 2.352,
+          "C99_ave_ci": [
+            2.2613,
+            2.3776
+          ],
+          "C99_ci": [
+            2.2613,
+            2.3776
+          ],
+          "C99_max_ci": [
+            2.2809,
+            2.3979
+          ],
+          "C95_seq": 1.6922,
+          "C95_par": 0.17,
+          "runtime_per_trial_ms": 9.775
+        },
+        "260": {
+          "scale_nmax": 260,
+          "ntrials": 20000,
+          "q_mean": 1797.93,
+          "q_ave": 1797.93,
+          "q_max": 1823.0,
+          "q_std": 31.6328,
+          "query_spread": 0.01759,
+          "q_spread": 0.01759,
+          "max_depth_mean": 250.61,
+          "seq_depth_mean": 1794.93,
+          "num_rounds_mean": 53.766,
+          "eps50": 0.0002826779,
+          "eps68": 0.0004216296,
+          "eps95": 0.0008604193,
+          "eps99": 0.001223109,
+          "C50_ave": 0.5082,
+          "C68_ave": 0.7581,
+          "C68_max": 0.7686,
+          "C68_ave_ci": [
+            0.7467,
+            0.7714
+          ],
+          "C68_ci": [
+            0.7467,
+            0.7714
+          ],
+          "C68_max_ci": [
+            0.7572,
+            0.7822
+          ],
+          "C95_ave": 1.547,
+          "C95_max": 1.5685,
+          "C95_ave_ci": [
+            1.527,
+            1.5699
+          ],
+          "C95_ci": [
+            1.527,
+            1.5699
+          ],
+          "C95_max_ci": [
+            1.5483,
+            1.5922
+          ],
+          "C99_ave": 2.1991,
+          "C99_max": 2.2297,
+          "C99_ave_ci": [
+            2.1274,
+            2.2726
+          ],
+          "C99_ci": [
+            2.1274,
+            2.2726
+          ],
+          "C99_max_ci": [
+            2.1573,
+            2.3039
+          ],
+          "C95_seq": 1.5444,
+          "C95_par": 0.2156,
+          "runtime_per_trial_ms": 10.073
+        },
+        "540": {
+          "scale_nmax": 540,
+          "ntrials": 20000,
+          "q_mean": 3843.9,
+          "q_ave": 3843.9,
+          "q_max": 3893.0,
+          "q_std": 66.0283,
+          "query_spread": 0.01718,
+          "q_spread": 0.01718,
+          "max_depth_mean": 526.25,
+          "seq_depth_mean": 3840.9,
+          "num_rounds_mean": 59.42,
+          "eps50": 0.0001333961,
+          "eps68": 0.0001975244,
+          "eps95": 0.000405861,
+          "eps99": 0.0005709328,
+          "C50_ave": 0.5128,
+          "C68_ave": 0.7593,
+          "C68_max": 0.769,
+          "C68_ave_ci": [
+            0.7463,
+            0.7699
+          ],
+          "C68_ci": [
+            0.7463,
+            0.7699
+          ],
+          "C68_max_ci": [
+            0.7557,
+            0.7796
+          ],
+          "C95_ave": 1.5601,
+          "C95_max": 1.58,
+          "C95_ave_ci": [
+            1.5387,
+            1.5819
+          ],
+          "C95_ci": [
+            1.5387,
+            1.5819
+          ],
+          "C95_max_ci": [
+            1.5584,
+            1.6024
+          ],
+          "C99_ave": 2.1946,
+          "C99_max": 2.2226,
+          "C99_ave_ci": [
+            2.1376,
+            2.2755
+          ],
+          "C99_ci": [
+            2.1376,
+            2.2755
+          ],
+          "C99_max_ci": [
+            2.1649,
+            2.305
+          ],
+          "C95_seq": 1.5589,
+          "C95_par": 0.2136,
+          "runtime_per_trial_ms": 11.247
+        },
+        "1000": {
+          "scale_nmax": 1000,
+          "ntrials": 20000,
+          "q_mean": 967.79,
+          "q_ave": 967.79,
+          "q_max": 1000.0,
+          "q_std": 42.8009,
+          "query_spread": 0.04423,
+          "q_spread": 0.04423,
+          "max_depth_mean": 195.87,
+          "seq_depth_mean": 964.79,
+          "num_rounds_mean": 48.259,
+          "eps50": 0.0004977695,
+          "eps68": 0.0007449436,
+          "eps95": 0.00153935,
+          "eps99": 0.002665459,
+          "C50_ave": 0.4817,
+          "C68_ave": 0.7209,
+          "C68_max": 0.7449,
+          "C68_ave_ci": [
+            0.7109,
+            0.7297
+          ],
+          "C68_ci": [
+            0.7109,
+            0.7297
+          ],
+          "C68_max_ci": [
+            0.7347,
+            0.754
+          ],
+          "C95_ave": 1.4898,
+          "C95_max": 1.5394,
+          "C95_ave_ci": [
+            1.4668,
+            1.5156
+          ],
+          "C95_ci": [
+            1.4668,
+            1.5156
+          ],
+          "C95_max_ci": [
+            1.5158,
+            1.5666
+          ],
+          "C99_ave": 2.5796,
+          "C99_max": 2.6655,
+          "C99_ave_ci": [
+            2.3439,
+            2.7182
+          ],
+          "C99_ci": [
+            2.3439,
+            2.7182
+          ],
+          "C99_max_ci": [
+            2.4223,
+            2.809
+          ],
+          "C95_seq": 1.4851,
+          "C95_par": 0.3015,
+          "runtime_per_trial_ms": 10.076
+        }
+      },
+      "submission_path": "bayesoed_grid",
+      "certified_by": "CI certifier (blind HMAC-derived seed)",
+      "ntrials": 20000,
+      "blind_secret_active": false,
+      "wide_prior_C95_ave": 1.5769159668964043,
+      "wide_prior_C99_ave": 2.2848854931146896,
+      "seed_band": "BLIND_SECRET_SEED",
+      "headline_C68_ave": 0.7672141868922158,
+      "headline_C99_max": 2.3674652367041467,
+      "headline_C95_seq": 1.5701402748167324,
+      "rounds_mean": 53.423700000000004,
+      "runtime_per_trial_ms": 10.292834253775002,
+      "commit_sha": "c6ebf5f2587c39094a94e7b735d4018830701dc7",
+      "certified_at": "2026-10-27T17:51:55.573624+00:00"
     },
     {
       "algo_id": "quadsteer_hybrid_2top",
