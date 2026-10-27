@@ -1,0 +1,14 @@
+{
+  "algorithm_name": "MLQAE-GaussCent (Flagship + Local Gaussian Centroid)",
+  "track": "non-adaptive",
+  "authors": [
+    "Farrokh Labib"
+  ],
+  "github_handle": "FarLab",
+  "affiliation": "Unitary Foundation",
+  "paper_url": null,
+  "pr_number": "TBD",
+  "description": "Non-adaptive flagship geometric Grover schedule (r=1.45 plus near-cap mirror-breaking rung at round(nmax/1.3) with canonical linear shot profile) paired with a two-stage continuous terminal estimator: exact coarse-grid global maximum likelihood + 25-point parabolic zoom to identify the winning basin mode, followed by fine-grid Gaussian-windowed local posterior centroid integration over [-0.75w, +0.75w] (c = 4.5 sigma_theta) around the mode. Smoothly averages skew and near-tied mirror modes while exponentially suppressing distant rival basins, reducing both C95 and C99 relative to global ML at zero extra query cost.",
+  "date": "2026-10-27",
+  "entrypoint": "submission.py:MLQAEGaussCentSubmission"
+}
