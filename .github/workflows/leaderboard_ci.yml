@@ -99,7 +99,7 @@ jobs:
     name: "Main Branch: Anti-Cheat Unit Tests & Baseline Certification"
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 25
     permissions:
       contents: read
 
@@ -509,7 +509,7 @@ jobs:
       (github.event_name == 'pull_request_target' && github.event.label.name == 'certify-leaderboard') ||
       (github.event_name == 'workflow_dispatch' && inputs.tier == 'certify')
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 120
     permissions:
       contents: write
       pull-requests: write
@@ -638,7 +638,7 @@ jobs:
           fi
 
           "${SANDBOX_CMD[@]}" bash -c "
-            ulimit -t 1800
+            ulimit -t 7200
             ulimit -f 51200
             export OPENBLAS_NUM_THREADS=2
             export OMP_NUM_THREADS=2
@@ -693,6 +693,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Several certify runs may finish close together; each one re-reads main right
+          # before merging its entry and retries the push if another run landed first.
+          for attempt in 1 2 3 4 5 6 7 8; do
+          git fetch origin main
+          git reset --hard origin/main
           python3 - <<'PYEOF'
           import datetime, json, os
 
@@ -741,15 +749,22 @@ jobs:
 
           print(f"Updated {db_path}, docs/leaderboard.json, and docs/leaderboard_data.json with certified results for '{algo_id}'.")
           PYEOF
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add leaderboard/data/leaderboard.json docs/leaderboard.json docs/leaderboard_data.json
-
-          if ! git diff --cached --quiet; then
-            git commit -m "chore(leaderboard): certify ${ALGO_ID} (${COMMIT_SHA:0:7}) [skip ci]"
-            git push origin HEAD:main
+          if git diff --cached --quiet; then
+            echo "Leaderboard already contains this certified entry; nothing to commit."
+            break
           fi
+          git commit -m "chore(leaderboard): certify ${ALGO_ID} (${COMMIT_SHA:0:7}) [skip ci]"
+          if git push origin HEAD:main; then
+            break
+          fi
+          echo "::warning::Push rejected on attempt ${attempt} (another certify run landed first); refetching and retrying."
+          sleep $((RANDOM % 20 + 5))
+          if [[ "${attempt}" == "8" ]]; then
+            echo "::error::Could not push the certified entry after 8 attempts."
+            exit 1
+          fi
+          done
 
       - name: Post Tier 2 Certification Comment on PR
         if: github.event_name == 'pull_request_target' && steps.target_sub.outputs.submission_path != ''

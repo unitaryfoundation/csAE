@@ -1673,9 +1673,11 @@ def _cli_main() -> None:
             fh.write(f"```\n{rep.summary()}\n\n{md_table}\n```\n")
 
     if args.json_out:
+        import json as _json
+
         std_sum = bench["standard_prior"]["summary"]
         wide_sum = bench["wide_prior"]["summary"]
-        payload = {
+        legacy = {
             "name": algo_name,
             "verified": rep.passed,
             "seed_band": args.seed,
@@ -1693,8 +1695,28 @@ def _cli_main() -> None:
             "wide_prior_C95_ave": wide_sum["C95_ave"],
             "wide_prior_C99_ave": wide_sum["C99_ave"],
         }
+        # A submission directory with metadata.json gets a FULL leaderboard entry (per-scale
+        # metrics, track, authors, source="challenge") in the same schema as the literature
+        # baselines, so the page can render it straight from leaderboard.json.
+        payload: Dict[str, Any] = dict(legacy)
+        build_error: Optional[str] = None
+        meta_path = os.path.join(os.path.dirname(py_path), "metadata.json") if py_path else None
+        if meta_path and os.path.isfile(meta_path):
+            with open(meta_path, "r", encoding="utf-8") as fh:
+                meta = _json.load(fh)
+            algo_id = os.path.basename(os.path.dirname(py_path))
+            try:
+                from leaderboard.entry_builder import entry_from_benchmark
+
+                full_entry = entry_from_benchmark(bench, meta=meta, algo_id=algo_id, verified=rep.passed)
+                payload = {**full_entry, **legacy, "name": full_entry["name"], "algo_id": algo_id}
+            except Exception as exc:  # noqa: BLE001 - surfaced below as a hard CI error
+                build_error = f"{type(exc).__name__}: {exc}"
         with open(args.json_out, "w", encoding="utf-8") as fh:
-            json.dump(payload, fh, indent=2)
+            _json.dump(payload, fh, indent=2)
+        if build_error is not None:
+            print(f"::error::Could not build a full leaderboard entry from the benchmark: {build_error}", file=sys.stderr)
+            sys.exit(3)
 
 
 if __name__ == "__main__":

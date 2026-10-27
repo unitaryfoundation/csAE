@@ -1,11 +1,13 @@
 {
   "algorithm_name": "BayesOED-Grid (Fractional-Moment OED)",
   "track": "adaptive-fixed-budget",
-  "authors": ["Farrokh Labib"],
+  "authors": [
+    "Farrokh Labib"
+  ],
   "github_handle": "FarLab",
   "affiliation": "Unitary Foundation",
   "paper_url": null,
-  "pr_number": "TBD",
+  "pr_number": 9,
   "description": "Exact discrete Bayesian optimal experimental design over a dense theta grid using a fractional-moment (p=1.5) step-efficiency utility, tempered-mixture active set for side-lobe tracking, two-stage endgame allocation, and posterior-mean/MAP continuous MLE refinement.",
   "date": "2026-04-20",
   "entrypoint": "submission.py:BayesOEDGridSubmission"

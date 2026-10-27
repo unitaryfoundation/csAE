@@ -7,7 +7,7 @@
   "github_handle": "FarLab",
   "affiliation": "Unitary Foundation",
   "paper_url": null,
-  "pr_number": "TBD",
+  "pr_number": 7,
   "description": "Two/three-round conditional semi-adaptive parallel amplitude estimation using a top-down r=1.50 geometric ladder with lean Round-1 shot ramp (slope=0.85), Round-2 complementary opposite-slope phase steering (+-phi_0) with Bhattacharyya rival-aware depth selection and conditional rival-killer shots, and a conditional Round-3 tie-breaker (triggered on ~4% of trials when Delta_ell_2 < 4.5).",
   "date": "2026-10-27",
   "entrypoint": "submission.py:SemiAdapt3RCondSubmission"

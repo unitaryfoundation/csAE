@@ -67,6 +67,7 @@
       "name": "mlqae-plain (Labib 2026)",
       "category": "literature",
       "badge": "Literature (2026)",
+      "source": "literature",
       "track": "non-adaptive",
       "track_category": "non-adaptive",
       "authors": [
@@ -386,6 +387,7 @@
       "name": "mlqae-flagship (Labib 2026)",
       "category": "literature",
       "badge": "Flagship Baseline (1R)",
+      "source": "literature",
       "track": "non-adaptive",
       "track_category": "non-adaptive",
       "authors": [
@@ -705,6 +707,7 @@
       "name": "BAE-Adaptive (Ramoa & Santos 2024)",
       "category": "literature",
       "badge": "Literature (2024)",
+      "source": "literature",
       "track": "adaptive-fixed-budget",
       "track_category": "adaptive-fixed-budget",
       "authors": [
@@ -1025,6 +1028,7 @@
       "name": "chebAE (Rall & Fuller 2023)",
       "category": "literature",
       "badge": "Literature (2023)",
+      "source": "literature",
       "track": "adaptive-variable",
       "track_category": "adaptive-variable",
       "authors": [
@@ -1345,6 +1349,7 @@
       "name": "csAE (Labib et al. 2024)",
       "category": "literature",
       "badge": "Literature (2024)",
+      "source": "literature",
       "track": "non-adaptive",
       "track_category": "non-adaptive",
       "authors": [
@@ -1659,6 +1664,7 @@
       "name": "BIQAE (Bayesian Interval QAE, 2024)",
       "category": "literature",
       "badge": "Literature (2024)",
+      "source": "literature",
       "track": "adaptive-variable",
       "track_category": "adaptive-variable",
       "authors": [
@@ -1978,6 +1984,7 @@
       "name": "IQAE-CP (Grinko et al. 2021)",
       "category": "literature",
       "badge": "Literature (2021)",
+      "source": "literature",
       "track": "adaptive-variable",
       "track_category": "adaptive-variable",
       "authors": [
@@ -2300,6 +2307,7 @@
       "name": "MLAE-EIS (Suzuki et al. 2020)",
       "category": "literature",
       "badge": "Literature (2020)",
+      "source": "literature",
       "track": "non-adaptive",
       "track_category": "non-adaptive",
       "authors": [
@@ -2624,6 +2632,7 @@
       "name": "FAE (Nakaji 2020)",
       "category": "literature",
       "badge": "Literature (2020)",
+      "source": "literature",
       "track": "adaptive-variable",
       "track_category": "adaptive-variable",
       "authors": [
@@ -2943,6 +2952,7 @@
       "name": "IQAE-Chernoff (Grinko et al. 2021)",
       "category": "literature",
       "badge": "Literature (2021)",
+      "source": "literature",
       "track": "adaptive-variable",
       "track_category": "adaptive-variable",
       "authors": [
@@ -3265,6 +3275,7 @@
       "name": "MLAE-LIS (Suzuki et al. 2020)",
       "category": "literature",
       "badge": "Literature (2020)",
+      "source": "literature",
       "track": "non-adaptive",
       "track_category": "non-adaptive",
       "authors": [

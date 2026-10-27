@@ -7,7 +7,7 @@
   "github_handle": "FarLab",
   "affiliation": "Unitary Foundation",
   "paper_url": null,
-  "pr_number": "TBD",
+  "pr_number": 4,
   "description": "Cumulative-Likelihood Bayesian Interval Quantum Amplitude Estimation (CL-BIQAE): modernizes chebAE (Rall & Fuller 2023) and BIQAE (Li et al. 2023 / Kiss et al. 2024) by enforcing physically realizable odd Grover degrees d = 2n + 1, replacing per-round memoryless Beta posteriors with an exact multi-round cumulative binomial log-likelihood moving-grid estimator, using single-shot deep adaptive jumps without a minimum step ratio r_min, two-stage credible intervals, and an explicit worst-case query safety cap.",
   "date": "2026-10-27",
   "entrypoint": "submission.py:CLBIQAESubmission"
