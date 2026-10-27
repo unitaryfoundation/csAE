@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "updated_at": "2026-10-27T17:26:44.531704+00:00",
+  "updated_at": "2026-10-27T17:27:25.090639+00:00",
   "evaluation_protocol": {
     "ntrials_holdout": 20000,
     "boot_B": 1000,
@@ -61,6 +61,335 @@
     1000
   ],
   "entries": [
+    {
+      "algo_id": "ondemand_tiebreak",
+      "algorithm_name": "OnDemand-UltraLean (Bhattacharyya Tie-Breaker)",
+      "name": "OnDemand-UltraLean (Bhattacharyya Tie-Breaker)",
+      "category": "challenge",
+      "badge": "Challenge submission",
+      "track": "adaptive-variable",
+      "track_category": "adaptive-variable",
+      "authors": [
+        "Farrokh Labib"
+      ],
+      "github_handle": "FarLab",
+      "affiliation": "Unitary Foundation",
+      "paper_url": null,
+      "pr_number": 6,
+      "description": "Lean-mid / strong-shallow baseline schedule on the plain r=1.45 geometric ladder (top_tuple=(2,2,2,1,1), s_shallow=0.65) combined with Fisher-adaptive local-minimum basin detection and on-demand boundary-regularized Bhattacharyya (eps=0.04) tie-breaking shots over step-1 upper integer depths.",
+      "date": "2026-10-27",
+      "source": "challenge",
+      "status": "Certified",
+      "repro_cmd": "python3 leaderboard/verifier_and_runner.py --mode=certify --submission=leaderboard/submissions/ondemand_tiebreak --ntrials=20000",
+      "agent_origin": "Challenge submission",
+      "is_baseline": false,
+      "verified": true,
+      "deterministic_budget": false,
+      "rounds": "~2.40 Rnds",
+      "rounds_num": 2.402,
+      "num_rounds_mean": 2.402,
+      "query_spread": 0.1458426223937599,
+      "q_spread": 0.14584,
+      "C68_ave": 0.894,
+      "C68_max": 1.2363,
+      "C68_ave_ci": [
+        0.8811,
+        0.9077
+      ],
+      "C95_ave": 2.0075,
+      "C95_max": 2.776,
+      "C95_ave_ci": [
+        1.9735,
+        2.0398
+      ],
+      "C95_ci": [
+        1.9735,
+        2.0398
+      ],
+      "C99_ave": 3.1532,
+      "C99_max": 4.3603,
+      "C99_ave_ci": [
+        2.9828,
+        3.4077
+      ],
+      "C99_ci": [
+        2.9828,
+        3.4077
+      ],
+      "C95_seq": 0.5896,
+      "C95_par": 0.3019,
+      "headline_C95_ave": 2.007499982511357,
+      "headline_C95_max": 2.776053940390451,
+      "headline_C99_ave": 3.1531316908184586,
+      "scales": {
+        "125": {
+          "scale_nmax": 125,
+          "ntrials": 20000,
+          "q_mean": 816.69,
+          "q_ave": 816.69,
+          "q_max": 1138.0,
+          "q_std": 119.4043,
+          "query_spread": 0.1462,
+          "q_spread": 0.1462,
+          "max_depth_mean": 125.0,
+          "seq_depth_mean": 240.69,
+          "num_rounds_mean": 2.37,
+          "eps50": 0.0007129001,
+          "eps68": 0.001076399,
+          "eps95": 0.002396744,
+          "eps99": 0.003744898,
+          "C50_ave": 0.5822,
+          "C68_ave": 0.8791,
+          "C68_max": 1.2249,
+          "C68_ave_ci": [
+            0.8669,
+            0.8929
+          ],
+          "C68_ci": [
+            0.8669,
+            0.8929
+          ],
+          "C68_max_ci": [
+            1.2079,
+            1.2444
+          ],
+          "C95_ave": 1.9574,
+          "C95_max": 2.7275,
+          "C95_ave_ci": [
+            1.9244,
+            1.9901
+          ],
+          "C95_ci": [
+            1.9244,
+            1.9901
+          ],
+          "C95_max_ci": [
+            2.6835,
+            2.7729
+          ],
+          "C99_ave": 3.0584,
+          "C99_max": 4.2617,
+          "C99_ave_ci": [
+            2.8787,
+            3.2241
+          ],
+          "C99_ci": [
+            2.8787,
+            3.2241
+          ],
+          "C99_max_ci": [
+            4.0097,
+            4.4908
+          ],
+          "C95_seq": 0.5769,
+          "C95_par": 0.2996,
+          "runtime_per_trial_ms": 0.407
+        },
+        "260": {
+          "scale_nmax": 260,
+          "ntrials": 20000,
+          "q_mean": 1199.49,
+          "q_ave": 1199.49,
+          "q_max": 1664.0,
+          "q_std": 176.0726,
+          "query_spread": 0.14679,
+          "q_spread": 0.14679,
+          "max_depth_mean": 182.0,
+          "seq_depth_mean": 354.49,
+          "num_rounds_mean": 2.404,
+          "eps50": 0.0004877966,
+          "eps68": 0.00074294,
+          "eps95": 0.001668658,
+          "eps99": 0.00271307,
+          "C50_ave": 0.5851,
+          "C68_ave": 0.8911,
+          "C68_max": 1.2363,
+          "C68_ave_ci": [
+            0.8785,
+            0.9047
+          ],
+          "C68_ci": [
+            0.8785,
+            0.9047
+          ],
+          "C68_max_ci": [
+            1.2183,
+            1.2551
+          ],
+          "C95_ave": 2.0015,
+          "C95_max": 2.7766,
+          "C95_ave_ci": [
+            1.9673,
+            2.0373
+          ],
+          "C95_ci": [
+            1.9673,
+            2.0373
+          ],
+          "C95_max_ci": [
+            2.7286,
+            2.8276
+          ],
+          "C99_ave": 3.2543,
+          "C99_max": 4.5145,
+          "C99_ave_ci": [
+            3.0886,
+            3.5304
+          ],
+          "C99_ci": [
+            3.0886,
+            3.5304
+          ],
+          "C99_max_ci": [
+            4.2809,
+            4.8946
+          ],
+          "C95_seq": 0.5915,
+          "C95_par": 0.3037,
+          "runtime_per_trial_ms": 0.419
+        },
+        "540": {
+          "scale_nmax": 540,
+          "ntrials": 20000,
+          "q_mean": 2561.89,
+          "q_ave": 2561.89,
+          "q_max": 3531.0,
+          "q_std": 373.053,
+          "query_spread": 0.14562,
+          "q_spread": 0.14562,
+          "max_depth_mean": 382.0,
+          "seq_depth_mean": 749.89,
+          "num_rounds_mean": 2.405,
+          "eps50": 0.0002301043,
+          "eps68": 0.0003498851,
+          "eps95": 0.0007932899,
+          "eps99": 0.001180436,
+          "C50_ave": 0.5895,
+          "C68_ave": 0.8964,
+          "C68_max": 1.2354,
+          "C68_ave_ci": [
+            0.8831,
+            0.9104
+          ],
+          "C68_ci": [
+            0.8831,
+            0.9104
+          ],
+          "C68_max_ci": [
+            1.217,
+            1.2549
+          ],
+          "C95_ave": 2.0323,
+          "C95_max": 2.8011,
+          "C95_ave_ci": [
+            2.0068,
+            2.0607
+          ],
+          "C95_ci": [
+            2.0068,
+            2.0607
+          ],
+          "C95_max_ci": [
+            2.7676,
+            2.8402
+          ],
+          "C99_ave": 3.0242,
+          "C99_max": 4.1681,
+          "C99_ave_ci": [
+            2.8779,
+            3.3078
+          ],
+          "C99_ci": [
+            2.8779,
+            3.3078
+          ],
+          "C99_max_ci": [
+            3.9649,
+            4.5567
+          ],
+          "C95_seq": 0.5949,
+          "C95_par": 0.303,
+          "runtime_per_trial_ms": 0.466
+        },
+        "1000": {
+          "scale_nmax": 1000,
+          "ntrials": 20000,
+          "q_mean": 5434.53,
+          "q_ave": 5434.53,
+          "q_max": 7461.0,
+          "q_std": 786.699,
+          "query_spread": 0.14476,
+          "q_spread": 0.14476,
+          "max_depth_mean": 803.0,
+          "seq_depth_mean": 1586.53,
+          "num_rounds_mean": 2.429,
+          "eps50": 0.0001102413,
+          "eps68": 0.0001673548,
+          "eps95": 0.0003751465,
+          "eps99": 0.0006027495,
+          "C50_ave": 0.5991,
+          "C68_ave": 0.9095,
+          "C68_max": 1.2486,
+          "C68_ave_ci": [
+            0.896,
+            0.9229
+          ],
+          "C68_ci": [
+            0.896,
+            0.9229
+          ],
+          "C68_max_ci": [
+            1.2301,
+            1.2669
+          ],
+          "C95_ave": 2.0387,
+          "C95_max": 2.799,
+          "C95_ave_ci": [
+            1.9955,
+            2.071
+          ],
+          "C95_ci": [
+            1.9955,
+            2.071
+          ],
+          "C95_max_ci": [
+            2.7408,
+            2.8418
+          ],
+          "C99_ave": 3.2757,
+          "C99_max": 4.4971,
+          "C99_ave_ci": [
+            3.0859,
+            3.5686
+          ],
+          "C99_ci": [
+            3.0859,
+            3.5686
+          ],
+          "C99_max_ci": [
+            4.2362,
+            4.9043
+          ],
+          "C95_seq": 0.5952,
+          "C95_par": 0.3012,
+          "runtime_per_trial_ms": 0.543
+        }
+      },
+      "submission_path": "ondemand_tiebreak",
+      "certified_by": "CI certifier (blind HMAC-derived seed)",
+      "ntrials": 20000,
+      "blind_secret_active": false,
+      "wide_prior_C95_ave": 2.007614724506858,
+      "wide_prior_C99_ave": 3.0913298623281498,
+      "seed_band": "BLIND_SECRET_SEED",
+      "headline_C68_ave": 0.8940236697287872,
+      "headline_C99_max": 4.36036949410812,
+      "headline_C95_seq": 0.5896136491725293,
+      "rounds_mean": 2.402125,
+      "runtime_per_trial_ms": 0.45855031628750004,
+      "commit_sha": "c6ebf5f2587c39094a94e7b735d4018830701dc7",
+      "certified_at": "2026-10-27T17:27:25.090639+00:00"
+    },
     {
       "algo_id": "mlqae_plain",
       "algorithm_name": "mlqae-plain (Labib 2026)",
