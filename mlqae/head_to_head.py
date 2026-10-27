@@ -114,9 +114,43 @@ def cheb_constants(err, q, md, pct, B=2000, seed=1):
     return point, cis
 
 
+def add_scale(nmax, nt_ours=NT_OURS, nt_cheb=NT_CHEB):
+    """Append one benchmark scale to head_to_head.pkl: the flagship ladder at
+    `nmax` (its achieved eps_95 sets chebAE's target, as for the original four
+    scales) and chebAE at that target, with per-trial max circuit depth. Seeds
+    follow the original convention (987000 + nmax for ours, 555000 + nmax for
+    chebAE). Existing scales are left untouched."""
+    with open(OUTFILE, 'rb') as h:
+        results = pickle.load(h)
+    if any(int(item[0]) == int(nmax) for item in results['cheb95']):
+        raise SystemExit(f"scale {nmax} already present in {OUTFILE}")
+    ladder, shots = flagship_schedule(nmax, RATIO)
+    r = evaluate_schedule(ladder, shots, nt_ours, seed=987000 + nmax, return_errors=True)
+    lo68, hi68 = boot_ci_constant(r['errors'], r['nq'], 68)
+    lo95, hi95 = boot_ci_constant(r['errors'], r['nq'], 95)
+    lo99, hi99 = boot_ci_constant(r['errors'], r['nq'], 99)
+    results['ours'].append((nmax, ladder, shots, r, (lo95, hi95), (lo99, hi99), (lo68, hi68)))
+    print(f"ours nmax={r['nmax']:4d} q={r['nq']:5d} eps95={r['p95']:.2e} C95={r['C95']:.2f} "
+          f"[{lo95:.2f},{hi95:.2f}] C99={r['C99']:.2f} C95par={r['C95par']:.3f}", flush=True)
+    eps = r['p95']
+    err, q, md, mx = run_chebae(eps, 0.05, nt_cheb, seed0=555000 + nmax, return_max_depth=True)
+    (cav, cmx, cpar), (ciav, cimx, cipar) = cheb_constants(err, q, md, 95)
+    results['cheb95'].append((nmax, eps, err, q, md))
+    results.setdefault('cheb95_maxdepth', {})[int(nmax)] = mx
+    print(f"chebAE target eps={eps:.2e}: achieved eps95={np.percentile(err, 95):.2e} "
+          f"C_ave={cav:.2f} [{ciav[0]:.2f},{ciav[1]:.2f}] C_max={cmx:.2f} "
+          f"<max depth>={mx.mean():.1f} <seq depth>={md.mean():.1f}", flush=True)
+    with open(OUTFILE, 'wb') as h:
+        pickle.dump(results, h)
+    print(f'saved {OUTFILE} with scale {nmax}')
+
+
 if __name__ == '__main__':
     if '--chebae-only' in sys.argv:
         rerun_chebae_max_depth()
+        sys.exit(0)
+    if '--add-scale' in sys.argv:
+        add_scale(int(sys.argv[sys.argv.index('--add-scale') + 1]))
         sys.exit(0)
     results = {'ours': [], 'cheb95': [], 'cheb68': None, 'cheb99': None,
                'ours99': None, 'cheb95_maxdepth': {}}

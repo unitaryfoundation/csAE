@@ -22,7 +22,7 @@ from mlqae import (geom_ladder, canonical_shots, flagship_schedule,
 
 SEARCH_SEED = 100_000
 HOLDOUT_SEED = 900_000
-SCALES = (60, 125, 260, 540)
+SCALES = (125, 260, 540, 1000)
 
 
 def shot_cost(n: int) -> int:

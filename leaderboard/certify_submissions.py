@@ -94,8 +94,8 @@ def certify_all_submissions(base_dir: str = SUBMISSIONS_DIR) -> List[Dict[str, A
         status_str = "PASS" if rep.passed else "FAIL"
         print(
             f"[{idx:2d}/{len(sub_dirs):2d}] {slug:<24} | {track:<21} | {status_str:<4} | "
-            f"C95(60)={sc_diag.get('C95_small', float('nan')):6.3f} | "
-            f"C95(260)={sc_diag.get('C95_large', float('nan')):6.3f} | "
+            f"C95({sc_diag.get('nmax_small', '?')})={sc_diag.get('C95_small', float('nan')):6.3f} | "
+            f"C95({sc_diag.get('nmax_large', '?')})={sc_diag.get('C95_large', float('nan')):6.3f} | "
             f"({elapsed_s:.2f}s)"
         )
         if not rep.passed:
@@ -107,8 +107,8 @@ def certify_all_submissions(base_dir: str = SUBMISSIONS_DIR) -> List[Dict[str, A
     print("=" * 136)
     header = (
         f"{'Slug':<24} | {'Track':<21} | {'AST':^4} | {'I/O':^4} | {'Repr':^4} | "
-        f"{'0-Inf':^5} | {'Scale':^5} | {'eps95(60)':>9} | {'eps95(260)':>10} | "
-        f"{'C95(60)':>7} | {'C95(260)':>8} | {'Status':^8}"
+        f"{'0-Inf':^5} | {'Scale':^5} | {'eps95(S1)':>9} | {'eps95(S2)':>10} | "
+        f"{'C95(S1)':>7} | {'C95(S2)':>8} | {'Status':^8}"
     )
     print(header)
     print("-" * len(header))

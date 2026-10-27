@@ -1,7 +1,7 @@
 """Compile and export certified HOLDOUT_SEED literature baselines to leaderboard/data/leaderboard.json.
 
 Evaluates and certifies the 11 published Literature Baselines across scales
-n_max in {60, 125, 260, 540} on HOLDOUT_SEED = 900_000 (20,000 trials per scale,
+n_max in {125, 260, 540, 1000} on HOLDOUT_SEED = 900_000 (20,000 trials per scale,
 1,000 bootstrap resamples for 95% CIs), plus the published non-adaptive Depth-Limited track
 (M in {64, 256}, s in {4, 16, 64}) and Depolarizing Noisy track (eta = 1e-3) from
 arXiv:2609.02715.
@@ -55,12 +55,33 @@ from leaderboard.harness import (
     eval_nonadaptive_baseline,
     generate_trials,
 )
+from leaderboard.verifier_and_runner import _load_submission_from_dir  # noqa: E402
 from leaderboard.schema_and_api import (
+    DepthCapExceededError,
     SCHEMA_VERSION,
     VALID_TRACKS,
     validate_leaderboard,
     validate_leaderboard_entry,
 )
+
+def _eval_non_adaptive_submission(sub: Any, nmax: int, ntrials: int, boot_B: int) -> dict[str, Any]:
+    """Run a NonAdaptiveAESubmission on the holdout trials of scale `nmax` (same
+    a_true draws as the other baselines) and return harness metrics."""
+    depths, shots = sub.get_schedule(int(nmax))
+    d = np.asarray(depths, dtype=np.int64)
+    sh = np.asarray(shots, dtype=np.int64)
+    if int(d.max()) > int(nmax):
+        raise DepthCapExceededError(f"{type(sub).__name__} schedule depth {int(d.max())} exceeds scale {nmax}")
+    a_true, th_true, _ = generate_trials(ntrials, HOLDOUT_SEED + int(nmax))
+    rng = np.random.default_rng(HOLDOUT_SEED + int(nmax) + 7919)
+    probs = np.cos(np.outer(th_true, 2.0 * d + 1.0)) ** 2
+    counts = rng.binomial(sh[None, :], probs).astype(np.int64)
+    a_hat = np.clip(np.asarray(sub.estimate(list(map(int, d)), list(map(int, sh)), counts), dtype=float), 0.0, 1.0)
+    nq = float(np.sum(np.where(d == 0, 1, d) * sh))
+    q_vec = np.full(ntrials, nq)
+    md_vec = np.full(ntrials, float(d.max()))
+    return compute_metrics(a_true, a_hat, q_vec, max_depths=md_vec, seq_depths=md_vec, boot_B=boot_B)
+
 
 OUT_JSON_PATHS = [
     os.path.join(_HERE, "data", "leaderboard.json"),
@@ -751,6 +772,7 @@ def eval_track_non_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[d
         r = evaluate_schedule(
             lad, shots, ntrials, seed=HOLDOUT_SEED + nmax,
             return_errors=True, return_extra=True,
+            chunk=500 if nmax >= 500 else 4000,  # dense grid x 1001 depths: bound memory
         )
         q_vec = np.full(ntrials, r["nq"], dtype=float)
         md_vec = np.full(ntrials, r["nmax"], dtype=float)
@@ -837,48 +859,15 @@ def eval_track_non_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[d
         )
     )
 
-    # 1C. csAE (Labib et al. 2024) - Compressed Sensing / Virtual-Array ESPRIT
+    # 1C. csAE (Labib et al. 2024) - Compressed Sensing / Virtual-Array ESPRIT.
+    #     Evaluated through the self-contained leaderboard submission (power-of-two
+    #     schedule up to the largest 2^k <= n_max, C = 4.0 shot ramp, sign recovery +
+    #     ESPRIT), so it obeys the per-scale depth cap like every other entry.
     csae_scales: dict[str, dict[str, Any]] = {}
-    pkl_c4 = os.path.join(_ROOT, "csae", "sims", "csae_C4.000_mc0500.pkl")
-    pkl_c8 = os.path.join(_ROOT, "csae", "sims", "csae_C8.000_mc0500.pkl")
-    with open(pkl_c4, "rb") as f4:
-        errors4, _, _, _, queries4, maxq4, _, _, _, avals4 = pickle.load(f4)
-    with open(pkl_c8, "rb") as f8:
-        errors8, _, _, _, queries8, maxq8, _, _, _, _ = pickle.load(f8)
-
-    a_csae = np.asarray(avals4, dtype=float)
-    for idx_row, nmax in zip((2, 3, 4, 5), SCALES):
-        err_row = np.asarray(errors4[idx_row], dtype=float)
-        nq_row = float(queries4[idx_row])
-        md_row = float(maxq4[idx_row])
-        q_vec = np.full(len(err_row), nq_row, dtype=float)
-        md_vec = np.full(len(err_row), md_row, dtype=float)
-        a_ref = a_csae[idx_row] if a_csae.ndim == 2 else a_csae
-        m = compute_metrics(
-            a_ref, a_ref + err_row, q_vec,
-            max_depths=md_vec, seq_depths=md_vec, boot_B=boot_B,
-        )
-        c99_c8 = float(np.percentile(errors8[idx_row], 99) * queries8[idx_row])
-        csae_scales[str(nmax)] = _clean_scale_dict(
-            m, nmax, num_rounds_mean=1.0,
-            extra={"csae_max_depth": int(md_row), "C99_C8_schedule": round(c99_c8, 4)},
-        )
-
-    e4_sub = np.asarray(errors4)[2:]
-    q4_sub = np.asarray(queries4, dtype=float)[2:]
-    mq4_sub = np.asarray(maxq4, dtype=float)[2:]
-    e8_sub = np.asarray(errors8)[2:]
-    q8_sub = np.asarray(queries8, dtype=float)[2:]
-
-    def _wls_fit(eps_arr: np.ndarray, q_arr: np.ndarray) -> float:
-        mod = sm.WLS(eps_arr, sm.add_constant(1.0 / q_arr), weights=1.0 / (eps_arr**2)).fit()
-        return round(float(mod.params[1]), 4)
-
-    wls_c68 = _wls_fit(np.percentile(e4_sub, 68, axis=1), q4_sub)
-    wls_c95 = _wls_fit(np.percentile(e4_sub, 95, axis=1), q4_sub)
-    wls_c99_c4 = _wls_fit(np.percentile(e4_sub, 99, axis=1), q4_sub)
-    wls_c99_c8 = _wls_fit(np.percentile(e8_sub, 99, axis=1), q8_sub)
-    wls_c95_seq = _wls_fit(np.percentile(e4_sub, 95, axis=1), mq4_sub)
+    csae_sub, _, _ = _load_submission_from_dir(os.path.join(_HERE, "submissions", "csae_esprit_labib"))
+    for nmax in SCALES:
+        m = _eval_non_adaptive_submission(csae_sub, nmax, ntrials, boot_B)
+        csae_scales[str(nmax)] = _clean_scale_dict(m, nmax, num_rounds_mean=1.0)
 
     entries.append(
         _build_entry(
@@ -894,20 +883,21 @@ def eval_track_non_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[d
             pr_number=None,
             description=(
                 "Compressed-Sensing Amplitude Estimation (Labib et al. 2024, arXiv:2405.14697): "
-                "power-of-two Grover depth schedule with sliding-window sign recovery, 2q-th order "
-                "virtual uniform linear array (ULA) covariance construction, and ESPRIT frequency estimation."
+                "power-of-two Grover depth schedule (largest 2^k <= n_max) with the C = 4.0 shot ramp, "
+                "sliding-window sign recovery, 2q-th order virtual uniform linear array (ULA) covariance "
+                "construction, and ESPRIT frequency estimation; run through the self-contained leaderboard submission."
             ),
             scales_dict=csae_scales,
             deterministic_budget=True,
             agent_origin="Literature (Labib et al. 2024)",
-            repro_cmd="OPENBLAS_NUM_THREADS=1 .venv/bin/python mlqae/compare_to_csae.py",
+            repro_cmd="OPENBLAS_NUM_THREADS=1 .venv/bin/python leaderboard/populate_baselines.py",
             date_str="2024-05-23",
             extra_summary={
-                "published_wls_C68": wls_c68,
-                "published_wls_C95": wls_c95,
-                "published_wls_C99_C4": wls_c99_c4,
-                "published_wls_C99_C8": wls_c99_c8,
-                "published_wls_C95_seq": wls_c95_seq,
+                "evaluation_note": (
+                    "Evaluated through leaderboard/submissions/csae_esprit_labib on the holdout "
+                    "trials (20,000 per scale); powers of two up to the largest 2^k <= n_max, so "
+                    "scales 540 and 1000 share the depth-512 schedule."
+                ),
             },
         )
     )
@@ -1021,7 +1011,7 @@ def eval_track_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[dict[
     cheb_scales: dict[str, dict[str, Any]] = {}
 
     print("  -> Building precomputed trigonometric tables for BAE-Adaptive ...")
-    grid_bae, logP_bae, log1mP_bae = _build_bae_grid_tables(G=4096, max_n_table=800)
+    grid_bae, logP_bae, log1mP_bae = _build_bae_grid_tables(G=4096, max_n_table=int(max(SCALES)) + 1)
 
     # Warm up JIT kernels
     a_w, th_w, s_w = generate_trials(16, SEARCH_SEED + 60)
@@ -1042,7 +1032,8 @@ def eval_track_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[dict[
         )
         fae_scales[str(nmax)] = _clean_scale_dict(
             m_fae, nmax, num_rounds_mean=float(np.mean(rd_fae)),
-            extra={"target_eps95": float(f"{eps_t:.6e}")},
+            extra={"target_eps95": float(f"{eps_t:.6e}"),
+                   "frac_trials_over_scale_depth": round(float(np.mean(np.asarray(md_fae) > nmax)), 4)},
         )
 
         # 2B. IQAE-Chernoff (Grinko et al. 2021)
@@ -1052,7 +1043,7 @@ def eval_track_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[dict[
         )
         iqae_ch_scales[str(nmax)] = _clean_scale_dict(
             m_ich, nmax, num_rounds_mean=float(np.mean(rd_ich)),
-            extra={"target_eps95": float(f"{eps_t:.6e}")},
+            extra={"frac_trials_over_scale_depth": round(float(np.mean(np.asarray(md_ich) > nmax)), 4), "target_eps95": float(f"{eps_t:.6e}")},
         )
 
         # 2C. IQAE-CP (Grinko et al. 2021)
@@ -1071,7 +1062,7 @@ def eval_track_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[dict[
         )
         iqae_cp_scales[str(nmax)] = _clean_scale_dict(
             m_icp, nmax, num_rounds_mean=float(np.mean(rd_icp)),
-            extra={"target_eps95": float(f"{eps_t:.6e}")},
+            extra={"frac_trials_over_scale_depth": round(float(np.mean(np.asarray(md_icp) > nmax)), 4), "target_eps95": float(f"{eps_t:.6e}")},
         )
 
         # 2D. BIQAE (Bayesian Interval QAE, 2024)
@@ -1089,7 +1080,7 @@ def eval_track_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[dict[
         )
         biqae_scales[str(nmax)] = _clean_scale_dict(
             m_biq, nmax, num_rounds_mean=float(np.mean(rd_biq)),
-            extra={"target_eps95": float(f"{eps_t:.6e}")},
+            extra={"frac_trials_over_scale_depth": round(float(np.mean(np.asarray(md_biq) > nmax)), 4), "target_eps95": float(f"{eps_t:.6e}")},
         )
 
         # 2E. chebAE (Rall & Fuller 2023)
@@ -1108,7 +1099,9 @@ def eval_track_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[dict[
         )
         cheb_scales[str(nmax)] = _clean_scale_dict(
             m_cheb, nmax, num_rounds_mean=15.0,
-            extra={"target_eps95": float(f"{eps_t:.6e}")},
+            extra={"target_eps95": float(f"{eps_t:.6e}"),
+                   # archived matched-error runs are not depth-capped; record how often they exceed n_max
+                   "frac_trials_over_scale_depth": round(float(np.mean(mx_c > nmax)), 4)},
         )
 
         # 2F. BAE-Adaptive (Ramoa & Santos 2024)
@@ -1122,7 +1115,7 @@ def eval_track_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[dict[
         )
         bae_scales[str(nmax)] = _clean_scale_dict(
             m_bae, nmax, num_rounds_mean=float(np.mean(rd_bae)),
-            extra={"deterministic_budget_B": b_flag},
+            extra={"frac_trials_over_scale_depth": round(float(np.mean(np.asarray(md_bae) > nmax)), 4), "deterministic_budget_B": b_flag},
         )
 
     entries.append(
@@ -1578,7 +1571,7 @@ def print_summary_tables(
 ) -> None:
     print("\n" + "=" * 134)
     print(" QUANTUM AMPLITUDE ESTIMATION LEADERBOARD — CERTIFIED HOLDOUT_SEED (900,000) LITERATURE BASELINES")
-    print(" Scales: n_max in {60, 125, 260, 540} | Prior: a ~ U(0.1, 0.9) | Trials: 20,000/scale | Bootstrap: B=1,000")
+    print(f" Scales: n_max in {set(SCALES)} | Prior: a ~ U(0.1, 0.9) | Trials: 20,000/scale | Bootstrap: B=1,000")
     print("=" * 134)
     hdr = (
         f"{'Rank':<4} {'Algorithm':<52} {'Category':<10} {'Track':<21} {'Rnds':>5} "
@@ -1626,6 +1619,13 @@ def main() -> None:
             "scales": list(SCALES),
             "query_accounting": "shot_cost(0) = 1, shot_cost(n) = n for n >= 1 (total = sum(n * N_n) + N_0)",
             "kappa_crlb": {str(k): v for k, v in KAPPA.items()},
+            "depth_cap": "max Grover depth <= n_max for every track (enforced by the evaluators and the CI oracle)",
+            # CRLB of the flagship ladder itself at each scale: the floor the paper's
+            # exact ML estimator is measured against. Not a bound for other schedules.
+            "flagship_schedule_crlb": {
+                str(n): {str(p): round(float(crlb_constant(*flagship_schedule(n), pct=p)), 4) for p in (68, 95, 99)}
+                for n in SCALES
+            },
         },
         "tracks": list(VALID_TRACKS),
         "scales": list(SCALES),

@@ -3,7 +3,7 @@
 Tests both:
 1. Legitimate non-adaptive and adaptive Quantum Amplitude Estimation algorithms
    (verifying they pass all 5 anti-cheat checks and produce complete statistical
-   benchmarks across nmax in {60, 125, 260, 540} on HOLDOUT_SEED = 900_000 as
+   benchmarks across nmax in {125, 260, 540, 1000} on HOLDOUT_SEED = 900_000 as
    well as wide-prior robustness on a ~ U(0.01, 0.99)).
 2. Adversarial / cheating / malformed mock algorithms:
    - Stack frame inspection (`sys._getframe`)
@@ -33,6 +33,7 @@ if _ROOT not in sys.path:
 import numpy as np
 from leaderboard.harness import HOLDOUT_SEED, SCALES, generate_trials
 from leaderboard.verifier_and_runner import (
+    ALG_RNG_XOR,
     AdaptiveTwoRoundSubmission,
     MLQAEFlagshipSubmission,
     MLQAEPlainSubmission,
@@ -97,21 +98,28 @@ def cheat_oracle_attribute_tamper(oracle, nmax):
 def make_side_channel_leak_submission(seed_specs):
     """Create a submission with clean AST that leaks `a_true` from a pre-populated side-channel table.
 
-    Used to prove that Stage 4 (Zero-Information Constant-0.5 Dummy Oracle Test)
-    independently catches any side-channel leakage of `a_true` even if AST checks pass!
+    Models an attacker who has memorized the public seed's trial table: for each
+    verification stage (ntrials, seed) it precomputes the trials the harness will
+    generate and keys `a_true` by the first draw of the algorithm RNG the harness
+    hands to the submission (which is derived deterministically from the trial
+    seed). The submission then ignores the oracle outcomes entirely. Used to prove
+    that Stage 4 (Zero-Information Constant-0.5 Dummy Oracle Test) independently
+    catches such leakage even though the AST is clean and no oracle attribute is
+    misused.
     """
     lookup = {}
     for n_t, s in seed_specs:
         a_arr, _, t_seeds = generate_trials(n_t, s, a_range=(0.1, 0.9))
         for a_val, ts in zip(a_arr, t_seeds):
-            lookup[int(ts)] = float(a_val)
+            first_draw = float(np.random.default_rng(int(ts) ^ ALG_RNG_XOR).random())
+            lookup[round(first_draw, 15)] = float(a_val)
 
-    def side_channel_estimator(oracle, nmax, seed):
+    def side_channel_estimator(oracle, nmax, rng):
         # Queries the oracle normally so depth/shot checks pass, but ignores oracle
-        # outcomes and returns the side-channeled a_true for this trial seed!
+        # outcomes and returns the memorized a_true for this trial.
         oracle.measure(1, 2)
         oracle.measure(max(1, nmax // 2), 2)
-        return lookup.get(int(seed), 0.5)
+        return lookup.get(round(float(rng.random()), 15), 0.5)
 
     return side_channel_estimator
 
@@ -305,7 +313,7 @@ class TestVerifierAndBenchmark(unittest.TestCase):
                 self.assertTrue(rep.scaling_passed)
                 self.assertTrue(rep.passed, f"Legitimate algorithm {name} failed verification: {rep.violations}")
 
-        # Full statistical benchmark across standard scales {60, 125, 260, 540} on HOLDOUT_SEED = 900_000
+        # Full statistical benchmark across standard scales {125, 260, 540, 1000} on HOLDOUT_SEED = 900_000
         bench_flagship = benchmark_submission(
             flagship,
             name="MLQAE-Flagship (Non-Adaptive Baseline)",
@@ -333,7 +341,7 @@ class TestVerifierAndBenchmark(unittest.TestCase):
         # Verify all required metrics exist and are sensible for both standard and wide priors
         for bench in (bench_flagship, bench_adaptive):
             self.assertEqual(bench["seed_band"], HOLDOUT_SEED)
-            self.assertEqual(bench["scales"], (60, 125, 260, 540))
+            self.assertEqual(bench["scales"], (125, 260, 540, 1000))
             for prior_key in ("standard_prior", "wide_prior"):
                 sec = bench[prior_key]
                 for scale in SCALES:
@@ -412,7 +420,7 @@ class TestVerifierAndBenchmark(unittest.TestCase):
         bench = benchmark_submission(
             sub,
             name="MLQAE-Flagship-BlindSecret",
-            scales=(60, 125),
+            scales=(125, 540),
             ntrials=200,
             ntrials_wide_prior=100,
             boot_B=50,

@@ -37,7 +37,8 @@ All tracks use the exact accounting conventions of [`mlqae/core.py`](../mlqae/co
 
 ### 1.3 Benchmark Scales, Blind Seed Protocol & Metrics
 - **Prior distribution:** $a \sim \mathrm{Uniform}(0.1, 0.9)$ across Monte Carlo trials.
-- **Standard benchmark scales:** $n_{\max} \in \{60, 125, 260, 540\}$.
+- **Standard benchmark scales:** $n_{\max} \in \{125, 260, 540, 1000\}$.
+- **Depth cap:** $n_{\max}$ is a hard limit on the Grover depth of every circuit in every track (`max_depth_cap = n_max` in the evaluators and in the CI oracle; a deeper request raises `DepthCapExceededError`). Adaptive methods may use as many sequential rounds as they like; those are charged in the sequential-depth constant, not forbidden.
 - **Development vs. Blind Certification Seeds:**
   - **Local development & smoke testing:** Contributors can develop and benchmark locally using `SEARCH_SEED = 100_000` (and local validation seed `HOLDOUT_SEED = 900_000`).
   - **Official blind certification (`LEADERBOARD_SECRET_SEED`):** While contributors can test locally on `SEARCH_SEED = 100_000`, official leaderboard certification runs in GitHub Actions against a **blind cryptographic repository secret (`LEADERBOARD_SECRET_SEED`)** so submissions cannot tune hyperparameters on or memorize the test amplitudes. Any submission whose performance on the blind secret seed diverges significantly from its public seed performance is automatically flagged.
@@ -262,4 +263,4 @@ print('Metadata valid:', meta['algorithm_name'], '| Track:', meta['track'])
 ### Step 4: Open a Pull Request
 1. Commit your `leaderboard/submissions/<your_algorithm_slug>/` directory (do **not** modify core evaluation harnesses or existing baseline files).
 2. Open a Pull Request against the `main` branch.
-3. Automated CI will run Tier-1 verification on `SEARCH_SEED = 100_000` and Tier-2 official certification against `HOLDOUT_SEED = 900_000` and the blind cryptographic secret `LEADERBOARD_SECRET_SEED` across $n_{\max} \in \{60, 125, 260, 540\}$ with bootstrap 95% confidence intervals, then update `leaderboard/leaderboard.json`.
+3. Automated CI will run Tier-1 verification on `SEARCH_SEED = 100_000` and Tier-2 official certification against `HOLDOUT_SEED = 900_000` and the blind cryptographic secret `LEADERBOARD_SECRET_SEED` across $n_{\max} \in \{125, 260, 540, 1000\}$ with bootstrap 95% confidence intervals, then update `leaderboard/leaderboard.json`.

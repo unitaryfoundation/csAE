@@ -711,7 +711,7 @@ jobs:
                       "blind_secret_seed": True,
                       "salted_seed_verification": True,
                       "a_range": [0.1, 0.9],
-                      "scales": [60, 125, 260, 540],
+                      "scales": [125, 260, 540, 1000],
                   },
                   "entries": [],
               }

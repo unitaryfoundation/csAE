@@ -106,7 +106,7 @@ VALID_TRACKS: tuple[str, ...] = (
     "depth-limited",
 )
 
-STANDARD_SCALES: tuple[int, ...] = (60, 125, 260, 540)
+STANDARD_SCALES: tuple[int, ...] = (125, 260, 540, 1000)
 DEFAULT_A_RANGE: tuple[float, float] = (0.1, 0.9)
 SEARCH_SEED: int = 100_000
 HOLDOUT_SEED: int = 900_000
@@ -795,7 +795,7 @@ class AdaptiveAESubmission(abc.ABC):
             Sandboxed quantum oracle wrapping the unknown amplitude $a$.
             Call ``oracle.measure(depth, shots)`` or ``oracle.measure_batch(depths, shots)``.
         target_scale_or_budget : int
-            Benchmark scale $n_{\\max} \\in \\{60, 125, 260, 540\\}$ or target query budget $Q$.
+            Benchmark scale $n_{\\max} \\in \\{125, 260, 540, 1000\\}$ or target query budget $Q$.
             If ``oracle.max_query_budget`` is set, the oracle enforces that hard budget cap.
         rng : np.random.Generator
             Per-trial classical random number generator for randomized adaptive decisions.
@@ -1081,6 +1081,8 @@ def evaluate_non_adaptive_submission(
     if np.any(d_arr < 0) or np.any(s_arr < 1):
         raise ValueError("Schedule must have depths >= 0 and shots >= 1.")
 
+    if max_depth_cap is None:
+        max_depth_cap = int(scale_nmax)
     nmax_actual = int(np.max(d_arr))
     if max_depth_cap is not None and nmax_actual > int(max_depth_cap):
         raise DepthCapExceededError(
@@ -1134,7 +1136,15 @@ def evaluate_adaptive_submission(
     max_depth_cap: int | None = None,
     boot_B: int = 1000,
 ) -> dict[str, Any]:
-    """Evaluate an ``AdaptiveAESubmission`` across ``ntrials`` sandboxed ``QuantumAEOracle`` runs."""
+    """Evaluate an ``AdaptiveAESubmission`` across ``ntrials`` sandboxed ``QuantumAEOracle`` runs.
+
+    The Grover depth is capped at ``target_scale_or_budget`` unless ``max_depth_cap`` is
+    given explicitly: the benchmark scale is a hardware depth limit, the same for every
+    track, so an adaptive method cannot lower its query constant by running deeper
+    circuits than the non-adaptive schedules it is compared with.
+    """
+    if max_depth_cap is None:
+        max_depth_cap = int(target_scale_or_budget)
     master_rng = np.random.default_rng(int(seed_band) + int(target_scale_or_budget))
     a_true = master_rng.uniform(a_range[0], a_range[1], int(ntrials))
     oracle_seeds = master_rng.integers(0, 2**31 - 1, size=int(ntrials), dtype=np.int64)

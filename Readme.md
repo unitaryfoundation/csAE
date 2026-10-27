@@ -19,7 +19,8 @@ Can you design a **non-adaptive** or **adaptive** amplitude estimation schedule/
 ### Standardized Rules & Blind Evaluation
 - **Physical Model**: Estimating unknown amplitude $a = \sin\theta \sim \mathrm{Uniform}(0.1, 0.9)$ from measurements of $G^n U|0\rangle$ with success probability $p(n,\theta) = \cos^2((2n+1)\theta)$.
 - **Query Cost Accounting**: A shot at Grover depth $n = 0$ costs $1$ query; a shot at Grover depth $n \ge 1$ costs $n$ queries ($N_{\mathrm{tot}} = \sum_{n \ge 1} n N_n + N_0$).
-- **Primary Metric**: $C_{95}^{\mathrm{ave}} = \varepsilon_{95} \cdot \langle N_{\mathrm{tot}} \rangle$ across standard scales $n_{\max} \in \{60, 125, 260, 540\}$ ($20{,}000$ Monte Carlo trials per scale with $1{,}000$-resample bootstrap 95% confidence intervals), tracked alongside worst-case query cost $C_{95}^{\max}$, tail constant $C_{99}^{\mathrm{ave}}$, and sequential depth constant $C_{95}^{\mathrm{seq}}$.
+- **Depth Cap**: the benchmark scale $n_{\max}$ is a hard limit on the Grover depth of every circuit, for every track; the evaluators and the CI oracle reject deeper circuits. Sequential rounds are not capped and are charged in the sequential-depth constant.
+- **Primary Metric**: $C_{95}^{\mathrm{ave}} = \varepsilon_{95} \cdot \langle N_{\mathrm{tot}} \rangle$ across standard scales $n_{\max} \in \{125, 260, 540, 1000\}$ ($20{,}000$ Monte Carlo trials per scale with $1{,}000$-resample bootstrap 95% confidence intervals), tracked alongside worst-case query cost $C_{95}^{\max}$, tail constant $C_{99}^{\mathrm{ave}}$, and sequential depth constant $C_{95}^{\mathrm{seq}}$.
 - **5-Stage Anti-Cheat & Blind Secret Test Seed (`LEADERBOARD_SECRET_SEED`)**:
   Every Pull Request touching `leaderboard/submissions/<your_algo>/` triggers an isolated, network-disabled GitHub Actions workflow ([`.github/workflows/leaderboard_ci.yml`](.github/workflows/leaderboard_ci.yml)) running [`leaderboard/verifier_and_runner.py`](leaderboard/verifier_and_runner.py):
   1. **Static AST Security Scanner** (blocks forbidden imports, builtins, and underscore/dunder introspection).
@@ -34,17 +35,17 @@ Literature baselines are run exactly as specified in their papers; the benchmark
 
 | Rank | Algorithm | Track | Rounds | $C_{68}^{\mathrm{ave}}$ | $C_{95}^{\mathrm{ave}}$ `[95% CI]` | $C_{95}^{\max}$ | $C_{99}^{\mathrm{ave}}$ | $C_{95}^{\mathrm{seq}}$ | Reference |
 | ---: | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **1** | **`mlqae-plain`** | `non-adaptive` | $1.0$ | $1.199$ | **2.818** `[2.76, 2.89]` | $2.818$ | $6.45$ | $0.284$ | [arXiv:2609.02715](https://arxiv.org/abs/2609.02715) |
-| **2** | **`mlqae-flagship`** | `non-adaptive` | $1.0$ | $1.275$ | **2.883** `[2.82, 2.94]` | $2.883$ | $5.50$ | $0.212$ | [arXiv:2609.02715](https://arxiv.org/abs/2609.02715) |
-| **3** | **`BAE-Adaptive`** | `adaptive-fixed-budget` | $21.1$ | $1.068$ | **3.034** `[2.91, 3.16]` | $3.034$ | $10.97$ | $3.013$ | [arXiv:2401.15072](https://arxiv.org/abs/2401.15072) |
-| **4** | **`chebAE`** | `adaptive-variable` | $15.0$ | $1.391$ | **3.141** `[2.93, 3.42]` | $4.833$ | $9.97$ | $2.905$ | [arXiv:2207.08628](https://arxiv.org/abs/2207.08628) |
-| **5** | **`BIQAE (Beta-Posterior)`** | `adaptive-variable` | $10.0$ | $1.990$ | **4.691** `[4.61, 4.79]` | $9.513$ | $8.65$ | $4.691$ | Bayesian Beta-IQAE |
-| **6** | **`csAE (ESPRIT)`** | `non-adaptive` | $1.0$ | $1.760$ | **4.815** `[4.16, 6.11]` | $4.815$ | $15.64$ | $0.296$ | [arXiv:2405.14697](https://arxiv.org/abs/2405.14697) |
-| **7** | **`IQAE-CP`** | `adaptive-variable` | $5.2$ | $2.735$ | **6.838** `[6.68, 6.98]` | $14.626$ | $19.40$ | $6.838$ | [arXiv:1912.05559](https://arxiv.org/abs/1912.05559) |
-| **8** | **`MLAE-EIS (Suzuki)`** | `non-adaptive` | $1.0$ | $3.602$ | **7.918** `[7.77, 8.07]` | $7.918$ | $13.85$ | $0.040$ | [arXiv:1904.10246](https://arxiv.org/abs/1904.10246) |
-| **9** | **`FAE`** | `adaptive-variable` | $8.1$ | $3.932$ | **8.735** `[8.58, 8.90]` | $11.011$ | $14.10$ | $8.735$ | [arXiv:2003.02417](https://arxiv.org/abs/2003.02417) |
-| **10** | **`IQAE-Chernoff`** | `adaptive-variable` | $19.1$ | $4.035$ | **9.371** `[9.20, 9.54]` | $38.952$ | $13.54$ | $9.371$ | [arXiv:1912.05559](https://arxiv.org/abs/1912.05559) |
-| **11** | **`MLAE-LIS (Suzuki)`** | `non-adaptive` | $1.0$ | $25.144$ | **53.078** `[52.23, 53.86]` | $53.078$ | $72.07$ | $0.006$ | [arXiv:1904.10246](https://arxiv.org/abs/1904.10246) |
+| **1** | **`mlqae-plain`** | `non-adaptive` | $1.0$ | $1.222$ | **2.881** `[2.82, 2.96]` | $2.881$ | $6.67$ | $0.285$ | [arXiv:2609.02715](https://arxiv.org/abs/2609.02715) |
+| **2** | **`mlqae-flagship`** | `non-adaptive` | $1.0$ | $1.300$ | **2.936** `[2.88, 3.00]` | $2.936$ | $5.71$ | $0.212$ | [arXiv:2609.02715](https://arxiv.org/abs/2609.02715) |
+| **3** | **`BAE-Adaptive`** | `adaptive-fixed-budget` | $26.6$ | $1.098$ | **3.034** `[2.92, 3.15]` | $3.034$ | $11.25$ | $3.023$ | [arXiv:2401.15072](https://arxiv.org/abs/2401.15072) |
+| **4** | **`chebAE`** | `adaptive-variable` | $15.0$ | $1.411$ | **3.188** `[2.95, 3.44]` | $4.871$ | $15.24$ | $2.920$ | [arXiv:2207.08628](https://arxiv.org/abs/2207.08628) |
+| **5** | **`csAE (ESPRIT)`** | `non-adaptive` | $1.0$ | $1.401$ | **3.741** `[3.60, 3.88]` | $3.741$ | $12.55$ | $0.231$ | [arXiv:2405.14697](https://arxiv.org/abs/2405.14697) |
+| **6** | **`BIQAE (Beta-Posterior)`** | `adaptive-variable` | $10.8$ | $1.957$ | **4.652** `[4.57, 4.75]` | $9.396$ | $9.42$ | $4.652$ | Bayesian Beta-IQAE |
+| **7** | **`IQAE-CP`** | `adaptive-variable` | $5.7$ | $2.703$ | **6.805** `[6.66, 6.95]` | $14.605$ | $31.03$ | $6.805$ | [arXiv:1912.05559](https://arxiv.org/abs/1912.05559) |
+| **8** | **`MLAE-EIS (Suzuki)`** | `non-adaptive` | $1.0$ | $3.628$ | **7.942** `[7.80, 8.09]` | $7.942$ | $14.05$ | $0.040$ | [arXiv:1904.10246](https://arxiv.org/abs/1904.10246) |
+| **9** | **`FAE`** | `adaptive-variable` | $9.1$ | $3.947$ | **8.785** `[8.63, 8.95]` | $11.278$ | $14.32$ | $8.785$ | [arXiv:2003.02417](https://arxiv.org/abs/2003.02417) |
+| **10** | **`IQAE-Chernoff`** | `adaptive-variable` | $19.9$ | $3.881$ | **9.066** `[8.90, 9.23]` | $30.157$ | $13.16$ | $9.066$ | [arXiv:1912.05559](https://arxiv.org/abs/1912.05559) |
+| **11** | **`MLAE-LIS (Suzuki)`** | `non-adaptive` | $1.0$ | $35.354$ | **74.588** `[73.38, 75.62]` | $74.588$ | $100.86$ | $0.004$ | [arXiv:1904.10246](https://arxiv.org/abs/1904.10246) |
 
 ### Quickstart: Verify & Benchmark Locally
 ```bash

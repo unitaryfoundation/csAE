@@ -147,7 +147,8 @@ footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-si
     <span>sequential depth = Grover depth run in series: n<sub>max</sub> for one parallel round, the sum of per-round depths when adaptive</span>
     <span>&epsilon;<sub>&delta;</sub> = &delta;-th percentile of |&acirc; &minus; a|, &delta; &isin; {68, 95, 99}</span>
     <span>cost(n=0) = 1, cost(n&ge;1) = n</span>
-    <span>n<sub>max</sub> &isin; {60, 125, 260, 540}</span>
+    <span id="scalesChip">n<sub>max</sub> &isin; {&hellip;}</span>
+    <span>max circuit depth &le; n<sub>max</sub> for every track</span>
   </div>
 </header>
 
@@ -160,13 +161,7 @@ footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-si
   </div>
   <div class="ctl">
     <label>Scale n<sub>max</sub></label>
-    <div class="seg" id="segScale" role="group">
-      <button type="button" data-v="mean" aria-pressed="true">Mean of scales</button>
-      <button type="button" data-v="60">60</button>
-      <button type="button" data-v="125">125</button>
-      <button type="button" data-v="260">260</button>
-      <button type="button" data-v="540">540</button>
-    </div>
+    <div class="seg" id="segScale" role="group"></div>
   </div>
 </section>
 
@@ -174,7 +169,7 @@ footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-si
   <div class="head">
     <div>
       <div class="t">Trade-off frontier: sequential-depth constant vs total queries</div>
-      <div class="s">Lower-left is better. C&#771; charges wall-clock depth: adaptive rounds run one after another, a non-adaptive schedule runs once. It is invariant under shot count, C<sup>Q</sup> is not, so a method cannot buy a better position by taking more shots. Dashed: Pareto frontier over all entries; green: Cramér&ndash;Rao floor &kappa;<sub>&delta;</sub> on C<sup>Q</sup>.</div>
+      <div class="s">Lower-left is better. C&#771; charges wall-clock depth: adaptive rounds run one after another, a non-adaptive schedule runs once. It is invariant under shot count, C<sup>Q</sup> is not, so a method cannot buy a better position by taking more shots. Dashed: Pareto frontier over all entries; green: the Cramér&ndash;Rao floor of the flagship ladder, a reference for that schedule only.</div>
     </div>
     <div class="seg" id="segDelta" role="group" aria-label="Percentile">
       <button type="button" data-v="68">&delta; = 68</button>
@@ -191,7 +186,7 @@ footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-si
     <div class="head">
       <div>
         <div class="t">Total queries &middot; C<sub>68</sub><sup>Q</sup> &rarr; C<sub>95</sub><sup>Q</sup> &rarr; C<sub>99</sub><sup>Q</sup></div>
-        <div class="s">Sorted by C<sub>95</sub><sup>Q</sup>. &#9733; = Pareto-optimal across the three percentiles.</div>
+        <div class="s">Sorted by C<sub>95</sub><sup>Q</sup>. &#9733; = Pareto-optimal across the three percentiles. Dashed: Cramér&ndash;Rao floor of the flagship ladder at each percentile.</div>
       </div>
     </div>
     <svg class="chart" id="svgQ" role="img" aria-label="Dot plot of query constants"></svg>
@@ -217,7 +212,7 @@ footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-si
   <div class="head">
     <div>
       <div class="t" id="tblTitle">All entries</div>
-      <div class="s">Click a header to sort, a row to expand. Q / D badges mark Pareto-optimal entries in the query and sequential-depth frontiers.</div>
+      <div class="s">Click a header to sort, a row to expand. Q / D badges mark Pareto-optimal entries in the query and sequential-depth frontiers. &dagger; = literature method run at a matched target error, not depth-capped (hover for the share of trials above n<sub>max</sub>).</div>
     </div>
   </div>
   <div class="tbl-wrap">
@@ -260,8 +255,9 @@ footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-si
     <p>Why C&#771; and not &epsilon; &middot; depth: multiplying every shot count by k divides &epsilon; by &radic;k and multiplies queries by k, so &epsilon; &middot; depth can be driven down at will while &epsilon; &middot; queries goes up. The product &epsilon;&sup2; &middot; depth &middot; queries does not move. The depth that enters is the sequential one, the Grover depth a single processor must run in series: a non-adaptive schedule runs all its circuits in one parallel round, so its sequential depth is its deepest rung, while an adaptive method waits for each round before choosing the next and pays the sum. (The paper's parallel constant &epsilon;<sub>95</sub> n<sub>max</sub> &asymp; 0.21 is the same idea at one shot on the deepest rung.)</p>
   </div>
   <div>
-    <h3>Bounds</h3>
-    <p>For any fixed schedule under this prior, the exact scale-mixture Cramér&ndash;Rao bound gives <span class="mono">C<sup>Q</sup> &ge; &kappa;<sub>&delta;</sub></span> with <span class="mono" id="kappaTxt"></span>. The Ziv&ndash;Zakai bound at &delta; = 95 is <span class="mono">1.94</span>.</p>
+    <h3>Reference floors</h3>
+    <p>The dashed green lines are the Cramér&ndash;Rao floor of the flagship ladder itself, <span class="mono" id="kappaTxt"></span>, averaged over the scales. They bound what any estimator can do <em>on that schedule</em> (the paper's exact ML sits within a few percent of them) and say nothing about other schedules: an adaptive method that spends fewer queries on disambiguation can legitimately go below them. No universal floor for the query constant is drawn.</p>
+    <p>Depth is capped at n<sub>max</sub> for every track, so a method cannot lower its query constant by running deeper circuits than the schedules it is compared with. Sequential rounds are not capped; they show up in C&#771;.</p>
   </div>
   <div>
     <h3>Certification</h3>
@@ -287,7 +283,7 @@ const TRACKS = {
 const tok = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const fmt = (x, d = 2) => (x == null || !isFinite(x)) ? "–" : x.toFixed(d);
 
-let DATA = null, entries = [], kappa = { 68: 0.802408, 95: 1.668608, 99: 2.258032 };
+let DATA = null, entries = [], SCALES = [], flagCRLB = null; // flagCRLB[δ] = mean over scales of the flagship ladder's CRLB constant
 let trackFilter = "all", scale = "mean", delta = 95, selectedId = null, hoverId = null;
 let sortKey = "Q95", sortAsc = true;
 
@@ -304,7 +300,7 @@ function constantsFor(e, sc){
   // Q_δ = ε_δ·⟨queries⟩ ; D_δ = C̃_δ = ε_δ²·⟨sequential depth⟩·⟨queries⟩ (shot-invariant)
   const scales = sc === "mean" ? Object.keys(e.scales) : [sc];
   const acc = { Q68: [], Q95: [], Q99: [], D68: [], D95: [], D99: [], q: [], rung: [], seq: [], rounds: [] };
-  let known = true;
+  let known = true, overCap = 0;
   for(const k of scales){
     const s = e.scales[k]; if(!s) continue;
     const q = s.q_mean ?? s.q_ave;
@@ -316,12 +312,14 @@ function constantsFor(e, sc){
       acc["D" + d].push(eps * eps * seq * q);
     }
     acc.q.push(q); acc.rung.push(rung); acc.seq.push(seq); acc.rounds.push(s.num_rounds_mean ?? 1);
+    overCap = Math.max(overCap, +(s.frac_trials_over_scale_depth || 0));
   }
   const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN;
   const out = {};
   for(const k in acc) out[k] = mean(acc[k]);
   out.n = acc.q.length;
   out.depthKnown = known;
+  out.overCap = overCap; // largest per-scale fraction of trials whose deepest circuit exceeded n_max (archived literature runs only)
   out.rungMin = Math.min(...acc.rung); out.rungMax = Math.max(...acc.rung);
   out.seqMin = Math.min(...acc.seq); out.seqMax = Math.max(...acc.seq);
   return out;
@@ -406,7 +404,7 @@ function tipHtml(e){
   return `<b>${e.algorithm_name}</b><br><span class="mono">${TRACKS[e.track].label} · ${m.rounds <= 1.0001 ? "1 round" : "~" + m.rounds.toFixed(1) + " rounds"}</span><br>` +
     `<span class="mono">Q: ${fmt(m.Q68)} / ${fmt(m.Q95)} / ${fmt(m.Q99)}</span><br>` +
     `<span class="mono">C̃: ${fmt3(m.D68)} / ${fmt3(m.D95)} / ${fmt3(m.D99)}</span><br>` +
-    `<span class="mono">⟨queries⟩ ${Math.round(m.q)} · seq. depth ${fmtSeq(m)} · deepest rung ${fmtRung(m)}</span>`;
+    `<span class="mono">⟨queries⟩ ${Math.round(m.q)} · seq. depth ${fmtSeq(m)} · deepest rung ${fmtRung(m)}${m.overCap > 0 ? " · " + (100 * m.overCap).toFixed(0) + "% of trials above n_max (not capped)" : ""}</span>`;
 }
 function bindHover(node, e){
   node.addEventListener("mousemove", ev => { hoverId = e.algo_id; showTip(tipHtml(e), ev.clientX, ev.clientY); });
@@ -424,7 +422,7 @@ function drawTrade(){
   const shown = entries;
   const xs = shown.map(e => e.m[kx]), ys = shown.map(e => e.m[ky]);
   const xlo = Math.min(...xs) / 1.6, xhi = Math.max(...xs) * 1.6;
-  const ylo = Math.min(kappa[delta] / 1.25, Math.min(...ys) / 1.2), yhi = Math.max(...ys) * 1.3;
+  const ylo = Math.min(flagCRLB ? flagCRLB[delta] / 1.25 : Infinity, Math.min(...ys) / 1.2), yhi = Math.max(...ys) * 1.3;
   const X = v => pad.l + (Math.log(v) - Math.log(xlo)) / (Math.log(xhi) - Math.log(xlo)) * (W - pad.l - pad.r);
   const Y = v => pad.t + (1 - (Math.log(v) - Math.log(ylo)) / (Math.log(yhi) - Math.log(ylo))) * (H - pad.t - pad.b);
 
@@ -441,9 +439,8 @@ function drawTrade(){
   svg.appendChild(richText({ x: pad.l + (W - pad.l - pad.r) / 2, y: H - 6, "text-anchor": "middle" }, `Sequential-depth constant C̃{${delta}} = ε{${delta}}² · ⟨seq. depth⟩ · ⟨queries⟩`));
   svg.appendChild(richText({ x: 12, y: pad.t + (H - pad.t - pad.b) / 2, "text-anchor": "middle", transform: `rotate(-90 12 ${pad.t + (H - pad.t - pad.b) / 2})` }, `Query constant C{${delta}}^{Q} = ε{${delta}} · ⟨total queries⟩`));
 
-  // bounds
-  const bounds = [{ y: kappa[delta], label: `CRLB κ${delta} = ${kappa[delta].toFixed(2)}` }];
-  if(delta === 95) bounds.push({ y: 1.94, label: "Ziv–Zakai 1.94" });
+  // reference line: CRLB of the flagship ladder (a bound for estimators on THAT schedule, not for other schedules)
+  const bounds = flagCRLB ? [{ y: flagCRLB[delta], label: `flagship-schedule CRLB ${flagCRLB[delta].toFixed(2)}` }] : [];
   for(const b of bounds){
     if(b.y < ylo || b.y > yhi) continue;
     svg.appendChild(el("line", { class: "bound", x1: pad.l, x2: W - pad.r, y1: Y(b.y), y2: Y(b.y) }));
@@ -500,19 +497,19 @@ function drawDots(svgId, prefix){
   const keys = DELTAS.map(d => prefix + d);
   const all = rows.flatMap(e => keys.map(k => e.m[k])).filter(isFinite);
   let lo = Math.min(...all) / 1.3; const hi = Math.max(...all) * 1.3;
-  if(prefix === "Q") lo = Math.min(lo, kappa[68] / 1.15);
+  if(prefix === "Q" && flagCRLB) lo = Math.min(lo, flagCRLB[68] / 1.15);
   const X = v => pad.l + (Math.log(v) - Math.log(lo)) / (Math.log(hi) - Math.log(lo)) * (W - pad.l - pad.r);
 
   for(const v of logTicks(lo, hi, W - pad.l - pad.r)){
     svg.appendChild(el("line", { class: "grid", x1: X(v), x2: X(v), y1: pad.t, y2: H - pad.b }));
     svg.appendChild(el("text", { x: X(v), y: H - pad.b + 14, "text-anchor": "middle" }, tickFmt(v)));
   }
-  const k = kappa; // CRLB only meaningful for the query panel
-  if(prefix === "Q"){
+  if(prefix === "Q" && flagCRLB){
     for(const d of DELTAS){
-      if(k[d] < lo || k[d] > hi) continue;
-      svg.appendChild(el("line", { class: "bound", x1: X(k[d]), x2: X(k[d]), y1: pad.t, y2: H - pad.b }));
-      svg.appendChild(el("text", { class: "bound-lbl", x: X(k[d]) + 3, y: pad.t + 9 }, "κ" + d));
+      const v = flagCRLB[d];
+      if(v < lo || v > hi) continue;
+      svg.appendChild(el("line", { class: "bound", x1: X(v), x2: X(v), y1: pad.t, y2: H - pad.b }));
+      svg.appendChild(el("text", { class: "bound-lbl", x: X(v) + 3, y: pad.t + 9 }, "CRLB" + d));
     }
   }
   svg.appendChild(el("line", { class: "axis", x1: pad.l, x2: W - pad.r, y1: H - pad.b, y2: H - pad.b }));
@@ -555,7 +552,7 @@ function renderTable(){
   });
   document.querySelectorAll("#tbl th[data-k]").forEach(th => th.classList.toggle("sorted", th.dataset.k === sortKey));
   const vis = entries.filter(e => e.visible).length;
-  $("tblTitle").textContent = `${vis} of ${entries.length} entries · ${scale === "mean" ? "mean over nmax ∈ {60, 125, 260, 540}" : "nmax = " + scale}`;
+  $("tblTitle").textContent = `${vis} of ${entries.length} entries · ${scale === "mean" ? "mean over nmax ∈ {" + SCALES.join(", ") + "}" : "nmax = " + scale}`;
 
   for(const e of list){
     const tr = document.createElement("tr");
@@ -567,7 +564,7 @@ function renderTable(){
       `<td class="l name">${e.short}<span class="sub">${(e.authors || []).slice(0, 2).join(", ")}${(e.authors || []).length > 2 ? " et al." : ""}${e.date ? " · " + e.date.slice(0, 4) : ""}</span></td>` +
       `<td class="l"><span class="chip" style="background:${e.col}">${TRACKS[e.track].label}</span></td>` +
       `<td class="num">${m.rounds <= 1.0001 ? "1" : "~" + m.rounds.toFixed(1)}</td>` +
-      `<td class="num">${fmtRung(m)}</td><td class="num">${fmtSeq(m)}</td>` +
+      `<td class="num">${fmtRung(m)}${m.overCap > 0 ? `<sup title="Literature method run at a matched target error with its own stopping rule, not depth-capped: up to ${(100 * m.overCap).toFixed(0)}% of trials ran a circuit deeper than n_max at some scale">&dagger;</sup>` : ""}</td><td class="num">${fmtSeq(m)}</td>` +
       `<td class="num">${fmt(m.Q68)}</td><td class="num"><b>${fmt(m.Q95)}</b></td><td class="num">${fmt(m.Q99)}</td>` +
       `<td class="num">${fmt3(m.D68)}</td><td class="num"><b>${fmt3(m.D95)}</b></td><td class="num">${fmt3(m.D99)}</td>` +
       `<td><span class="pareto${e.pQ ? "" : " off"}">Q</span><span class="pareto${e.pD ? "" : " off"}">D</span></td>`;
@@ -652,10 +649,21 @@ async function load(){
     if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
     DATA = await resp.json();
     if(!Array.isArray(DATA.entries) || !DATA.entries.length) throw new Error("no entries in leaderboard.json");
-    const kc = DATA.evaluation_protocol && DATA.evaluation_protocol.kappa_crlb;
-    if(kc) kappa = { 68: +kc["68"], 95: +kc["95"], 99: +kc["99"] };
-    $("kappaTxt").textContent = `κ68 = ${kappa[68].toFixed(2)}, κ95 = ${kappa[95].toFixed(2)}, κ99 = ${kappa[99].toFixed(2)}`;
     const ep = DATA.evaluation_protocol || {};
+    SCALES = (DATA.scales || ep.scales || []).map(Number);
+    if(!SCALES.length) SCALES = [...new Set(DATA.entries.flatMap(e => Object.keys(e.scales || {}).map(Number)))].sort((a, b) => a - b);
+    $("scalesChip").innerHTML = `n<sub>max</sub> ∈ {${SCALES.join(", ")}}`;
+    $("segScale").innerHTML = `<button type="button" data-v="mean" aria-pressed="true">Mean of scales</button>` +
+      SCALES.map(n => `<button type="button" data-v="${n}" aria-pressed="false">${n}</button>`).join("");
+    const fc = ep.flagship_schedule_crlb;
+    if(fc){
+      const ns = Object.keys(fc);
+      flagCRLB = {};
+      for(const d of DELTAS) flagCRLB[d] = ns.reduce((a, n) => a + (+fc[n][String(d)]), 0) / ns.length;
+      $("kappaTxt").textContent = `C68 ≥ ${flagCRLB[68].toFixed(2)}, C95 ≥ ${flagCRLB[95].toFixed(2)}, C99 ≥ ${flagCRLB[99].toFixed(2)}`;
+    } else {
+      $("kappaTxt").textContent = "not available in this leaderboard.json";
+    }
     $("protoTxt").textContent = `${(ep.ntrials_holdout || 20000).toLocaleString()} trials per scale with ${(ep.boot_B || 1000).toLocaleString()}-resample bootstrap intervals`;
     $("status").textContent = `leaderboard.json · ${DATA.entries.length} entries · updated ${(DATA.updated_at || "").slice(0, 10)}`;
     buildTrackSeg();

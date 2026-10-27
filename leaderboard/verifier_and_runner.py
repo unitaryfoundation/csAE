@@ -30,7 +30,7 @@ Implements:
      query budget increases, achieves quantum depth scaling (eps95 * nmax <= 8.0),
      and that C95 beats both random guessing and depth-0 classical sampling.
 3. Full Statistical Evaluation (`benchmark_submission`):
-   - Evaluates across standard scales nmax in {60, 125, 260, 540} on
+   - Evaluates across standard scales nmax in {125, 260, 540, 1000} on
      HOLDOUT_SEED = 900_000 (or blind HMAC secret seed when active) for the
      standard prior a ~ U(0.1, 0.9) AND tests prior robustness on a ~ U(0.01, 0.99).
    - Computes C68_ave, C95_ave (+ 95% bootstrap CI), C95_max (+ 95% bootstrap CI),
@@ -498,6 +498,11 @@ def check_ast_security(
 # 2. Guarded Black-Box Quantum Oracle
 # ============================================================================
 
+# The algorithm RNG handed to a submission is derived from the trial seed with this
+# XOR so it never shares a stream with the measurement RNG. The trial seed itself is
+# never exposed to submissions.
+ALG_RNG_XOR = 0x5DEECE66D
+
 _ALLOWED_ORACLE_ATTRS = frozenset({
     "measure",
     "measure_batch",
@@ -518,7 +523,6 @@ _ALLOWED_ORACLE_ATTRS = frozenset({
     "max_depth",
     "seq_depth_used",
     "seq_depth",
-    "seed",
     "rng",
     "history",
     "accounting",
@@ -595,7 +599,7 @@ def _create_guarded_oracle(
 ) -> Tuple[GuardedOracle, Callable[[], Dict[str, Any]]]:
     """Create a (GuardedOracle, get_private_stats) pair with lexical isolation."""
     meas_rng = np.random.default_rng(int(trial_seed))
-    alg_rng = np.random.default_rng(int(trial_seed) ^ 0x5DEECE66D)
+    alg_rng = np.random.default_rng(int(trial_seed) ^ ALG_RNG_XOR)
 
     queries_used = 0
     total_shots = 0
@@ -710,8 +714,6 @@ def _create_guarded_oracle(
             return int(max_depth_used)
         if attr in ("seq_depth_used", "seq_depth"):
             return int(seq_depth_used)
-        if attr == "seed":
-            return int(trial_seed)
         if attr == "rng":
             return alg_rng
         if attr == "history":
@@ -814,9 +816,10 @@ def _invoke_single_trial(
     elif len(params) == 2:
         raw_out = fn(oracle, int(nmax))
     elif len(params) >= 3 or has_varargs:
-        third_name = params[2].name.lower() if len(params) >= 3 else "rng"
-        third_arg = int(trial_seed) if "seed" in third_name else oracle.rng
-        raw_out = fn(oracle, int(nmax), third_arg)
+        # Always hand over the algorithm RNG, never the trial seed: the measurement
+        # RNG is derived from the trial seed, so exposing it would let a submission
+        # replay the binomial draws and recover theta without any information.
+        raw_out = fn(oracle, int(nmax), oracle.rng)
     else:
         raw_out = fn(oracle)
 
@@ -875,6 +878,7 @@ def _run_trials_guarded(
             zero_info_mode=zero_info_mode,
             eta=eta,
             max_queries=max_queries,
+            max_depth_limit=int(nmax),  # the benchmark scale is a hard depth cap
         )
         a_hat = _invoke_single_trial(fn, oracle, nmax, t_seed)
         stats = get_stats()
@@ -961,7 +965,7 @@ def verify_submission(
     source_code: Optional[str] = None,
     submission_path: Optional[str] = None,
     allowed_dir: Optional[str] = None,
-    scales: Tuple[int, int] = (60, 260),
+    scales: Tuple[int, int] = (125, 540),
     ntrials_repro: int = 20,
     ntrials_zero_info: int = 80,
     ntrials_scaling: int = 250,
@@ -1243,12 +1247,12 @@ def benchmark_submission(
     submission_path: Optional[str] = None,
     secret_seed: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Run full statistical evaluation across standard scales {60, 125, 260, 540}."""
+    """Run full statistical evaluation across standard scales {125, 260, 540, 1000}."""
     active_secret = secret_seed if secret_seed is not None else scrub_secret_seed_env()
 
     verification: Optional[VerificationReport] = None
     if verify_first:
-        v_scales = (min(scales), max(scales)) if len(scales) >= 2 else (60, 260)
+        v_scales = (min(scales), max(scales)) if len(scales) >= 2 else (125, 540)
         verification = verify_submission(
             submission,
             name=name,

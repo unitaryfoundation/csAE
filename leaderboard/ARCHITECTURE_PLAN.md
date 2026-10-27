@@ -210,7 +210,7 @@ Across all tracks, the target parameter is the amplitude $a = \sin\theta \in (0.
 
 | Track Identifier | Regime & Constraints | Primary Ranking Metric | Secondary Metrics |
 | :--- | :--- | :--- | :--- |
-| `non-adaptive` | Fixed schedule $(n_k, N_k)$ chosen prior to any measurements; 1 parallel batch round (`num_rounds = 1`) across $n_{\max} \in \{60, 125, 260, 540\}$. | Mean $C_{95,\text{ave}} = \varepsilon_{95} \cdot N_{\text{tot}}$ | $C_{99,\text{ave}}$, $C_{68,\text{ave}}$, $C_{95,\text{seq}} = \varepsilon_{95} \cdot n_{\max}$ |
+| `non-adaptive` | Fixed schedule $(n_k, N_k)$ chosen prior to any measurements; 1 parallel batch round (`num_rounds = 1`) across $n_{\max} \in \{125, 260, 540, 1000\}$. | Mean $C_{95,\text{ave}} = \varepsilon_{95} \cdot N_{\text{tot}}$ | $C_{99,\text{ave}}$, $C_{68,\text{ave}}$, $C_{95,\text{seq}} = \varepsilon_{95} \cdot n_{\max}$ |
 | `semi-adaptive` | Small bounded number of parallel batch rounds ($R \in \{2, 3, 4\}$ via `oracle.measure_batch`). | Mean $C_{95,\text{ave}} = \varepsilon_{95} \cdot \overline{N}_{\text{tot}}$ | $C_{95,\max}$, $C_{99,\text{ave}}$, $C_{95,\text{seq}}$, rounds $R$ |
 | `adaptive-fixed-budget` | Multi-round or sequential adaptive depth selection under a deterministic per-trial query budget $N_{\text{tot}} \le B$. | Mean $C_{95,\text{ave}} = \varepsilon_{95} \cdot \overline{N}_{\text{tot}}$ | $C_{95,\max}$, $C_{99,\text{ave}}$, $C_{95,\text{seq}}$ |
 | `adaptive-variable` | Sequential adaptive algorithm with stopping rule (variable per-trial query count $N_{\text{tot}}^{(i)}$). | Mean $C_{95,\text{ave}} = \varepsilon_{95} \cdot \overline{N}_{\text{tot}}$ | Worst-case $C_{95,\max} = \varepsilon_{95} \cdot \max_i N_{\text{tot}}^{(i)}$, $C_{99,\text{ave}}$, $C_{95,\text{seq}}$ |
