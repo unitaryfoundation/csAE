@@ -1,0 +1,14 @@
+{
+  "algorithm_name": "QuadSteer-Hybrid-2Top (r=1.60 Quadrature-Steered Ladder)",
+  "track": "adaptive-fixed-budget",
+  "authors": [
+    "Farrokh Labib"
+  ],
+  "github_handle": "FarLab",
+  "affiliation": "Unitary Foundation",
+  "paper_url": null,
+  "pr_number": "TBD",
+  "description": "Quadrature-steered adaptive geometric ladder (r=1.60, top-anchored with 2 cap shots and shallow anchor floor). Batches shallow rungs (n < 4) in one parallel round, then steers each deep shot (n >= 4) onto opposite-slope p=0.5 quadrature crossings of the local-basin Boltzmann centroid with trajectory-pinned query budget.",
+  "date": "2026-10-27",
+  "entrypoint": "submission.py:QuadSteerHybrid2TopSubmission"
+}
