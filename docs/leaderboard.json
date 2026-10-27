@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "updated_at": "2026-10-27T17:33:50.670871+00:00",
+  "updated_at": "2026-10-27T17:37:14.987956+00:00",
   "evaluation_protocol": {
     "ntrials_holdout": 20000,
     "boot_B": 1000,
@@ -61,6 +61,335 @@
     1000
   ],
   "entries": [
+    {
+      "algo_id": "cl_biqae",
+      "algorithm_name": "CL-BIQAE (Cumulative-Likelihood BIQAE)",
+      "name": "CL-BIQAE (Cumulative-Likelihood BIQAE)",
+      "category": "challenge",
+      "badge": "Challenge submission",
+      "track": "adaptive-variable",
+      "track_category": "adaptive-variable",
+      "authors": [
+        "Farrokh Labib"
+      ],
+      "github_handle": "FarLab",
+      "affiliation": "Unitary Foundation",
+      "paper_url": null,
+      "pr_number": 4,
+      "description": "Cumulative-Likelihood Bayesian Interval Quantum Amplitude Estimation (CL-BIQAE): modernizes chebAE (Rall & Fuller 2023) and BIQAE (Li et al. 2023 / Kiss et al. 2024) by enforcing physically realizable odd Grover degrees d = 2n + 1, replacing per-round memoryless Beta posteriors with an exact multi-round cumulative binomial log-likelihood moving-grid estimator, using single-shot deep adaptive jumps without a minimum step ratio r_min, two-stage credible intervals, and an explicit worst-case query safety cap.",
+      "date": "2026-10-27",
+      "source": "challenge",
+      "status": "Certified",
+      "repro_cmd": "python3 leaderboard/verifier_and_runner.py --mode=certify --submission=leaderboard/submissions/cl_biqae --ntrials=20000",
+      "agent_origin": "Challenge submission",
+      "is_baseline": false,
+      "verified": true,
+      "deterministic_budget": false,
+      "rounds": "Adaptive (~93.9)",
+      "rounds_num": 93.9035,
+      "num_rounds_mean": 93.9035,
+      "query_spread": 0.17236731385187773,
+      "q_spread": 0.17237,
+      "C68_ave": 0.7998,
+      "C68_max": 0.9907,
+      "C68_ave_ci": [
+        0.7895,
+        0.8101
+      ],
+      "C95_ave": 1.5382,
+      "C95_max": 1.9055,
+      "C95_ave_ci": [
+        1.5193,
+        1.5617
+      ],
+      "C95_ci": [
+        1.5193,
+        1.5617
+      ],
+      "C99_ave": 2.0807,
+      "C99_max": 2.5801,
+      "C99_ave_ci": [
+        2.0236,
+        2.1554
+      ],
+      "C99_ci": [
+        2.0236,
+        2.1554
+      ],
+      "C95_seq": 1.4728,
+      "C95_par": 0.1977,
+      "headline_C95_ave": 1.5382114708738281,
+      "headline_C95_max": 1.905552799324568,
+      "headline_C99_ave": 2.080678545004353,
+      "scales": {
+        "125": {
+          "scale_nmax": 125,
+          "ntrials": 20000,
+          "q_mean": 977.99,
+          "q_ave": 977.99,
+          "q_max": 1126.0,
+          "q_std": 139.7424,
+          "query_spread": 0.14289,
+          "q_spread": 0.14289,
+          "max_depth_mean": 113.34,
+          "seq_depth_mean": 895.11,
+          "num_rounds_mean": 88.047,
+          "eps50": 0.000611096,
+          "eps68": 0.0008936376,
+          "eps95": 0.001719189,
+          "eps99": 0.002260567,
+          "C50_ave": 0.5976,
+          "C68_ave": 0.874,
+          "C68_max": 1.0062,
+          "C68_ave_ci": [
+            0.8618,
+            0.886
+          ],
+          "C68_ci": [
+            0.8618,
+            0.886
+          ],
+          "C68_max_ci": [
+            0.992,
+            1.0197
+          ],
+          "C95_ave": 1.6813,
+          "C95_max": 1.9358,
+          "C95_ave_ci": [
+            1.6613,
+            1.7134
+          ],
+          "C95_ci": [
+            1.6613,
+            1.7134
+          ],
+          "C95_max_ci": [
+            1.913,
+            1.9725
+          ],
+          "C99_ave": 2.2108,
+          "C99_max": 2.5454,
+          "C99_ave_ci": [
+            2.1664,
+            2.2847
+          ],
+          "C99_ci": [
+            2.1664,
+            2.2847
+          ],
+          "C99_max_ci": [
+            2.4965,
+            2.6305
+          ],
+          "C95_seq": 1.5389,
+          "C95_par": 0.1948,
+          "runtime_per_trial_ms": 4.039
+        },
+        "260": {
+          "scale_nmax": 260,
+          "ntrials": 20000,
+          "q_mean": 1874.0,
+          "q_ave": 1874.0,
+          "q_max": 2304.0,
+          "q_std": 316.4939,
+          "query_spread": 0.16889,
+          "q_spread": 0.16889,
+          "max_depth_mean": 238.06,
+          "seq_depth_mean": 1791.01,
+          "num_rounds_mean": 92.126,
+          "eps50": 0.0002915384,
+          "eps68": 0.0004288093,
+          "eps95": 0.0008215916,
+          "eps99": 0.00110811,
+          "C50_ave": 0.5463,
+          "C68_ave": 0.8036,
+          "C68_max": 0.988,
+          "C68_ave_ci": [
+            0.7934,
+            0.8132
+          ],
+          "C68_ci": [
+            0.7934,
+            0.8132
+          ],
+          "C68_max_ci": [
+            0.9754,
+            0.9996
+          ],
+          "C95_ave": 1.5397,
+          "C95_max": 1.8929,
+          "C95_ave_ci": [
+            1.5214,
+            1.559
+          ],
+          "C95_ci": [
+            1.5214,
+            1.559
+          ],
+          "C95_max_ci": [
+            1.8704,
+            1.9173
+          ],
+          "C99_ave": 2.0766,
+          "C99_max": 2.5531,
+          "C99_ave_ci": [
+            2.0228,
+            2.1411
+          ],
+          "C99_ci": [
+            2.0228,
+            2.1411
+          ],
+          "C99_max_ci": [
+            2.4855,
+            2.6332
+          ],
+          "C95_seq": 1.4715,
+          "C95_par": 0.1956,
+          "runtime_per_trial_ms": 4.391
+        },
+        "540": {
+          "scale_nmax": 540,
+          "ntrials": 20000,
+          "q_mean": 3709.41,
+          "q_ave": 3709.41,
+          "q_max": 4747.0,
+          "q_std": 685.7347,
+          "query_spread": 0.18486,
+          "q_spread": 0.18486,
+          "max_depth_mean": 499.0,
+          "seq_depth_mean": 3626.38,
+          "num_rounds_mean": 96.05,
+          "eps50": 0.0001412632,
+          "eps68": 0.0002070825,
+          "eps95": 0.0003975272,
+          "eps99": 0.00053901,
+          "C50_ave": 0.524,
+          "C68_ave": 0.7682,
+          "C68_max": 0.983,
+          "C68_ave_ci": [
+            0.7575,
+            0.7776
+          ],
+          "C68_ci": [
+            0.7575,
+            0.7776
+          ],
+          "C68_max_ci": [
+            0.9689,
+            0.9949
+          ],
+          "C95_ave": 1.4746,
+          "C95_max": 1.8871,
+          "C95_ave_ci": [
+            1.4538,
+            1.4965
+          ],
+          "C95_ci": [
+            1.4538,
+            1.4965
+          ],
+          "C95_max_ci": [
+            1.8609,
+            1.9145
+          ],
+          "C99_ave": 1.9994,
+          "C99_max": 2.5587,
+          "C99_ave_ci": [
+            1.9439,
+            2.0638
+          ],
+          "C99_ci": [
+            1.9439,
+            2.0638
+          ],
+          "C99_max_ci": [
+            2.4881,
+            2.6385
+          ],
+          "C95_seq": 1.4416,
+          "C95_par": 0.1984,
+          "runtime_per_trial_ms": 4.926
+        },
+        "1000": {
+          "scale_nmax": 1000,
+          "ntrials": 20000,
+          "q_mean": 6696.89,
+          "q_ave": 6696.89,
+          "q_max": 8761.0,
+          "q_std": 1291.3699,
+          "query_spread": 0.19283,
+          "q_spread": 0.19283,
+          "max_depth_mean": 928.3,
+          "seq_depth_mean": 6613.73,
+          "num_rounds_mean": 99.391,
+          "eps50": 7.729849e-05,
+          "eps68": 0.0001124973,
+          "eps95": 0.0002176003,
+          "eps99": 0.0003040067,
+          "C50_ave": 0.5177,
+          "C68_ave": 0.7534,
+          "C68_max": 0.9856,
+          "C68_ave_ci": [
+            0.7453,
+            0.7635
+          ],
+          "C68_ci": [
+            0.7453,
+            0.7635
+          ],
+          "C68_max_ci": [
+            0.9752,
+            0.9981
+          ],
+          "C95_ave": 1.4572,
+          "C95_max": 1.9064,
+          "C95_ave_ci": [
+            1.4407,
+            1.4777
+          ],
+          "C95_ci": [
+            1.4407,
+            1.4777
+          ],
+          "C95_max_ci": [
+            1.8844,
+            1.9321
+          ],
+          "C99_ave": 2.0359,
+          "C99_max": 2.6634,
+          "C99_ave_ci": [
+            1.9614,
+            2.132
+          ],
+          "C99_ci": [
+            1.9614,
+            2.132
+          ],
+          "C99_max_ci": [
+            2.5653,
+            2.7954
+          ],
+          "C95_seq": 1.4391,
+          "C95_par": 0.202,
+          "runtime_per_trial_ms": 5.197
+        }
+      },
+      "submission_path": "cl_biqae",
+      "certified_by": "CI certifier (blind HMAC-derived seed)",
+      "ntrials": 20000,
+      "blind_secret_active": false,
+      "wide_prior_C95_ave": 1.488824461110179,
+      "wide_prior_C99_ave": 2.026330877588637,
+      "seed_band": "BLIND_SECRET_SEED",
+      "headline_C68_ave": 0.7997730952597797,
+      "headline_C99_max": 2.5801414831521674,
+      "headline_C95_seq": 1.4727709351300238,
+      "rounds_mean": 93.9038125,
+      "runtime_per_trial_ms": 4.638217098487501,
+      "commit_sha": "c6ebf5f2587c39094a94e7b735d4018830701dc7",
+      "certified_at": "2026-10-27T17:37:14.987956+00:00"
+    },
     {
       "algo_id": "quadsteer_hybrid_2top",
       "algorithm_name": "QuadSteer-Hybrid-2Top (r=1.60 Quadrature-Steered Ladder)",
