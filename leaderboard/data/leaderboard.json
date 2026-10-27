@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "updated_at": "2026-10-27T17:27:25.090639+00:00",
+  "updated_at": "2026-10-27T17:28:34.230740+00:00",
   "evaluation_protocol": {
     "ntrials_holdout": 20000,
     "boot_B": 1000,
@@ -389,6 +389,335 @@
       "runtime_per_trial_ms": 0.45855031628750004,
       "commit_sha": "c6ebf5f2587c39094a94e7b735d4018830701dc7",
       "certified_at": "2026-10-27T17:27:25.090639+00:00"
+    },
+    {
+      "algo_id": "semi_adapt_3r_cond",
+      "algorithm_name": "3R-Cond (r=1.50 Opposite-Slope + Tie-Breaker)",
+      "name": "3R-Cond (r=1.50 Opposite-Slope + Tie-Breaker)",
+      "category": "challenge",
+      "badge": "Challenge submission",
+      "track": "semi-adaptive",
+      "track_category": "semi-adaptive",
+      "authors": [
+        "Farrokh Labib"
+      ],
+      "github_handle": "FarLab",
+      "affiliation": "Unitary Foundation",
+      "paper_url": null,
+      "pr_number": 7,
+      "description": "Two/three-round conditional semi-adaptive parallel amplitude estimation using a top-down r=1.50 geometric ladder with lean Round-1 shot ramp (slope=0.85), Round-2 complementary opposite-slope phase steering (+-phi_0) with Bhattacharyya rival-aware depth selection and conditional rival-killer shots, and a conditional Round-3 tie-breaker (triggered on ~4% of trials when Delta_ell_2 < 4.5).",
+      "date": "2026-10-27",
+      "source": "challenge",
+      "status": "Certified",
+      "repro_cmd": "python3 leaderboard/verifier_and_runner.py --mode=certify --submission=leaderboard/submissions/semi_adapt_3r_cond --ntrials=20000",
+      "agent_origin": "Challenge submission",
+      "is_baseline": false,
+      "verified": true,
+      "deterministic_budget": false,
+      "rounds": "~2.19 Rnds",
+      "rounds_num": 2.1903,
+      "num_rounds_mean": 2.1903,
+      "query_spread": 0.044281900028018614,
+      "q_spread": 0.04428,
+      "C68_ave": 1.035,
+      "C68_max": 1.2742,
+      "C68_ave_ci": [
+        1.0207,
+        1.0496
+      ],
+      "C95_ave": 2.2651,
+      "C95_max": 2.7885,
+      "C95_ave_ci": [
+        2.2243,
+        2.3056
+      ],
+      "C95_ci": [
+        2.2243,
+        2.3056
+      ],
+      "C99_ave": 3.7165,
+      "C99_max": 4.5753,
+      "C99_ave_ci": [
+        3.526,
+        3.8803
+      ],
+      "C99_ci": [
+        3.526,
+        3.8803
+      ],
+      "C95_seq": 0.3703,
+      "C95_par": 0.2286,
+      "headline_C95_ave": 2.2651262843022675,
+      "headline_C95_max": 2.7885067724427364,
+      "headline_C99_ave": 3.7165256745550996,
+      "scales": {
+        "125": {
+          "scale_nmax": 125,
+          "ntrials": 20000,
+          "q_mean": 1133.42,
+          "q_ave": 1133.42,
+          "q_max": 1404.0,
+          "q_std": 51.8573,
+          "query_spread": 0.04575,
+          "q_spread": 0.04575,
+          "max_depth_mean": 118.09,
+          "seq_depth_mean": 188.9,
+          "num_rounds_mean": 2.178,
+          "eps50": 0.0005966413,
+          "eps68": 0.0009052326,
+          "eps95": 0.001963901,
+          "eps99": 0.003274448,
+          "C50_ave": 0.6762,
+          "C68_ave": 1.026,
+          "C68_max": 1.2709,
+          "C68_ave_ci": [
+            1.0118,
+            1.0384
+          ],
+          "C68_ci": [
+            1.0118,
+            1.0384
+          ],
+          "C68_max_ci": [
+            1.2472,
+            1.2852
+          ],
+          "C95_ave": 2.2259,
+          "C95_max": 2.7573,
+          "C95_ave_ci": [
+            2.1904,
+            2.2638
+          ],
+          "C95_ci": [
+            2.1904,
+            2.2638
+          ],
+          "C95_max_ci": [
+            2.7009,
+            2.8004
+          ],
+          "C99_ave": 3.7113,
+          "C99_max": 4.5973,
+          "C99_ave_ci": [
+            3.5237,
+            3.8734
+          ],
+          "C99_ci": [
+            3.5237,
+            3.8734
+          ],
+          "C99_max_ci": [
+            4.3488,
+            4.7843
+          ],
+          "C95_seq": 0.371,
+          "C95_par": 0.2319,
+          "runtime_per_trial_ms": 0.802
+        },
+        "260": {
+          "scale_nmax": 260,
+          "ntrials": 20000,
+          "q_mean": 1665.72,
+          "q_ave": 1665.72,
+          "q_max": 2040.0,
+          "q_std": 72.7729,
+          "query_spread": 0.04369,
+          "q_spread": 0.04369,
+          "max_depth_mean": 169.52,
+          "seq_depth_mean": 273.9,
+          "num_rounds_mean": 2.19,
+          "eps50": 0.0004148955,
+          "eps68": 0.0006187259,
+          "eps95": 0.001321677,
+          "eps99": 0.002117853,
+          "C50_ave": 0.6911,
+          "C68_ave": 1.0306,
+          "C68_max": 1.2622,
+          "C68_ave_ci": [
+            1.0158,
+            1.0432
+          ],
+          "C68_ci": [
+            1.0158,
+            1.0432
+          ],
+          "C68_max_ci": [
+            1.241,
+            1.2773
+          ],
+          "C95_ave": 2.2015,
+          "C95_max": 2.6962,
+          "C95_ave_ci": [
+            2.1627,
+            2.2363
+          ],
+          "C95_ci": [
+            2.1627,
+            2.2363
+          ],
+          "C95_max_ci": [
+            2.6442,
+            2.7374
+          ],
+          "C99_ave": 3.5277,
+          "C99_max": 4.3204,
+          "C99_ave_ci": [
+            3.3423,
+            3.7152
+          ],
+          "C99_ci": [
+            3.3423,
+            3.7152
+          ],
+          "C99_max_ci": [
+            4.0919,
+            4.5494
+          ],
+          "C95_seq": 0.362,
+          "C95_par": 0.2241,
+          "runtime_per_trial_ms": 0.829
+        },
+        "540": {
+          "scale_nmax": 540,
+          "ntrials": 20000,
+          "q_mean": 3531.45,
+          "q_ave": 3531.45,
+          "q_max": 4392.0,
+          "q_std": 155.6069,
+          "query_spread": 0.04406,
+          "q_spread": 0.04406,
+          "max_depth_mean": 351.99,
+          "seq_depth_mean": 573.37,
+          "num_rounds_mean": 2.197,
+          "eps50": 0.0001957957,
+          "eps68": 0.0002937302,
+          "eps95": 0.0006497805,
+          "eps99": 0.001061822,
+          "C50_ave": 0.6914,
+          "C68_ave": 1.0373,
+          "C68_max": 1.2901,
+          "C68_ave_ci": [
+            1.0229,
+            1.0556
+          ],
+          "C68_ci": [
+            1.0229,
+            1.0556
+          ],
+          "C68_max_ci": [
+            1.2634,
+            1.3101
+          ],
+          "C95_ave": 2.2947,
+          "C95_max": 2.8538,
+          "C95_ave_ci": [
+            2.2469,
+            2.34
+          ],
+          "C95_ci": [
+            2.2469,
+            2.34
+          ],
+          "C95_max_ci": [
+            2.7737,
+            2.9038
+          ],
+          "C99_ave": 3.7498,
+          "C99_max": 4.6635,
+          "C99_ave_ci": [
+            3.5368,
+            3.8967
+          ],
+          "C99_ci": [
+            3.5368,
+            3.8967
+          ],
+          "C99_max_ci": [
+            4.3919,
+            4.8237
+          ],
+          "C95_seq": 0.3726,
+          "C95_par": 0.2287,
+          "runtime_per_trial_ms": 0.916
+        },
+        "1000": {
+          "scale_nmax": 1000,
+          "ntrials": 20000,
+          "q_mean": 7454.61,
+          "q_ave": 7454.61,
+          "q_max": 9075.0,
+          "q_std": 325.1921,
+          "query_spread": 0.04362,
+          "q_spread": 0.04362,
+          "max_depth_mean": 732.78,
+          "seq_depth_mean": 1197.27,
+          "num_rounds_mean": 2.196,
+          "eps50": 9.353873e-05,
+          "eps68": 0.0001403449,
+          "eps95": 0.0003136807,
+          "eps99": 0.0005201149,
+          "C50_ave": 0.6973,
+          "C68_ave": 1.0462,
+          "C68_max": 1.2736,
+          "C68_ave_ci": [
+            1.0322,
+            1.0614
+          ],
+          "C68_ci": [
+            1.0322,
+            1.0614
+          ],
+          "C68_max_ci": [
+            1.2398,
+            1.2904
+          ],
+          "C95_ave": 2.3384,
+          "C95_max": 2.8467,
+          "C95_ave_ci": [
+            2.2974,
+            2.3823
+          ],
+          "C95_ci": [
+            2.2974,
+            2.3823
+          ],
+          "C95_max_ci": [
+            2.7612,
+            2.8916
+          ],
+          "C99_ave": 3.8773,
+          "C99_max": 4.72,
+          "C99_ave_ci": [
+            3.7012,
+            4.0361
+          ],
+          "C99_ci": [
+            3.7012,
+            4.0361
+          ],
+          "C99_max_ci": [
+            4.4777,
+            4.8976
+          ],
+          "C95_seq": 0.3756,
+          "C95_par": 0.2299,
+          "runtime_per_trial_ms": 1.046
+        }
+      },
+      "submission_path": "semi_adapt_3r_cond",
+      "certified_by": "CI certifier (blind HMAC-derived seed)",
+      "ntrials": 20000,
+      "blind_secret_active": false,
+      "wide_prior_C95_ave": 2.218337537911195,
+      "wide_prior_C99_ave": 3.5747080024324793,
+      "seed_band": "BLIND_SECRET_SEED",
+      "headline_C68_ave": 1.0350359294675462,
+      "headline_C99_max": 4.57532747082866,
+      "headline_C95_seq": 0.3702787823249127,
+      "rounds_mean": 2.1902875,
+      "runtime_per_trial_ms": 0.8980821110125005,
+      "commit_sha": "c6ebf5f2587c39094a94e7b735d4018830701dc7",
+      "certified_at": "2026-10-27T17:28:34.230740+00:00"
     },
     {
       "algo_id": "mlqae_plain",
