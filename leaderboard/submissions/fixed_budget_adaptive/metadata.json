@@ -1,0 +1,14 @@
+{
+  "algorithm_name": "FixedBudgetAdaptiveAE (Zero-Spread Slope-Extended)",
+  "track": "adaptive-fixed-budget",
+  "authors": [
+    "Farrokh Labib"
+  ],
+  "github_handle": "FarLab",
+  "affiliation": "Unitary Foundation",
+  "paper_url": null,
+  "pr_number": "TBD",
+  "description": "Deterministic-budget adaptive Maximum-Likelihood Quantum Amplitude Estimation (Zero Query Spread, std(Q) = 0): combines adaptive early advance on shallow/mid rungs when log-likelihood mode gap Delta_ell >= 5.5, multiplicative alias-breaking tie-breaker shots when Delta_ell < 5.5, maximum-slope Grover depth steering (cos^2((2n+1)*theta_hat) ~ 0.5), and multi-step geometric horizon pacing with final-pair Fisher split so every trial expends the exact deterministic query budget Q_i == B(n_max).",
+  "date": "2026-10-27",
+  "entrypoint": "submission.py:FixedBudgetAdaptiveSubmission"
+}
