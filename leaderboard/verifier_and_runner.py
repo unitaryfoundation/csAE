@@ -1457,7 +1457,7 @@ def _get_adaptive_full_table(nmax: int):
 
 
 class ReferenceBayesianAdaptiveSubmission:
-    """Reference multi-round Bayesian adaptive QAE baseline (cf. Ramôa & Santos 2024 / Grinko et al. 2021).
+    """Reference multi-round Bayesian adaptive QAE baseline (cf. Ramôa & Santos 2025 / Grinko et al. 2021).
 
     Stage 1 executes a coarse geometric ladder to form a Bayesian posterior distribution
     over theta, and Stage 2 selects supplementary depths where the posterior variance is

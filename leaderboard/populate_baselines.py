@@ -474,7 +474,7 @@ def _run_bae_adaptive_batch(
     q_budget: int,
     n_cap: int,
 ):
-    """Parallel Numba evaluator for BAE-Adaptive (Ramoa & Santos 2024, annealed utility + PGH step cap)."""
+    """Parallel Numba evaluator for the BAE-Adaptive baseline (after Ramôa & Santos 2025; grid posterior, not the paper's SMC)."""
     nt = len(th_true_arr)
     G = len(grid)
     grid_step = grid[1] - grid[0]
@@ -706,9 +706,9 @@ def eval_track_non_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[d
             category="literature",
             track="non-adaptive",
             badge="Literature (2024)",
-            authors=["R. Kirby", "F. Labib", "et al."],
+            authors=["Farrokh Labib", "B. David Clader", "Nikitas Stamatopoulos", "William J. Zeng"],
             github_handle="farrokhlabib",
-            affiliation="Tufts / IBM / Unitary Foundation",
+            affiliation="Unitary Foundation / Goldman Sachs",
             paper_url="https://arxiv.org/abs/2405.14697",
             pr_number=None,
             description=(
@@ -895,7 +895,7 @@ def eval_track_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[dict[
             extra={"frac_trials_over_scale_depth": round(float(np.mean(np.asarray(md_icp) > nmax)), 4), "target_eps95": float(f"{eps_t:.6e}")},
         )
 
-        # 2D. BIQAE (Bayesian Interval QAE, 2024)
+        # 2D. BIQAE (after Li et al. 2025, arXiv:2507.23074)
         alpha_t_biq = 0.015 / t_stages
         lo_biq, hi_biq = _precompute_interval_table(600, alpha_t_biq, method="biqae")
         l_max_biq = float(
@@ -934,7 +934,7 @@ def eval_track_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[dict[
                    "frac_trials_over_scale_depth": round(float(np.mean(mx_c > nmax)), 4)},
         )
 
-        # 2F. BAE-Adaptive (Ramoa & Santos 2024)
+        # 2F. BAE-Adaptive (after Ramôa & Santos 2025, arXiv:2412.04394)
         lad_fl, sh_fl = flagship_schedule(nmax, r=1.45, cap_divisor=1.3)
         b_flag = int(sum((1 if d == 0 else d) * s for d, s in zip(lad_fl, sh_fl)))
         ah_bae, q_bae, md_bae, sd_bae, rd_bae = _run_bae_adaptive_batch(
@@ -1025,24 +1025,25 @@ def eval_track_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[dict[
     entries.append(
         _build_entry(
             algo_id="biqae_beta",
-            algorithm_name="BIQAE (Bayesian Interval QAE, 2024)",
+            algorithm_name="BIQAE (Li et al. 2025)",
             category="literature",
             track="adaptive-variable",
-            badge="Literature (2024)",
-            authors=["BIQAE Reference Baseline"],
+            badge="Literature (2025)",
+            authors=["Qilin Li", "Atharva Vidwans", "Yazhen Wang", "Micheline B. Soley"],
             github_handle="unitaryfoundation",
-            affiliation="Literature Reference",
-            paper_url="https://doi.org/10.1038/s41534-021-00379-1",
+            affiliation="see arXiv:2507.23074",
+            paper_url="https://arxiv.org/abs/2507.23074",
             pr_number=None,
             description=(
-                "Bayesian Interval Quantum Amplitude Estimation (BIQAE): replaces frequentist "
-                "Clopper-Pearson bounds in IQAE with conjugate Beta(k+1, N-k+1) posterior "
-                "credible intervals (N_shots=36) and Bayesian posterior-mean terminal readout."
+                "Simplified BIQAE baseline after Li, Vidwans, Wang & Soley (Quantum 10, 1962 (2026), "
+                "arXiv:2507.23074): replaces frequentist Clopper-Pearson bounds in IQAE with conjugate "
+                "Beta(k+1, N-k+1) posterior credible intervals (N_shots=36) and Bayesian posterior-mean "
+                "terminal readout. The paper's posterior push-through across depth changes is not reproduced."
             ),
             scales_dict=biqae_scales,
             deterministic_budget=False,
-            agent_origin="Literature (Bayesian IQAE 2024)",
-            date_str="2024-02-15",
+            agent_origin="Literature (Li et al. 2025)",
+            date_str="2025-07-30",
         )
     )
 
@@ -1074,24 +1075,25 @@ def eval_track_adaptive(ntrials: int = 20_000, boot_B: int = 1000) -> list[dict[
     entries.append(
         _build_entry(
             algo_id="bae_adaptive",
-            algorithm_name="BAE-Adaptive (Ramoa & Santos 2024)",
+            algorithm_name="BAE-Adaptive (Ramôa & Santos 2025)",
             category="literature",
             track="adaptive-fixed-budget",
-            badge="Literature (2024)",
-            authors=["M. Ramoa", "L. Santos"],
+            badge="Literature (2025)",
+            authors=["Alexandra Ramôa", "Luis Paulo Santos"],
             github_handle="unitaryfoundation",
-            affiliation="INL / University of Minho (Reference)",
-            paper_url="https://arxiv.org/abs/2401.15072",
+            affiliation="INL / INESC TEC / University of Minho",
+            paper_url="https://arxiv.org/abs/2412.04394",
             pr_number=None,
             description=(
-                "Annealed Bayesian Amplitude Estimation (Ramoa & Santos 2024, arXiv:2401.15072): "
-                "online Bayesian posterior tracking with annealed depth selection 2n+1 ~ c / sigma_theta "
-                "and PGH step-ratio cap."
+                "Bayesian Amplitude Estimation baseline after Ramôa & Santos (Quantum 9, 1856 (2025), "
+                "arXiv:2412.04394): grid-posterior variant with depth selection 2n+1 ~ c / sigma_theta "
+                "and a step-ratio cap. The paper's sequential-Monte-Carlo posterior and expected-variance "
+                "look-ahead design are not reproduced."
             ),
             scales_dict=bae_scales,
             deterministic_budget=True,
-            agent_origin="Literature (Ramoa & Santos 2024)",
-            date_str="2024-01-26",
+            agent_origin="Literature (Ramôa & Santos 2025)",
+            date_str="2025-09-11",
         )
     )
 

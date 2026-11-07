@@ -3,7 +3,7 @@
 Reference:
     F. Labib, B. D. Clader, N. Stamatopoulos, and W. J. Zeng,
     "Quantum Amplitude Estimation from Classical Signal Processing,"
-    Quantum (2024), arXiv:2405.14697.
+    arXiv:2405.14697 (2024).
 
 Schedule & Estimator:
     - Power-of-two sparse-ruler Grover depths {0, 1, 2, 4, ..., 2^m <= scale_nmax}.

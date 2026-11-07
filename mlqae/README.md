@@ -1,4 +1,4 @@
-# Dense-ladder maximum-likelihood amplitude estimation
+# Quantum amplitude estimation beyond power-of-two schedules (`mlqae`)
 
 **Paper:** [arXiv:2609.02715](https://arxiv.org/abs/2609.02715) · **Live demo:** https://unitaryfoundation.github.io/csAE/
 

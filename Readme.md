@@ -31,16 +31,16 @@ Can you design a **non-adaptive** or **adaptive** amplitude estimation schedule/
 
 ### Seeded Literature Baselines (`11/11` Certified in [`leaderboard/submissions/`](leaderboard/submissions/))
 
-Literature baselines are run exactly as specified in their papers; the benchmark scale fixes only the sequence length. The two Suzuki et al. MLAE entries use $N_{\mathrm{shot}} = 100$ per circuit with the paper's LIS ($m_k = k$) and EIS ($m_k = 2^{k-1}$) sequences, so the LIS constant grows with scale as its $O(N_q^{-3/4})$ error law implies. The live page shows the per-scale values and the $C_{68}/C_{95}/C_{99}$ frontiers.
+The Suzuki et al. MLAE entries and the `mlqae` entries are run exactly as specified in their papers; the benchmark scale fixes only the sequence length. The adaptive entries (IQAE, chebAE, FAE, BAE, BIQAE) are benchmark adaptations with scale-dependent target errors and, for BAE and BIQAE, simplified posterior updates rather than the papers' full algorithms; see [`REVIEW_2026-11-07.md`](REVIEW_2026-11-07.md) for the exact differences. The two Suzuki et al. MLAE entries use $N_{\mathrm{shot}} = 100$ per circuit with the paper's LIS ($m_k = k$) and EIS ($m_k = 2^{k-1}$) sequences, so the LIS constant grows with scale as its $O(N_q^{-3/4})$ error law implies. The live page shows the per-scale values and the $C_{68}/C_{95}/C_{99}$ frontiers.
 
 | Rank | Algorithm | Track | Rounds | $C_{68}^{\mathrm{ave}}$ | $C_{95}^{\mathrm{ave}}$ `[95% CI]` | $C_{95}^{\max}$ | $C_{99}^{\mathrm{ave}}$ | $C_{95}^{\mathrm{seq}}$ | Reference |
 | ---: | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
 | **1** | **`mlqae-plain`** | `non-adaptive` | $1.0$ | $1.222$ | **2.881** `[2.82, 2.96]` | $2.881$ | $6.67$ | $0.285$ | [arXiv:2609.02715](https://arxiv.org/abs/2609.02715) |
 | **2** | **`mlqae-flagship`** | `non-adaptive` | $1.0$ | $1.300$ | **2.936** `[2.88, 3.00]` | $2.936$ | $5.71$ | $0.212$ | [arXiv:2609.02715](https://arxiv.org/abs/2609.02715) |
-| **3** | **`BAE-Adaptive`** | `adaptive-fixed-budget` | $26.6$ | $1.098$ | **3.034** `[2.92, 3.15]` | $3.034$ | $11.25$ | $3.023$ | [arXiv:2401.15072](https://arxiv.org/abs/2401.15072) |
+| **3** | **`BAE-Adaptive`** | `adaptive-fixed-budget` | $26.6$ | $1.098$ | **3.034** `[2.92, 3.15]` | $3.034$ | $11.25$ | $3.023$ | [arXiv:2412.04394](https://arxiv.org/abs/2412.04394) (simplified) |
 | **4** | **`chebAE`** | `adaptive-variable` | $15.0$ | $1.411$ | **3.188** `[2.95, 3.44]` | $4.871$ | $15.24$ | $2.920$ | [arXiv:2207.08628](https://arxiv.org/abs/2207.08628) |
 | **5** | **`csAE (ESPRIT)`** | `non-adaptive` | $1.0$ | $1.401$ | **3.741** `[3.60, 3.88]` | $3.741$ | $12.55$ | $0.231$ | [arXiv:2405.14697](https://arxiv.org/abs/2405.14697) |
-| **6** | **`BIQAE (Beta-Posterior)`** | `adaptive-variable` | $10.8$ | $1.957$ | **4.652** `[4.57, 4.75]` | $9.396$ | $9.42$ | $4.652$ | Bayesian Beta-IQAE |
+| **6** | **`BIQAE (Beta-Posterior)`** | `adaptive-variable` | $10.8$ | $1.957$ | **4.652** `[4.57, 4.75]` | $9.396$ | $9.42$ | $4.652$ | [arXiv:2507.23074](https://arxiv.org/abs/2507.23074) (simplified) |
 | **7** | **`IQAE-CP`** | `adaptive-variable` | $5.7$ | $2.703$ | **6.805** `[6.66, 6.95]` | $14.605$ | $31.03$ | $6.805$ | [arXiv:1912.05559](https://arxiv.org/abs/1912.05559) |
 | **8** | **`MLAE-EIS (Suzuki)`** | `non-adaptive` | $1.0$ | $3.628$ | **7.942** `[7.80, 8.09]` | $7.942$ | $14.05$ | $0.040$ | [arXiv:1904.10246](https://arxiv.org/abs/1904.10246) |
 | **9** | **`FAE`** | `adaptive-variable` | $9.1$ | $3.947$ | **8.785** `[8.63, 8.95]` | $11.278$ | $14.32$ | $8.785$ | [arXiv:2003.02417](https://arxiv.org/abs/2003.02417) |

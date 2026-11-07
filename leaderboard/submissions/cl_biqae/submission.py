@@ -1,7 +1,7 @@
 """Standalone leaderboard submission for CL-BIQAE (Cumulative-Likelihood BIQAE).
 
 Modernizes Chebyshev / Bayesian Interval Quantum Amplitude Estimation
-(chebAE, Rall & Fuller 2023; BIQAE, Li et al. 2023 / Kiss et al. 2024)
+(chebAE, Rall & Fuller 2023; BIQAE, Li et al. 2025, arXiv:2507.23074)
 under the strict odd-degree Grover cost model:
   1. Strictly odd Grover degrees d = 2n + 1 with cost(n) = max(1, n) per shot.
   2. Exact cumulative multi-round binomial log-likelihood evaluated on a compact

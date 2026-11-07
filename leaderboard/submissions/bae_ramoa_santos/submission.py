@@ -1,16 +1,17 @@
-"""Bayesian Amplitude Estimation (BAE-Adaptive) — Ramôa & Santos (2024).
+"""Bayesian Amplitude Estimation (BAE-Adaptive) — after Ramôa & Santos (2025).
 
 Reference:
-    G. Ramôa and L. Santos,
+    A. Ramôa and L. P. Santos,
     "Bayesian Quantum Amplitude Estimation,"
-    arXiv:2401.15072 (2024).
+    Quantum 9, 1856 (2025), arXiv:2412.04394.
 
-Implements sequential Bayesian experimental design for Quantum Amplitude
-Estimation where the posterior distribution over theta = arcsin(a) in (0, pi/2)
-is updated via Bayes' rule after each measurement round, and the next Grover
-depth k is selected from the posterior standard deviation sigma_theta and
-Bayesian credible region [theta_min, theta_max], followed by full multi-round
-Bayesian posterior estimation.
+Simplified credible-interval variant inspired by the reference: the posterior
+over theta = arcsin(a) in (0, pi/2) is summarised by a Beta credible region
+[theta_min, theta_max] after each measurement round, and the next Grover depth k
+is selected from a posterior-width proxy sigma_theta, followed by multi-round
+Bayesian posterior estimation. It does not reproduce the paper's sequential
+Monte Carlo posterior or its expected-variance look-ahead control selection;
+see REVIEW_2026-11-07.md.
 """
 from __future__ import annotations
 
@@ -107,7 +108,7 @@ def select_bae_next_degree(
     max_depth_cap: int,
     c_bae: float = 0.55,
 ) -> int | None:
-    """Select next odd Grover degree d = 2k+1 via Ramoa & Santos sigma_theta utility scaling."""
+    """Select next odd Grover degree d = 2k+1 via a sigma_theta scaling heuristic (not from the paper)."""
     span = max(1e-12, theta_max - theta_min)
     deg_branch = int((0.5 * math.pi) / span)
     deg_sigma = int(round(c_bae / max(sigma_th, 1e-12)))
@@ -128,9 +129,9 @@ def select_bae_next_degree(
 
 
 class BAERamoaSantosSubmission(AdaptiveAESubmission):
-    """Ramôa & Santos (2024) Bayesian Amplitude Estimation (`BAE-Adaptive`)."""
+    """Bayesian Amplitude Estimation baseline after Ramôa & Santos (2025) (`BAE-Adaptive`)."""
 
-    name = "BAE-Adaptive (Ramoa & Santos 2024)"
+    name = "BAE-Adaptive (Ramôa & Santos 2025)"
     track = "adaptive-variable"
 
     def run_trial(

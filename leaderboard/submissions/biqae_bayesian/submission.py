@@ -1,4 +1,15 @@
-"""Bayesian Iterative Quantum Amplitude Estimation (BIQAE).
+"""Bayesian Iterative Quantum Amplitude Estimation (BIQAE) — simplified baseline.
+
+Reference:
+    Q. Li, A. Vidwans, Y. Wang, and M. B. Soley,
+    "Harnessing Bayesian Statistics to Accelerate Iterative Quantum Amplitude Estimation,"
+    Quantum 10, 1962 (2026), arXiv:2507.23074.
+
+This is a simplified variant: it keeps the paper's replacement of Clopper-Pearson
+confidence intervals by Beta credible intervals, but uses a fixed per-stage alpha,
+a Jeffreys prior reset at every depth change, and a terminal MAP refinement. The
+paper's posterior push-through across depth changes and interval-centre estimator
+are not reproduced; see REVIEW_2026-11-07.md.
 
 Uses conjugate Jeffreys-prior Beta(0.5 + k, 0.5 + N - k) credible intervals
 to adaptively advance Grover depths on monotonic cosine branches, followed by

@@ -1,7 +1,7 @@
 """Labib (2026) Plain Geometric Ladder Maximum-Likelihood Amplitude Estimation.
 
 Reference:
-    F. Labib, "Dense-ladder maximum-likelihood amplitude estimation,"
+    F. Labib, "Quantum amplitude estimation beyond power-of-two schedules,"
     arXiv:2609.02715 (2026).
 
 Schedule:
