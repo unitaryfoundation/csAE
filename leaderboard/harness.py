@@ -39,6 +39,24 @@ def generate_trials(ntrials: int, seed: int, a_range=(0.1, 0.9)):
     return a_true, th_true, trial_seeds
 
 
+def generate_trial_table(ntrials: int, seed, a_range=(0.1, 0.9)):
+    """Generate (a_true, theta_true, oracle_seeds, alg_seeds) deterministically.
+
+    The first three outputs are bit-identical to `generate_trials(ntrials, seed)`.
+    The fourth is an independent draw from the same master stream: the RNG handed
+    to a submission is seeded from `alg_seeds[i]`, the measurement RNG from
+    `oracle_seeds[i]`, so neither can be derived from the other without the
+    master seed. `seed` may be any non-negative integer (including a 256-bit
+    HMAC digest in the blind certification path).
+    """
+    rng = np.random.default_rng(seed)
+    a_true = rng.uniform(a_range[0], a_range[1], ntrials)
+    th_true = np.arcsin(a_true)
+    oracle_seeds = rng.integers(0, 2**31 - 1, size=ntrials, dtype=np.int64)
+    alg_seeds = rng.integers(0, 2**63 - 1, size=ntrials, dtype=np.int64)
+    return a_true, th_true, oracle_seeds, alg_seeds
+
+
 def compute_metrics(a_true, a_hat, queries, max_depths=None, seq_depths=None,
                     boot_B=1000, seed=1):
     """Compute standardized C68, C95, C99 (ave and max) + bootstrap 95% CIs."""

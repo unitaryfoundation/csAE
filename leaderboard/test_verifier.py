@@ -15,11 +15,19 @@ Tests both:
    - Invalid Grover depths (negative, non-integer, boolean) and invalid shots (zero, negative)
    - Out-of-bounds amplitude estimates (< 0, > 1, NaN, or zero oracle queries)
    - Trivial constant/random guessing and classical depth-0-only sampling (caught by asymptotic scaling)
+3. Certification-seed confidentiality (REVIEW_2026-11-07.md section 5):
+   - The zero-information test runs on the blind HMAC band as well as the public band
+   - A scanner-clean cheat reading `sys.argv` / `os.environ` / `__main__` cannot rebuild the
+     trial table when run through the process-isolated harness (`IsolatedSubmission`)
+   - The sandbox worker's argv/environment/`__main__` are scrubbed
+   - Oracle and algorithm RNG seeds are independent draws
 """
 from __future__ import annotations
 
+import json
 import math
 import os
+import subprocess
 import sys
 import unittest
 
@@ -31,10 +39,10 @@ if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
 import numpy as np
-from leaderboard.harness import HOLDOUT_SEED, SCALES, generate_trials
+from leaderboard.harness import HOLDOUT_SEED, SCALES, SEARCH_SEED, generate_trial_table, generate_trials
 from leaderboard.verifier_and_runner import (
-    ALG_RNG_XOR,
     AdaptiveTwoRoundSubmission,
+    IsolatedSubmission,
     MLQAEFlagshipSubmission,
     MLQAEPlainSubmission,
     OracleInputError,
@@ -43,9 +51,15 @@ from leaderboard.verifier_and_runner import (
     SecurityViolationError,
     benchmark_submission,
     check_ast_security,
+    derive_blind_trial_table,
+    derive_trial_table,
     format_benchmark_report,
     verify_submission,
 )
+
+_TESTS_DIR = os.path.join(_HERE, "tests")
+_CHEAT_DIR = os.path.join(_TESTS_DIR, "seed_reader_cheat")
+_PROBE_DIR = os.path.join(_TESTS_DIR, "env_probe")
 
 
 # ============================================================================
@@ -95,31 +109,40 @@ def cheat_oracle_attribute_tamper(oracle, nmax):
         return 0.5
 
 
-def make_side_channel_leak_submission(seed_specs):
+def make_side_channel_leak_submission(seed_specs, secret=None, fallback=None):
     """Create a submission with clean AST that leaks `a_true` from a pre-populated side-channel table.
 
-    Models an attacker who has memorized the public seed's trial table: for each
-    verification stage (ntrials, seed) it precomputes the trials the harness will
-    generate and keys `a_true` by the first draw of the algorithm RNG the harness
-    hands to the submission (which is derived deterministically from the trial
-    seed). The submission then ignores the oracle outcomes entirely. Used to prove
+    Models an attacker who has memorized a seed band's trial table: for each
+    verification stage `(ntrials, seed, nmax)` it precomputes the trials the harness
+    will generate (the public table, or the blind HMAC table when `secret` is given)
+    and keys `a_true` by the first draw of the algorithm RNG the harness hands to the
+    submission. The submission then ignores the oracle outcomes entirely. Used to prove
     that Stage 4 (Zero-Information Constant-0.5 Dummy Oracle Test) independently
     catches such leakage even though the AST is clean and no oracle attribute is
     misused.
     """
     lookup = {}
-    for n_t, s in seed_specs:
-        a_arr, _, t_seeds = generate_trials(n_t, s, a_range=(0.1, 0.9))
-        for a_val, ts in zip(a_arr, t_seeds):
-            first_draw = float(np.random.default_rng(int(ts) ^ ALG_RNG_XOR).random())
+    for spec in seed_specs:
+        n_t, s, nmax = (spec + (125,))[:3]
+        a_arr, _, _, alg_seeds = derive_trial_table(n_t, s, nmax, a_range=(0.1, 0.9), secret=secret)
+        for a_val, ts in zip(a_arr, alg_seeds):
+            first_draw = float(np.random.default_rng(int(ts)).random())
             lookup[round(first_draw, 15)] = float(a_val)
 
     def side_channel_estimator(oracle, nmax, rng):
         # Queries the oracle normally so depth/shot checks pass, but ignores oracle
-        # outcomes and returns the memorized a_true for this trial.
+        # outcomes and returns the memorized a_true for this trial. On a miss it
+        # returns 0.5, or runs `fallback(oracle, nmax)` when one is given.
+        key = round(float(rng.random()), 15)
+        if key in lookup:
+            oracle.measure(1, 2)
+            oracle.measure(max(1, nmax // 2), 2)
+            return lookup[key]
+        if fallback is not None:
+            return float(fallback(oracle, nmax))
         oracle.measure(1, 2)
         oracle.measure(max(1, nmax // 2), 2)
-        return lookup.get(round(float(rng.random()), 15), 0.5)
+        return 0.5
 
     return side_channel_estimator
 
@@ -236,10 +259,10 @@ class TestVerifierAndBenchmark(unittest.TestCase):
         """Zero-Information dummy oracle test must catch side-channel leaks even when AST is clean."""
         seed = 100_000
         cheater = make_side_channel_leak_submission([
-            (20, seed + 11),
-            (80, seed + 29),
-            (250, seed + 60),
-            (250, seed + 260),
+            (20, seed + 11, 125),
+            (80, seed + 29, 125),
+            (250, seed + 125, 125),
+            (250, seed + 540, 540),
         ])
         rep = verify_submission(cheater, name="CleanAST_SideChannelCheater", seed=seed)
         self.assertTrue(rep.ast_passed, "Clean-AST side-channel mock should pass static AST check")
@@ -429,6 +452,185 @@ class TestVerifierAndBenchmark(unittest.TestCase):
         )
         self.assertTrue(bench["blind_secret_active"])
         self.assertLess(bench["standard_prior"]["summary"]["C95_ave"], 4.0)
+
+    # ------------------------------------------------------------------
+    # Certification-seed confidentiality (REVIEW_2026-11-07.md, section 5)
+    # ------------------------------------------------------------------
+
+    def test_10_zero_info_test_runs_on_certification_band(self):
+        """Stage 4 must run on the blind HMAC band too: a cheat that memorized only the blind table is caught there."""
+        seed = SEARCH_SEED
+        secret = "unit-test-certification-secret"
+        # Memorizes ONLY the blind table; on a miss it behaves exactly like the honest flagship.
+        blind_cheater = make_side_channel_leak_submission([
+            (20, seed + 11, 125),
+            (80, seed + 29, 125),
+            (250, seed + 125, 125),
+            (250, seed + 540, 540),
+        ], secret=secret, fallback=MLQAEFlagshipSubmission().estimate)
+
+        # Public band alone: the cheat knows nothing about the public table, so it passes
+        # every stage there and the leak is invisible (this was the pre-fix CI situation).
+        rep_public = verify_submission(blind_cheater, name="BlindTableCheater", seed=seed)
+        self.assertEqual(rep_public.diagnostics["bands_verified"], ["public"])
+        self.assertTrue(rep_public.passed, "public-band verification cannot see a blind-table memorizer")
+
+        # With the secret active, stages 2-5 run on BOTH bands and the blind band catches it.
+        rep_blind = verify_submission(blind_cheater, name="BlindTableCheater", seed=seed, secret_seed=secret)
+        self.assertEqual(rep_blind.diagnostics["bands_verified"], ["public", "blind"])
+        self.assertTrue(rep_blind.diagnostics["bands"]["public"]["zero_info_passed"])
+        self.assertFalse(rep_blind.diagnostics["bands"]["blind"]["zero_info_passed"])
+        self.assertFalse(rep_blind.zero_info_passed)
+        self.assertFalse(rep_blind.passed)
+        self.assertTrue(any("Zero-Info" in v and "blind band" in v for v in rep_blind.violations), rep_blind.violations)
+
+        # An honest submission passes on both bands and the scaling check is recorded per band.
+        rep_ok = verify_submission(MLQAEFlagshipSubmission(), name="Flagship", seed=seed, secret_seed=secret)
+        self.assertTrue(rep_ok.passed, rep_ok.violations)
+        self.assertIn("scaling", rep_ok.diagnostics["bands"]["blind"])
+        self.assertIn("scaling", rep_ok.diagnostics["bands"]["public"])
+
+    def test_11_seed_reading_cheat_cannot_recover_certification_table(self):
+        """The scanner-clean argv/environ/__main__ cheat certifies at an honest constant through the isolated harness."""
+        from leaderboard.verifier_and_runner import _load_submission_from_dir
+
+        cheat_py = os.path.join(_CHEAT_DIR, "submission.py")
+        ast_ok, ast_violations = check_ast_security(None, submission_path=cheat_py)
+        self.assertTrue(ast_ok, f"demo cheat must be scanner-clean: {ast_violations}")
+
+        secret = "unit-test-certification-secret"
+        public_band = 123_456
+        saved_argv, saved_env = list(sys.argv), dict(os.environ)
+        try:
+            # --- Positive control 1: in-process, public seed band on argv (the pre-fix CI layout).
+            sys.argv[:] = [sys.argv[0], "--mode=certify", f"--seed={public_band}", "--ntrials=50"]
+            cheat_obj, _, _ = _load_submission_from_dir(_CHEAT_DIR)
+            leaked = benchmark_submission(
+                cheat_obj, name="SeedReaderCheat (in-process, argv)", scales=(125,), ntrials=50,
+                ntrials_wide_prior=20, boot_B=20, verify_first=False, seed_band=public_band,
+            )
+            self.assertLess(
+                leaked["standard_prior"]["summary"]["C95_ave"], 1e-6,
+                "positive control: in-process cheat must recover the public table from argv",
+            )
+
+            # --- Positive control 2: in-process with the secret on __main__ (review item 2).
+            import __main__ as main_mod
+            setattr(main_mod, "_STARTUP_SECRET_SEED", secret)
+            try:
+                cheat_obj2, _, _ = _load_submission_from_dir(_CHEAT_DIR)
+                leaked_blind = benchmark_submission(
+                    cheat_obj2, name="SeedReaderCheat (in-process, __main__)", scales=(125,), ntrials=50,
+                    ntrials_wide_prior=20, boot_B=20, verify_first=False, seed_band=public_band, secret_seed=secret,
+                )
+            finally:
+                delattr(main_mod, "_STARTUP_SECRET_SEED")
+            self.assertLess(
+                leaked_blind["standard_prior"]["summary"]["C95_ave"], 1e-6,
+                "positive control: in-process cheat must recover the blind table from __main__",
+            )
+
+            # --- The fix: isolated worker. Pollute THIS process as aggressively as possible.
+            os.environ["LEADERBOARD_SECRET_SEED"] = secret
+            os.environ["LEADERBOARD_SALT_SEED"] = secret
+            os.environ["BLIND_TEST_SEED"] = str(public_band)
+            sys.argv[:] = [sys.argv[0], "--mode=certify", f"--seed={public_band}", "--ntrials=60",
+                           f"--secret={secret}"]
+            setattr(main_mod, "_STARTUP_SECRET_SEED", secret)
+            try:
+                with IsolatedSubmission(_CHEAT_DIR) as iso:
+                    sealed = benchmark_submission(
+                        iso, name="SeedReaderCheat (isolated)", scales=(125, 540), ntrials=60,
+                        ntrials_wide_prior=30, boot_B=20, verify_first=True, seed_band=public_band,
+                        secret_seed=secret,
+                    )
+            finally:
+                delattr(main_mod, "_STARTUP_SECRET_SEED")
+        finally:
+            sys.argv[:] = saved_argv
+            os.environ.clear()
+            os.environ.update(saved_env)
+
+        self.assertTrue(sealed["verification"].passed, sealed["verification"].violations)
+        self.assertEqual(sealed["verification"].diagnostics["bands_verified"], ["public", "blind"])
+        c95 = sealed["standard_prior"]["summary"]["C95_ave"]
+        # Honest MLQAE flagship lands at C95 ~ 2.5-3.2 at these scales; a leak gives 0.000.
+        self.assertGreater(c95, 1.0, f"isolated cheat must NOT recover the table (C95={c95:.3f})")
+        self.assertLess(c95, 4.5, f"fallback estimator should be the honest flagship (C95={c95:.3f})")
+        self.assertAlmostEqual(sealed["standard_prior"]["summary"]["rounds_mean"], 1.0, places=6)
+
+    def test_12_cli_certify_with_secret_fd_seals_the_seed(self):
+        """End-to-end: the certify CLI with --secret-fd never exposes the seed to the submission worker."""
+        import tempfile
+
+        secret = "cli-level-certification-secret"
+        with tempfile.TemporaryDirectory() as tmp:
+            json_out = os.path.join(tmp, "entry.json")
+            md_out = os.path.join(tmp, "summary.md")
+            r_fd, w_fd = os.pipe()
+            os.write(w_fd, secret.encode("utf-8"))
+            os.close(w_fd)
+            cmd = [
+                sys.executable, os.path.join(_HERE, "verifier_and_runner.py"),
+                "--mode=certify", f"--submission={_CHEAT_DIR}", "--ntrials=60", "--scales=125,260",
+                f"--secret-fd={r_fd}", "--salt-label=seed_reader_cheat:deadbeef",
+                f"--json-out={json_out}", f"--md-out={md_out}",
+            ]
+            env = dict(os.environ)
+            env["LEADERBOARD_SECRET_SEED"] = secret  # legacy transport must be scrubbed, not leaked
+            proc = subprocess.run(cmd, pass_fds=(r_fd,), env=env, capture_output=True, text=True, cwd=_ROOT)
+            os.close(r_fd)
+            self.assertEqual(proc.returncode, 0, f"stdout:\n{proc.stdout[-3000:]}\nstderr:\n{proc.stderr[-3000:]}")
+            with open(json_out, "r", encoding="utf-8") as fh:
+                entry = json.load(fh)
+            with open(md_out, "r", encoding="utf-8") as fh:
+                md_text = fh.read()
+        self.assertTrue(entry["verified"])
+        self.assertTrue(entry["blind_secret_active"])
+        self.assertEqual(entry["seed_band"], "BLIND_SECRET_SEED")
+        self.assertEqual(entry["bands_verified"], ["public", "blind"])
+        self.assertGreater(entry["headline_C95_ave"], 1.0, "CLI-certified cheat must land at an honest constant")
+        self.assertLess(entry["headline_C95_ave"], 4.5)
+        self.assertNotIn(secret, proc.stdout + proc.stderr + md_text + json.dumps(entry))
+
+    def test_13_sandbox_worker_is_scrubbed(self):
+        """The worker process must expose nothing on sys.argv, no secret env vars and no secret on __main__."""
+        saved_argv, saved_env = list(sys.argv), dict(os.environ)
+        try:
+            os.environ["LEADERBOARD_SECRET_SEED"] = "probe-secret"
+            os.environ["MY_API_TOKEN"] = "probe-token"
+            sys.argv[:] = [sys.argv[0], "--seed=42", "--secret-file=/nonexistent"]
+            with IsolatedSubmission(_PROBE_DIR) as iso:
+                from leaderboard.verifier_and_runner import _run_trials_guarded
+
+                res = _run_trials_guarded(iso, nmax=125, ntrials=3, seed=SEARCH_SEED, secret_seed="probe-secret")
+        finally:
+            sys.argv[:] = saved_argv
+            os.environ.clear()
+            os.environ.update(saved_env)
+        for a_hat in res["a_hat"]:
+            self.assertAlmostEqual(float(a_hat), 0.10, places=9, msg=f"worker leaked state (probe score={a_hat})")
+        self.assertTrue(np.all(res["queries"] == 1.0))
+
+    def test_14_oracle_and_algorithm_seeds_are_independent(self):
+        """Per-trial oracle and algorithm RNG seeds are separate draws, in both the public and blind tables."""
+        a1, th1, oseeds = generate_trials(64, SEARCH_SEED + 125)
+        a2, th2, oseeds2, aseeds = generate_trial_table(64, SEARCH_SEED + 125)
+        self.assertTrue(np.array_equal(a1, a2) and np.array_equal(th1, th2) and np.array_equal(oseeds, oseeds2))
+        self.assertFalse(np.any(oseeds2 == aseeds))
+        self.assertEqual(len(set(aseeds.tolist())), 64)
+
+        ab, thb, ob, alg_b = derive_blind_trial_table("secret-alpha", SEARCH_SEED, 125, 64)
+        ab2, _, ob2, alg_b2 = derive_blind_trial_table("secret-alpha", SEARCH_SEED, 125, 64)
+        ac, _, oc, alg_c = derive_blind_trial_table("secret-beta", SEARCH_SEED, 125, 64)
+        self.assertTrue(np.array_equal(ab, ab2) and np.array_equal(ob, ob2) and np.array_equal(alg_b, alg_b2))
+        self.assertFalse(np.array_equal(ab, ac))
+        self.assertFalse(np.array_equal(alg_b, alg_c))
+        self.assertFalse(np.array_equal(ab, a2))  # blind table != public table for the same band
+        # Changing only the algorithm-seed label input (via a different nmax) must not touch the
+        # structure: alg seeds are drawn from an HMAC stream separate from the oracle table.
+        _, _, _, alg_n = derive_blind_trial_table("secret-alpha", SEARCH_SEED, 260, 64)
+        self.assertFalse(np.array_equal(alg_b, alg_n))
 
 
 if __name__ == "__main__":
