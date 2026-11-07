@@ -1,13 +1,19 @@
 """CI Verification, Anti-Cheat & Statistical Benchmark Engine for the AE Leaderboard.
 
 Implements:
-1. Blind Secret Seed Scrubbing & HMAC Trial Permutation:
-   - Automatically pops and scrubs `LEADERBOARD_SECRET_SEED` and `LEADERBOARD_SALT_SEED`
-     (or any custom `--secret-seed-env` variable) from `os.environ` at startup BEFORE
-     importing or executing any user submission module.
-   - Uses `hmac.new(secret.encode(), ..., hashlib.sha256)` to derive both the blind
-     evaluation seed and a cryptographic trial permutation order so submitters cannot
-     predict or memorize test amplitudes.
+1. Blind Secret Seed Handling & Process Isolation:
+   - The certification secret enters the trusted parent process through a pipe or
+     file descriptor (`--secret-fd` / `--secret-file`); it is never placed on argv.
+     Legacy env-var transport (`--secret-seed-env`) is still accepted but the value is
+     popped and scrubbed from `os.environ` at startup.
+   - The per-trial table `(a_true, theta, oracle_seed, alg_seed)` is derived with
+     HMAC-SHA256 keyed by that secret (`derive_blind_trial_table`); the oracle seed and
+     the algorithm-RNG seed are independent draws, so nothing handed to a submission
+     identifies a trial.
+   - In CLI mode the submission is imported and executed in a separate worker process
+     (`IsolatedSubmission` + `leaderboard/sandbox_worker.py`) whose argv and environment
+     are scrubbed and which only sees an oracle RPC: `theta`, the measurement RNG and
+     the secret live exclusively in the parent.
 2. Static & Runtime Anti-Cheat Verification (`verify_submission`):
    - AST inspection blocking forbidden modules (`inspect`, `sys._getframe`, `ctypes`,
      `gc`, `subprocess`, `socket`, `pickle`, `importlib`, `builtins`, etc.),
@@ -44,8 +50,12 @@ import ast
 import hashlib
 import hmac
 import inspect as _host_inspect
+import json
 import math
 import os
+import shlex
+import struct
+import subprocess
 import sys
 import textwrap
 import time
@@ -79,6 +89,7 @@ from leaderboard.harness import (
     SCALES,
     SEARCH_SEED,
     compute_metrics,
+    generate_trial_table,
     generate_trials,
     shot_cost,
 )
@@ -92,6 +103,11 @@ __all__ = [
     "VerificationReport",
     "scrub_secret_seed_env",
     "derive_blind_seed_and_permutation",
+    "derive_blind_trial_table",
+    "derive_salted_secret",
+    "derive_trial_table",
+    "read_secret_from_fd",
+    "IsolatedSubmission",
     "check_ast_security",
     "verify_submission",
     "benchmark_submission",
@@ -162,6 +178,82 @@ def derive_blind_seed_and_permutation(
     perm_rng = np.random.default_rng(perm_seed)
     perm = perm_rng.permutation(int(ntrials))
     return int(blind_seed), perm
+
+
+def derive_blind_trial_table(
+    secret: str,
+    base_seed: int,
+    nmax: int,
+    ntrials: int,
+    a_range: Tuple[float, float] = (0.1, 0.9),
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Derive a blind `(a_true, theta_true, oracle_seeds, alg_seeds)` table via HMAC-SHA256.
+
+    Two independent 256-bit master seeds are derived from `secret` with distinct labels:
+    one for the amplitude/oracle-seed table and one for the algorithm-RNG seeds. The
+    algorithm seed handed to a submission therefore carries no information about the
+    trial's amplitude or measurement stream unless the secret itself is known.
+    """
+    key = secret.encode("utf-8")
+    tag = (
+        f"base={int(base_seed)}:nmax={int(nmax)}:n={int(ntrials)}"
+        f":a_lo={float(a_range[0])!r}:a_hi={float(a_range[1])!r}"
+    ).encode("utf-8")
+    tbl_digest = hmac.new(key, b"ae-leaderboard-blind-trial-table-v2:" + tag, hashlib.sha256).digest()
+    alg_digest = hmac.new(key, b"ae-leaderboard-blind-alg-seeds-v2:" + tag, hashlib.sha256).digest()
+    a_true, th_true, oracle_seeds, _ = generate_trial_table(
+        int(ntrials), int.from_bytes(tbl_digest, "big"), a_range=a_range
+    )
+    alg_rng = np.random.default_rng(int.from_bytes(alg_digest, "big"))
+    alg_seeds = alg_rng.integers(0, 2**63 - 1, size=int(ntrials), dtype=np.int64)
+    return a_true, th_true, oracle_seeds, alg_seeds
+
+
+def derive_salted_secret(secret: Optional[str], label: str) -> str:
+    """Derive the per-(algo, commit) salted-concordance secret from the primary secret."""
+    key = (secret or "").encode("utf-8")
+    msg = b"ae-leaderboard-salted-concordance-v2:" + label.encode("utf-8")
+    return hmac.new(key, msg, hashlib.sha256).hexdigest()
+
+
+def derive_trial_table(
+    ntrials: int,
+    seed: int,
+    nmax: int,
+    a_range: Tuple[float, float] = (0.1, 0.9),
+    secret: Optional[str] = None,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Return the `(a_true, theta_true, oracle_seeds, alg_seeds)` table for one evaluation.
+
+    Without a secret this is the public, reproducible `generate_trial_table(ntrials, seed)`
+    (the first three columns match `harness.generate_trials`). With a secret the table
+    is the HMAC-derived blind table and cannot be reconstructed from `seed`.
+    """
+    if secret:
+        return derive_blind_trial_table(secret, seed, nmax, ntrials, a_range=a_range)
+    return generate_trial_table(int(ntrials), int(seed), a_range=a_range)
+
+
+def read_secret_from_fd(fd: int) -> Optional[str]:
+    """Read the whole secret from an inherited file descriptor, then close it.
+
+    The pipe is drained to EOF and closed before any submission code can run, so the
+    secret exists afterwards only in this (parent) process's memory.
+    """
+    chunks: List[bytes] = []
+    try:
+        while True:
+            chunk = os.read(int(fd), 65536)
+            if not chunk:
+                break
+            chunks.append(chunk)
+    finally:
+        try:
+            os.close(int(fd))
+        except OSError:
+            pass
+    val = b"".join(chunks).decode("utf-8", errors="strict").strip()
+    return val or None
 
 
 # ============================================================================
@@ -498,10 +590,9 @@ def check_ast_security(
 # 2. Guarded Black-Box Quantum Oracle
 # ============================================================================
 
-# The algorithm RNG handed to a submission is derived from the trial seed with this
-# XOR so it never shares a stream with the measurement RNG. The trial seed itself is
-# never exposed to submissions.
-ALG_RNG_XOR = 0x5DEECE66D
+# The algorithm RNG handed to a submission and the measurement RNG are seeded from two
+# independent draws of the trial table (`oracle_seed`, `alg_seed`); neither seed is ever
+# exposed to submissions and neither can be derived from the other.
 
 _ALLOWED_ORACLE_ATTRS = frozenset({
     "measure",
@@ -590,16 +681,26 @@ class GuardedOracle:
 def _create_guarded_oracle(
     th_true: float,
     nmax: int,
-    trial_seed: int,
+    oracle_seed: int,
+    alg_seed: int,
     *,
     zero_info_mode: bool = False,
     eta: float = 0.0,
     max_queries: Optional[int] = None,
     max_depth_limit: int = 1_000_000,
+    remote_sampler: Optional[Callable[[str, List[int], List[int]], List[int]]] = None,
 ) -> Tuple[GuardedOracle, Callable[[], Dict[str, Any]]]:
-    """Create a (GuardedOracle, get_private_stats) pair with lexical isolation."""
-    meas_rng = np.random.default_rng(int(trial_seed))
-    alg_rng = np.random.default_rng(int(trial_seed) ^ ALG_RNG_XOR)
+    """Create a (GuardedOracle, get_private_stats) pair with lexical isolation.
+
+    `oracle_seed` seeds the measurement RNG and `alg_seed` the generator exposed as
+    `oracle.rng`; they are independent. When `remote_sampler` is given (sandbox worker
+    side) no amplitude or measurement RNG exists in this process at all: every sample
+    is requested from the trusted parent over the RPC pipe and this object only mirrors
+    the accounting for the informational attributes.
+    """
+    if remote_sampler is None:
+        meas_rng = np.random.default_rng(int(oracle_seed))
+    alg_rng = np.random.default_rng(int(alg_seed))
 
     queries_used = 0
     total_shots = 0
@@ -609,7 +710,7 @@ def _create_guarded_oracle(
     tamper_attempts = 0
     history: List[Tuple[int, int, int]] = []
 
-    secret_theta = float("nan") if zero_info_mode else float(th_true)
+    secret_theta = float("nan") if (zero_info_mode or remote_sampler is not None) else float(th_true)
 
     def _sample_single(d_int: int, s_int: int) -> int:
         if zero_info_mode:
@@ -623,6 +724,14 @@ def _create_guarded_oracle(
         p = min(max(p, 0.0), 1.0)
         return int(meas_rng.binomial(s_int, p))
 
+    def _sample_many(op: str, pairs: List[Tuple[int, int]]) -> List[int]:
+        if remote_sampler is not None:
+            ks = remote_sampler(op, [d for d, _ in pairs], [s for _, s in pairs])
+            if len(ks) != len(pairs):
+                raise OracleTamperError("Oracle RPC returned a malformed sample vector")
+            return [int(k) for k in ks]
+        return [_sample_single(d, s) for d, s in pairs]
+
     def _measure(depth: Any, shots: Any = 1) -> int:
         nonlocal queries_used, total_shots, rounds_used, max_depth_used, seq_depth_used
         d_int, s_int = _validate_depth_and_shots(depth, shots, max_depth_limit)
@@ -632,7 +741,7 @@ def _create_guarded_oracle(
                 f"Query budget exceeded: requested {cost} queries at depth {d_int}, "
                 f"but only {max_queries - queries_used} remain of budget {max_queries}"
             )
-        k = _sample_single(d_int, s_int)
+        k = _sample_many("m", [(d_int, s_int)])[0]
         queries_used += cost
         total_shots += s_int
         rounds_used += 1
@@ -670,8 +779,9 @@ def _create_guarded_oracle(
             )
 
         counts = np.empty(len(validated_pairs), dtype=np.int64)
+        ks = _sample_many("mb", validated_pairs)
         for idx, (d_int, s_int) in enumerate(validated_pairs):
-            k = _sample_single(d_int, s_int)
+            k = ks[idx]
             counts[idx] = k
             history.append((d_int, s_int, k))
             if d_int > max_depth_used:
@@ -801,9 +911,8 @@ def _invoke_single_trial(
     fn: Callable[..., Any],
     oracle: GuardedOracle,
     nmax: int,
-    trial_seed: int,
 ) -> float:
-    """Invoke `fn` with `(oracle)`, `(oracle, nmax)`, or `(oracle, nmax, rng/seed)`."""
+    """Invoke `fn` with `(oracle)`, `(oracle, nmax)`, or `(oracle, nmax, rng)`."""
     sig = _host_inspect.signature(fn)
     params = [
         p for p in sig.parameters.values()
@@ -829,6 +938,61 @@ def _invoke_single_trial(
     return a_hat
 
 
+class _TrialRunner:
+    """Executes one guarded trial of a submission; subclasses decide *where* it runs."""
+
+    def run_trial(
+        self,
+        theta_true: float,
+        nmax: int,
+        oracle_seed: int,
+        alg_seed: int,
+        *,
+        zero_info_mode: bool,
+        eta: float,
+        max_queries: Optional[int],
+        max_depth_limit: int,
+    ) -> Tuple[float, Dict[str, Any], float]:
+        raise NotImplementedError
+
+    def close(self) -> None:  # pragma: no cover - trivial
+        pass
+
+
+class _InProcessRunner(_TrialRunner):
+    """Runs the submission in this process (library use, unit tests, trusted baselines)."""
+
+    def __init__(self, submission: Any):
+        self._fn = _resolve_callable(submission)
+
+    def run_trial(self, theta_true, nmax, oracle_seed, alg_seed, *, zero_info_mode, eta, max_queries, max_depth_limit):
+        oracle, get_stats = _create_guarded_oracle(
+            theta_true,
+            nmax=nmax,
+            oracle_seed=oracle_seed,
+            alg_seed=alg_seed,
+            zero_info_mode=zero_info_mode,
+            eta=eta,
+            max_queries=max_queries,
+            max_depth_limit=max_depth_limit,
+        )
+        t0 = time.perf_counter()
+        a_hat = _invoke_single_trial(self._fn, oracle, nmax)
+        elapsed = time.perf_counter() - t0
+        stats = get_stats()
+        if stats["tamper_attempts"] > 0:
+            raise OracleTamperError(f"Detected {stats['tamper_attempts']} oracle tamper attempts")
+        if object.__getattribute__(oracle, "_dispatch") is None:
+            raise OracleTamperError("Oracle dispatch table was modified")
+        return a_hat, stats, elapsed
+
+
+def _as_runner(submission: Any) -> _TrialRunner:
+    if isinstance(submission, _TrialRunner):
+        return submission
+    return _InProcessRunner(submission)
+
+
 def _run_trials_guarded(
     submission: Any,
     nmax: int,
@@ -843,19 +1007,16 @@ def _run_trials_guarded(
 ) -> Dict[str, Any]:
     """Run `ntrials` guarded trials of `submission` at scale `nmax`.
 
-    If `secret_seed` is provided (or popped from `LEADERBOARD_SECRET_SEED`), the
-    effective seed and trial permutation order are derived via HMAC-SHA256 so
-    the test amplitudes and their ordering are 100% blind.
+    `submission` is either an in-process object/callable or an `IsolatedSubmission`
+    handle (sandbox worker). If `secret_seed` is provided the trial table is the
+    HMAC-derived blind table (`derive_blind_trial_table`), otherwise the public
+    `generate_trial_table(ntrials, seed)` table. Oracle and algorithm RNG seeds are
+    independent draws in both cases.
     """
-    fn = _resolve_callable(submission)
-    if secret_seed:
-        eff_seed, perm = derive_blind_seed_and_permutation(secret_seed, seed, nmax, ntrials)
-        a_raw, th_raw, seeds_raw = generate_trials(ntrials, eff_seed, a_range=a_range)
-        a_true_arr = a_raw[perm]
-        th_true_arr = th_raw[perm]
-        trial_seeds = seeds_raw[perm]
-    else:
-        a_true_arr, th_true_arr, trial_seeds = generate_trials(ntrials, seed, a_range=a_range)
+    runner = _as_runner(submission)
+    a_true_arr, th_true_arr, oracle_seeds, alg_seeds = derive_trial_table(
+        ntrials, seed, nmax, a_range=a_range, secret=secret_seed
+    )
 
     a_hat_arr = np.empty(ntrials, dtype=np.float64)
     queries_arr = np.empty(ntrials, dtype=np.float64)
@@ -865,28 +1026,23 @@ def _run_trials_guarded(
     histories: List[Tuple[Tuple[int, int, int], ...]] = []
 
     t0 = time.perf_counter()
+    trial_time = 0.0
     for i in range(ntrials):
         # Honeypot local variables in caller frame for zero-info side-channel test:
         a_true = float(a_true_arr[i])
         theta_true = float(th_true_arr[i])
-        t_seed = int(trial_seeds[i])
 
-        oracle, get_stats = _create_guarded_oracle(
+        a_hat, stats, elapsed_i = runner.run_trial(
             theta_true,
-            nmax=nmax,
-            trial_seed=t_seed,
+            nmax,
+            int(oracle_seeds[i]),
+            int(alg_seeds[i]),
             zero_info_mode=zero_info_mode,
             eta=eta,
             max_queries=max_queries,
             max_depth_limit=int(nmax),  # the benchmark scale is a hard depth cap
         )
-        a_hat = _invoke_single_trial(fn, oracle, nmax, t_seed)
-        stats = get_stats()
-        if stats["tamper_attempts"] > 0:
-            raise OracleTamperError(f"Detected {stats['tamper_attempts']} oracle tamper attempts on trial {i}")
-        if object.__getattribute__(oracle, "_dispatch") is None:
-            raise OracleTamperError("Oracle dispatch table was modified")
-
+        trial_time += elapsed_i
         a_hat_arr[i] = a_hat
         queries_arr[i] = stats["queries_used"]
         rounds_arr[i] = stats["rounds_used"]
@@ -895,6 +1051,9 @@ def _run_trials_guarded(
         histories.append(stats["history"])
 
     elapsed = time.perf_counter() - t0
+    # Per-trial runtime excludes RPC overhead when the submission runs in a worker; it
+    # can never exceed the wall-clock time measured here.
+    elapsed = min(elapsed, max(trial_time, 0.0)) if trial_time > 0.0 else elapsed
     return {
         "a_true": a_true_arr,
         "a_hat": a_hat_arr,
@@ -908,6 +1067,338 @@ def _run_trials_guarded(
         "runtime_per_trial_sec": elapsed / max(1, ntrials),
         "runtime_per_trial_ms": 1000.0 * elapsed / max(1, ntrials),
     }
+
+
+# ============================================================================
+# 3b. Process-Isolated Execution (parent holds theta/RNG/secret; worker sees an RPC)
+# ============================================================================
+
+_RPC_MAX_FRAME = 64 * 1024 * 1024
+_RPC_MAX_BATCH = 1_000_000
+_SECRET_ENV_MARKERS = ("SECRET", "SEED", "SALT", "TOKEN", "PASSWORD", "PASSWD", "CREDENTIAL", "PRIVATE_KEY", "API_KEY")
+_SECRET_ENV_PREFIXES = ("LEADERBOARD_", "CI_SECRET")
+_WORKER_EXC_TYPES: Dict[str, type] = {
+    "OracleInputError": OracleInputError,
+    "OutputValidationError": OutputValidationError,
+    "OracleTamperError": OracleTamperError,
+    "SecurityViolationError": SecurityViolationError,
+}
+
+
+def _is_secret_env_key(key: str) -> bool:
+    ku = key.upper()
+    return ku.startswith(_SECRET_ENV_PREFIXES) or any(m in ku for m in _SECRET_ENV_MARKERS)
+
+
+def scrub_process_for_untrusted_code() -> None:
+    """Strip `sys.argv` and every secret-looking variable from `os.environ`.
+
+    Called by the sandbox worker before the submission module is imported, so no value
+    the submission can read from `sys`, `os` or `__main__` identifies the trial table.
+    """
+    sys.argv[:] = sys.argv[:1]
+    for key in list(os.environ.keys()):
+        if _is_secret_env_key(key):
+            os.environ.pop(key, None)
+
+
+def _filtered_child_env() -> Dict[str, str]:
+    return {k: v for k, v in os.environ.items() if not _is_secret_env_key(k)}
+
+
+class _FramedPipe:
+    """Length-prefixed JSON messages over a pair of raw file descriptors."""
+
+    def __init__(self, read_fd: int, write_fd: int):
+        self._rfd = int(read_fd)
+        self._wfd = int(write_fd)
+
+    def send(self, obj: Any) -> None:
+        data = json.dumps(obj, separators=(",", ":")).encode("utf-8")
+        if len(data) > _RPC_MAX_FRAME:
+            raise OracleInputError(f"Oracle RPC frame too large ({len(data)} bytes)")
+        buf = struct.pack("!I", len(data)) + data
+        view = memoryview(buf)
+        while view:
+            n = os.write(self._wfd, view)
+            view = view[n:]
+
+    def _read_exact(self, n: int) -> bytes:
+        chunks: List[bytes] = []
+        remaining = n
+        while remaining > 0:
+            chunk = os.read(self._rfd, min(remaining, 1 << 20))
+            if not chunk:
+                raise EOFError("Oracle RPC peer closed the pipe")
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        return b"".join(chunks)
+
+    def recv(self) -> Any:
+        (n,) = struct.unpack("!I", self._read_exact(4))
+        if n > _RPC_MAX_FRAME:
+            raise OracleTamperError(f"Oracle RPC frame too large ({n} bytes)")
+        return json.loads(self._read_exact(n).decode("utf-8"))
+
+    def close(self) -> None:
+        for fd in (self._rfd, self._wfd):
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+
+
+def _check_int_list(vals: Any, label: str) -> List[int]:
+    if not isinstance(vals, list) or not vals or len(vals) > _RPC_MAX_BATCH:
+        raise OracleTamperError(f"Malformed oracle RPC request: {label} must be a non-empty list")
+    out: List[int] = []
+    for v in vals:
+        if isinstance(v, bool) or not isinstance(v, int):
+            raise OracleTamperError(f"Malformed oracle RPC request: {label} entries must be integers")
+        out.append(int(v))
+    return out
+
+
+class IsolatedSubmission(_TrialRunner):
+    """Handle to a submission running in a separate, scrubbed worker process.
+
+    The worker (`leaderboard/sandbox_worker.py`) imports the submission and executes
+    `run_trial` for each trial the parent requests. It receives only `nmax`, the
+    algorithm-RNG seed and the budget/depth caps; every oracle measurement is served by
+    this parent process, which alone holds `theta`, the measurement RNG, the secret and
+    the authoritative query accounting. The worker's argv and environment are scrubbed
+    before the submission module is imported.
+    """
+
+    def __init__(
+        self,
+        submission_path: str,
+        *,
+        entry: Optional[str] = None,
+        sandbox_cmd: Optional[Sequence[str]] = None,
+        python_executable: Optional[str] = None,
+        cpu_seconds: Optional[int] = None,
+        fsize_kb: Optional[int] = None,
+    ):
+        py_path, entry_cls_name, algo_name = _resolve_submission_entry(submission_path)
+        if entry:
+            entry_cls_name = entry
+        self.submission_path = py_path
+        self.entry = entry_cls_name
+        self.name = algo_name
+        self.track = None
+
+        p2c_r, p2c_w = os.pipe()  # parent -> child
+        c2p_r, c2p_w = os.pipe()  # child -> parent
+        worker = os.path.join(_HERE, "sandbox_worker.py")
+        cmd: List[str] = list(sandbox_cmd or [])
+        cmd += [
+            python_executable or sys.executable,
+            "-I",
+            worker,
+            "--submission-file", py_path,
+            "--entry", entry_cls_name or "",
+            "--fd-in", str(p2c_r),
+            "--fd-out", str(c2p_w),
+        ]
+
+        def _limits() -> None:  # pragma: no cover - exercised only in CI sandboxes
+            try:
+                import resource
+
+                if cpu_seconds:
+                    resource.setrlimit(resource.RLIMIT_CPU, (int(cpu_seconds), int(cpu_seconds)))
+                if fsize_kb:
+                    lim = int(fsize_kb) * 1024
+                    resource.setrlimit(resource.RLIMIT_FSIZE, (lim, lim))
+            except Exception:
+                pass
+
+        try:
+            worker_stdout: Any = sys.stderr.fileno()  # keep submission prints out of our report stream
+        except (AttributeError, OSError, ValueError):
+            worker_stdout = subprocess.DEVNULL
+        self._proc = subprocess.Popen(
+            cmd,
+            env=_filtered_child_env(),
+            pass_fds=(p2c_r, c2p_w),
+            stdin=subprocess.DEVNULL,
+            stdout=worker_stdout,
+            close_fds=True,
+            preexec_fn=_limits if (cpu_seconds or fsize_kb) else None,
+        )
+        os.close(p2c_r)
+        os.close(c2p_w)
+        self._pipe = _FramedPipe(c2p_r, p2c_w)
+        self._closed = False
+        try:
+            ready = self._pipe.recv()
+        except EOFError as exc:
+            self.close()
+            raise RuntimeError(f"Sandbox worker exited before loading '{py_path}' (rc={self._proc.returncode})") from exc
+        if not isinstance(ready, dict) or ready.get("op") != "ready":
+            etype = ready.get("type") if isinstance(ready, dict) else None
+            emsg = ready.get("msg") if isinstance(ready, dict) else ready
+            self.close()
+            raise RuntimeError(f"Sandbox worker failed to load submission: {etype}: {emsg}")
+
+    # -- protocol ------------------------------------------------------------
+    def run_trial(self, theta_true, nmax, oracle_seed, alg_seed, *, zero_info_mode, eta, max_queries, max_depth_limit):
+        if self._closed:
+            raise RuntimeError("IsolatedSubmission worker is closed")
+        oracle, get_stats = _create_guarded_oracle(
+            theta_true,
+            nmax=nmax,
+            oracle_seed=oracle_seed,
+            alg_seed=alg_seed,
+            zero_info_mode=zero_info_mode,
+            eta=eta,
+            max_queries=max_queries,
+            max_depth_limit=max_depth_limit,
+        )
+        pipe = self._pipe
+        t0 = time.perf_counter()
+        pipe.send({
+            "op": "trial",
+            "nmax": int(nmax),
+            "alg_seed": int(alg_seed),
+            "eta": float(eta),
+            "max_queries": None if max_queries is None else int(max_queries),
+            "max_depth_limit": int(max_depth_limit),
+        })
+        while True:
+            try:
+                msg = pipe.recv()
+            except EOFError as exc:
+                rc = self._proc.poll()
+                self._closed = True
+                raise RuntimeError(f"Sandbox worker terminated during a trial (rc={rc})") from exc
+            if not isinstance(msg, dict):
+                raise OracleTamperError("Malformed oracle RPC message from worker")
+            op = msg.get("op")
+            if op in ("m", "mb"):
+                try:
+                    d_list = _check_int_list(msg.get("d"), "depths")
+                    s_list = _check_int_list(msg.get("s"), "shots")
+                    if len(d_list) != len(s_list):
+                        raise OracleTamperError("Malformed oracle RPC request: depths/shots length mismatch")
+                    if op == "m":
+                        if len(d_list) != 1:
+                            raise OracleTamperError("Malformed oracle RPC request: single measure with batch payload")
+                        ks = [int(oracle.measure(d_list[0], s_list[0]))]
+                    else:
+                        ks = [int(k) for k in oracle.measure_batch(d_list, s_list)]
+                    pipe.send({"k": ks})
+                except OracleInputError as exc:
+                    pipe.send({"e": "OracleInputError", "m": str(exc)})
+            elif op == "done":
+                a_hat = _validate_estimate(msg.get("a_hat"))
+                stats = get_stats()
+                if stats["queries_used"] <= 0:
+                    raise OutputValidationError(
+                        "Submission returned an estimate without making any oracle queries (queries_used == 0)"
+                    )
+                wall = time.perf_counter() - t0
+                try:
+                    reported = float(msg.get("elapsed", wall))
+                except (TypeError, ValueError):
+                    reported = wall
+                elapsed = min(max(reported, 0.0), wall)
+                return a_hat, stats, elapsed
+            elif op == "err":
+                etype = str(msg.get("type", "RuntimeError"))[:80]
+                emsg = str(msg.get("msg", ""))[:4000]
+                exc_cls = _WORKER_EXC_TYPES.get(etype)
+                if exc_cls is not None:
+                    raise exc_cls(emsg)
+                raise RuntimeError(f"{etype}: {emsg}")
+            else:
+                raise OracleTamperError(f"Unexpected oracle RPC op {op!r} from worker")
+
+    def close(self) -> None:
+        if getattr(self, "_closed", True):
+            return
+        self._closed = True
+        try:
+            self._pipe.send({"op": "quit"})
+        except Exception:
+            pass
+        self._pipe.close()
+        try:
+            self._proc.wait(timeout=30)
+        except Exception:
+            self._proc.kill()
+
+    def __enter__(self) -> "IsolatedSubmission":
+        return self
+
+    def __exit__(self, *exc: Any) -> None:
+        self.close()
+
+    def __del__(self) -> None:  # pragma: no cover - best effort
+        try:
+            self.close()
+        except Exception:
+            pass
+
+    def __repr__(self) -> str:
+        return f"<IsolatedSubmission name={self.name!r} path={self.submission_path!r}>"
+
+
+def _worker_main(submission_file: str, entry: Optional[str], fd_in: int, fd_out: int) -> int:
+    """Body of `leaderboard/sandbox_worker.py`: serve trials for the parent over the RPC pipe.
+
+    Must be called only after `scrub_process_for_untrusted_code()`.
+    """
+    pipe = _FramedPipe(fd_in, fd_out)
+    try:
+        sub_obj = _import_submission(submission_file, entry or None)
+        fn = _resolve_callable(sub_obj)
+    except Exception as exc:  # noqa: BLE001 - reported to the parent
+        pipe.send({"op": "err", "type": type(exc).__name__, "msg": str(exc)[:4000]})
+        return 1
+    pipe.send({"op": "ready"})
+
+    def _remote_sampler(op: str, d_list: List[int], s_list: List[int]) -> List[int]:
+        pipe.send({"op": op, "d": [int(d) for d in d_list], "s": [int(x) for x in s_list]})
+        reply = pipe.recv()
+        if not isinstance(reply, dict):
+            raise OracleTamperError("Malformed oracle RPC reply")
+        if "e" in reply:
+            exc_cls = _WORKER_EXC_TYPES.get(str(reply["e"]), OracleTamperError)
+            raise exc_cls(str(reply.get("m", "")))
+        return [int(k) for k in reply["k"]]
+
+    while True:
+        try:
+            msg = pipe.recv()
+        except EOFError:
+            return 0
+        op = msg.get("op") if isinstance(msg, dict) else None
+        if op == "quit":
+            return 0
+        if op != "trial":
+            pipe.send({"op": "err", "type": "OracleTamperError", "msg": f"unexpected op {op!r}"})
+            continue
+        try:
+            nmax = int(msg["nmax"])
+            oracle, _ = _create_guarded_oracle(
+                float("nan"),
+                nmax=nmax,
+                oracle_seed=0,
+                alg_seed=int(msg["alg_seed"]),
+                eta=float(msg.get("eta", 0.0)),
+                max_queries=msg.get("max_queries"),
+                max_depth_limit=int(msg.get("max_depth_limit", nmax)),
+                remote_sampler=_remote_sampler,
+            )
+            t0 = time.perf_counter()
+            a_hat = _invoke_single_trial(fn, oracle, nmax)
+            elapsed = time.perf_counter() - t0
+        except Exception as exc:  # noqa: BLE001 - reported to the parent
+            pipe.send({"op": "err", "type": type(exc).__name__, "msg": str(exc)[:4000]})
+            continue
+        pipe.send({"op": "done", "a_hat": float(a_hat), "elapsed": float(elapsed)})
 
 
 # ============================================================================
@@ -958,41 +1449,33 @@ def _depth0_classical_c95(q_ave: float, ntrials: int = 2000, seed: int = 777_777
     return eps95, eps95 * n_shots
 
 
-def verify_submission(
+def _verify_band(
+    report: VerificationReport,
     submission: Any,
     *,
-    name: str = "Submission",
-    source_code: Optional[str] = None,
-    submission_path: Optional[str] = None,
-    allowed_dir: Optional[str] = None,
-    scales: Tuple[int, int] = (125, 540),
-    ntrials_repro: int = 20,
-    ntrials_zero_info: int = 80,
-    ntrials_scaling: int = 250,
-    seed: int = SEARCH_SEED,
-    secret_seed: Optional[str] = None,
-) -> VerificationReport:
-    """Run all 5 CI verification and anti-cheat checks on a submitted AE algorithm."""
-    scrub_secret_seed_env()
-    report = VerificationReport(name=name, passed=False)
+    band: str,
+    seed: int,
+    secret_seed: Optional[str],
+    nmax_small: int,
+    nmax_large: int,
+    ntrials_repro: int,
+    ntrials_zero_info: int,
+    ntrials_scaling: int,
+) -> bool:
+    """Run stages 2-5 on one seed band; record diagnostics under `report.diagnostics["bands"][band]`.
 
-    # ------------------------------------------------------------------
-    # Stage 1: Static AST Security Check
-    # ------------------------------------------------------------------
-    ast_ok, ast_violations = check_ast_security(
-        submission,
-        source_code=source_code,
-        submission_path=submission_path,
-        allowed_dir=allowed_dir,
-    )
-    report.ast_passed = ast_ok
-    for v in ast_violations:
-        report.violations.append(f"[AST] {v}")
+    Returns True when every stage passed on this band. Stage results on the report are
+    AND-ed across bands by the caller; the public band also writes the legacy
+    top-level diagnostic keys.
+    """
+    tag = "" if band == "public" else f" | {band} band"
+    diag: Dict[str, Any] = {"seed": int(seed), "blind": bool(secret_seed)}
+    report.diagnostics.setdefault("bands", {})[band] = diag
+    is_public = band == "public"
 
     # ------------------------------------------------------------------
     # Stage 2 & 3: Input/Output Validation + Reproducibility Check
     # ------------------------------------------------------------------
-    nmax_small, nmax_large = int(scales[0]), int(scales[1])
     try:
         run1 = _run_trials_guarded(
             submission, nmax=nmax_small, ntrials=ntrials_repro, seed=seed + 11, secret_seed=secret_seed
@@ -1000,7 +1483,7 @@ def verify_submission(
         run2 = _run_trials_guarded(
             submission, nmax=nmax_small, ntrials=ntrials_repro, seed=seed + 11, secret_seed=secret_seed
         )
-        report.input_output_passed = True
+        diag["input_output_passed"] = True
 
         est_identical = bool(np.array_equal(run1["a_hat"], run2["a_hat"]))
         q_identical = bool(np.array_equal(run1["queries"], run2["queries"]))
@@ -1008,27 +1491,28 @@ def verify_submission(
         hist_identical = run1["histories"] == run2["histories"]
 
         if est_identical and q_identical and seq_identical and hist_identical:
-            report.reproducibility_passed = True
+            diag["reproducibility_passed"] = True
         else:
+            diag["reproducibility_passed"] = False
             max_diff = float(np.max(np.abs(run1["a_hat"] - run2["a_hat"])))
             q_diff = float(np.max(np.abs(run1["queries"] - run2["queries"])))
             report.violations.append(
-                f"[Reproducibility] Non-deterministic execution detected: "
+                f"[Reproducibility{tag}] Non-deterministic execution detected: "
                 f"max |a_hat_1 - a_hat_2| = {max_diff:.3e}, max |Q_1 - Q_2| = {q_diff:.1f}, "
                 f"histories_equal={hist_identical}"
             )
     except (OracleInputError, OutputValidationError) as exc:
-        report.input_output_passed = False
-        report.violations.append(f"[Input/Output Validation] {exc}")
-        return report
+        diag["input_output_passed"] = False
+        report.violations.append(f"[Input/Output Validation{tag}] {exc}")
+        return False
     except (OracleTamperError, SecurityViolationError) as exc:
-        report.input_output_passed = False
-        report.violations.append(f"[Security/Tamper] {exc}")
-        return report
+        diag["input_output_passed"] = False
+        report.violations.append(f"[Security/Tamper{tag}] {exc}")
+        return False
     except Exception as exc:
-        report.input_output_passed = False
-        report.violations.append(f"[Runtime Error] {type(exc).__name__}: {exc}")
-        return report
+        diag["input_output_passed"] = False
+        report.violations.append(f"[Runtime Error{tag}] {type(exc).__name__}: {exc}")
+        return False
 
     # ------------------------------------------------------------------
     # Stage 4: Oracle Tamper & Zero-Information Test
@@ -1053,28 +1537,32 @@ def verify_submission(
         else:
             corr = 0.0
 
-        report.diagnostics["zero_info_mae"] = zi_mae
-        report.diagnostics["zero_info_eps95"] = zi_eps95
-        report.diagnostics["zero_info_corr"] = corr
+        diag["zero_info_mae"] = zi_mae
+        diag["zero_info_eps95"] = zi_eps95
+        diag["zero_info_corr"] = corr
+        if is_public:
+            report.diagnostics["zero_info_mae"] = zi_mae
+            report.diagnostics["zero_info_eps95"] = zi_eps95
+            report.diagnostics["zero_info_corr"] = corr
 
         corr_thresh = 4.2 / math.sqrt(max(4, ntrials_zero_info - 1))
         if zi_mae < 0.12 or zi_eps95 < 0.22 or abs(corr) > corr_thresh:
-            report.zero_info_passed = False
+            diag["zero_info_passed"] = False
             report.violations.append(
-                f"[Zero-Info Test] Side-channel leakage of a_true detected under constant-0.5 dummy oracle! "
+                f"[Zero-Info Test{tag}] Side-channel leakage of a_true detected under constant-0.5 dummy oracle! "
                 f"MAE={zi_mae:.4f} (min legal >= 0.12), eps95={zi_eps95:.4f} (min legal >= 0.22), "
                 f"corr(a_hat, a_true)={corr:.4f} (threshold +- {corr_thresh:.4f})"
             )
         else:
-            report.zero_info_passed = True
+            diag["zero_info_passed"] = True
     except (OracleInputError, OutputValidationError, OracleTamperError, SecurityViolationError) as exc:
-        report.zero_info_passed = False
-        report.violations.append(f"[Zero-Info / Oracle Tamper] {exc}")
-        return report
+        diag["zero_info_passed"] = False
+        report.violations.append(f"[Zero-Info / Oracle Tamper{tag}] {exc}")
+        return False
     except Exception as exc:
-        report.zero_info_passed = False
-        report.violations.append(f"[Zero-Info Runtime Error] {type(exc).__name__}: {exc}")
-        return report
+        diag["zero_info_passed"] = False
+        report.violations.append(f"[Zero-Info Runtime Error{tag}] {type(exc).__name__}: {exc}")
+        return False
 
     # ------------------------------------------------------------------
     # Stage 5: Asymptotic Scaling Check across 2 scales
@@ -1101,7 +1589,7 @@ def verify_submission(
         c95_par_2 = eps2 * nmax_large
         eps_d0, c95_d0 = _depth0_classical_c95(q2)
 
-        report.diagnostics["scaling"] = {
+        scaling_diag = {
             "nmax_small": nmax_small,
             "nmax_large": nmax_large,
             "q_ave_small": q1,
@@ -1114,6 +1602,9 @@ def verify_submission(
             "depth0_eps95_at_q2": eps_d0,
             "depth0_C95_at_q2": c95_d0,
         }
+        diag["scaling"] = scaling_diag
+        if is_public:
+            report.diagnostics["scaling"] = scaling_diag
 
         scaling_errors: List[str] = []
         if not (q2 > q1):
@@ -1141,20 +1632,96 @@ def verify_submission(
             )
 
         if scaling_errors:
-            report.scaling_passed = False
+            diag["scaling_passed"] = False
             for err_msg in scaling_errors:
-                report.violations.append(f"[Asymptotic Scaling] {err_msg}")
+                report.violations.append(f"[Asymptotic Scaling{tag}] {err_msg}")
         else:
-            report.scaling_passed = True
+            diag["scaling_passed"] = True
 
     except (OracleInputError, OutputValidationError, OracleTamperError, SecurityViolationError) as exc:
-        report.scaling_passed = False
-        report.violations.append(f"[Scaling Check Error] {exc}")
-        return report
+        diag["scaling_passed"] = False
+        report.violations.append(f"[Scaling Check Error{tag}] {exc}")
+        return False
     except Exception as exc:
-        report.scaling_passed = False
-        report.violations.append(f"[Scaling Runtime Error] {type(exc).__name__}: {exc}")
-        return report
+        diag["scaling_passed"] = False
+        report.violations.append(f"[Scaling Runtime Error{tag}] {type(exc).__name__}: {exc}")
+        return False
+
+    return bool(
+        diag.get("input_output_passed")
+        and diag.get("reproducibility_passed")
+        and diag.get("zero_info_passed")
+        and diag.get("scaling_passed")
+    )
+
+
+def verify_submission(
+    submission: Any,
+    *,
+    name: str = "Submission",
+    source_code: Optional[str] = None,
+    submission_path: Optional[str] = None,
+    allowed_dir: Optional[str] = None,
+    scales: Tuple[int, int] = (125, 540),
+    ntrials_repro: int = 20,
+    ntrials_zero_info: int = 80,
+    ntrials_scaling: int = 250,
+    seed: int = SEARCH_SEED,
+    secret_seed: Optional[str] = None,
+) -> VerificationReport:
+    """Run all 5 CI verification and anti-cheat checks on a submitted AE algorithm.
+
+    Stages 2-5 (I/O validation, reproducibility, zero-information coin-flip test and
+    asymptotic scaling) always run on the public `seed` band. When `secret_seed` is
+    given they run a second time on the blind HMAC-derived certification band, so
+    seed-keyed behaviour in either band is caught. A stage passes only if it passed on
+    every band; per-band results are in `report.diagnostics["bands"]`.
+
+    `submission` may be an in-process object/callable or an `IsolatedSubmission`.
+    """
+    scrub_secret_seed_env()
+    report = VerificationReport(name=name, passed=False)
+
+    # ------------------------------------------------------------------
+    # Stage 1: Static AST Security Check
+    # ------------------------------------------------------------------
+    if isinstance(submission, IsolatedSubmission) and submission_path is None:
+        submission_path = submission.submission_path
+    ast_ok, ast_violations = check_ast_security(
+        submission,
+        source_code=source_code,
+        submission_path=submission_path,
+        allowed_dir=allowed_dir,
+    )
+    report.ast_passed = ast_ok
+    for v in ast_violations:
+        report.violations.append(f"[AST] {v}")
+
+    nmax_small, nmax_large = int(scales[0]), int(scales[1])
+    bands: List[Tuple[str, Optional[str]]] = [("public", None)]
+    if secret_seed:
+        bands.append(("blind", secret_seed))
+    report.diagnostics["bands_verified"] = [b for b, _ in bands]
+
+    stage_keys = ("input_output_passed", "reproducibility_passed", "zero_info_passed", "scaling_passed")
+    band_results: Dict[str, Dict[str, Any]] = {}
+    for band, band_secret in bands:
+        _verify_band(
+            report,
+            submission,
+            band=band,
+            seed=seed,
+            secret_seed=band_secret,
+            nmax_small=nmax_small,
+            nmax_large=nmax_large,
+            ntrials_repro=ntrials_repro,
+            ntrials_zero_info=ntrials_zero_info,
+            ntrials_scaling=ntrials_scaling,
+        )
+        band_results[band] = report.diagnostics["bands"][band]
+
+    for key in stage_keys:
+        setattr(report, key, all(bool(d.get(key)) for d in band_results.values()))
 
     report.passed = (
         report.ast_passed
@@ -1525,37 +2092,41 @@ class ReferenceBayesianAdaptiveSubmission:
 AdaptiveTwoRoundSubmission = ReferenceBayesianAdaptiveSubmission
 
 
-def _load_submission_from_dir(sub_dir: str) -> Tuple[Any, str, str]:
-    """Load a submission object and its source file path from a submission directory or file."""
-    import importlib.util
-    import json
+def _resolve_submission_entry(sub_dir: str) -> Tuple[str, Optional[str], str]:
+    """Resolve a submission directory or file to `(py_path, entry_cls_name, algo_name)`.
 
-    # Always scrub any secret seed env vars prior to importing untrusted submission code
-    scrub_secret_seed_env()
+    Reads only `metadata.json`; never imports the submission module.
+    """
+    import json as _json
 
     abs_target = os.path.abspath(sub_dir)
     if os.path.isfile(abs_target):
-        py_path = abs_target
-        folder = os.path.dirname(abs_target)
-        algo_name = os.path.splitext(os.path.basename(abs_target))[0]
-        entry_cls_name = None
+        return abs_target, None, os.path.splitext(os.path.basename(abs_target))[0]
+
+    folder = abs_target
+    meta_path = os.path.join(folder, "metadata.json")
+    entry_spec = "submission.py"
+    algo_name = os.path.basename(folder)
+    if os.path.isfile(meta_path):
+        with open(meta_path, "r", encoding="utf-8") as fh:
+            meta = _json.load(fh)
+        algo_name = meta.get("algorithm_name") or meta.get("name") or meta.get("algo_id") or algo_name
+        entry_spec = meta.get("entrypoint", "submission.py")
+    if ":" in entry_spec:
+        file_part, entry_cls_name = entry_spec.split(":", 1)
     else:
-        folder = abs_target
-        meta_path = os.path.join(folder, "metadata.json")
-        entry_spec = "submission.py"
-        algo_name = os.path.basename(folder)
-        if os.path.isfile(meta_path):
-            with open(meta_path, "r", encoding="utf-8") as fh:
-                meta = json.load(fh)
-            algo_name = meta.get("algorithm_name") or meta.get("name") or meta.get("algo_id") or algo_name
-            entry_spec = meta.get("entrypoint", "submission.py")
-        if ":" in entry_spec:
-            file_part, entry_cls_name = entry_spec.split(":", 1)
-        else:
-            file_part, entry_cls_name = entry_spec, None
-        if not file_part.endswith(".py"):
-            file_part += ".py"
-        py_path = os.path.join(folder, file_part)
+        file_part, entry_cls_name = entry_spec, None
+    if not file_part.endswith(".py"):
+        file_part += ".py"
+    return os.path.join(folder, file_part), entry_cls_name, algo_name
+
+
+def _import_submission(py_path: str, entry_cls_name: Optional[str]) -> Any:
+    """Import the submission module at `py_path` and instantiate its entry object."""
+    import importlib.util
+
+    # Always scrub any secret seed env vars prior to importing untrusted submission code
+    scrub_secret_seed_env()
 
     spec = importlib.util.spec_from_file_location("submitted_module", py_path)
     if spec is None or spec.loader is None:
@@ -1565,42 +2136,108 @@ def _load_submission_from_dir(sub_dir: str) -> Tuple[Any, str, str]:
 
     if entry_cls_name and hasattr(mod, entry_cls_name):
         obj = getattr(mod, entry_cls_name)
-        return (obj() if _host_inspect.isclass(obj) else obj), algo_name, py_path
+        return obj() if _host_inspect.isclass(obj) else obj
 
     for cand_attr in ("Submission", "submission", "estimate", "run_trial"):
         if hasattr(mod, cand_attr):
             obj = getattr(mod, cand_attr)
-            return (obj() if _host_inspect.isclass(obj) else obj), algo_name, py_path
+            return obj() if _host_inspect.isclass(obj) else obj
 
     for _, obj in _host_inspect.getmembers(mod, _host_inspect.isclass):
         if obj.__module__ == mod.__name__ and (hasattr(obj, "run_trial") or hasattr(obj, "estimate") or hasattr(obj, "get_schedule")):
-            return obj(), algo_name, py_path
+            return obj()
 
     raise RuntimeError(f"No valid submission entrypoint found in {py_path}")
 
 
+def _load_submission_from_dir(sub_dir: str) -> Tuple[Any, str, str]:
+    """Load a submission object (in this process) and its source path from a directory or file.
+
+    Trusted-baseline use only (`certify_submissions.py`, tests). The CLI runs
+    untrusted submissions through `IsolatedSubmission` instead.
+    """
+    py_path, entry_cls_name, algo_name = _resolve_submission_entry(sub_dir)
+    return _import_submission(py_path, entry_cls_name), algo_name, py_path
+
+
+def _load_cli_secret(args: Any) -> Optional[str]:
+    """Obtain the certification secret for this (trusted, parent) process.
+
+    Priority: `--secret-fd` (pipe/descriptor, drained and closed immediately), then
+    `--secret-file`, then the legacy `--secret-seed-env` variable (popped from the
+    environment). Whatever the transport, the secret never appears on argv and is
+    never passed to the submission worker.
+    """
+    secret: Optional[str] = None
+    if args.secret_fd is not None:
+        secret = read_secret_from_fd(int(args.secret_fd))
+    if secret is None and args.secret_file:
+        with open(args.secret_file, "r", encoding="utf-8") as fh:
+            secret = fh.read().strip() or None
+    env_secret = scrub_secret_seed_env(args.secret_seed_env)
+    if secret is None:
+        secret = env_secret
+    return secret
+
+
 def _cli_main() -> None:
     import argparse
-    import json
+    import json as _json
 
     parser = argparse.ArgumentParser(description="CI Verifier & Statistical Benchmark Runner for AE Leaderboard")
     parser.add_argument("--mode", choices=["demo", "verify", "certify"], default="demo")
     parser.add_argument("--submission", type=str, default=None, help="Path to submission directory or Python file")
     parser.add_argument("--ntrials", type=int, default=2000)
-    parser.add_argument("--seed", type=int, default=HOLDOUT_SEED)
-    parser.add_argument("--salted-seed", type=int, default=None)
+    parser.add_argument(
+        "--seed", type=int, default=HOLDOUT_SEED,
+        help="PUBLIC base seed band. With a secret active the actual trial table is HMAC(secret, band) "
+             "and this value reveals nothing.",
+    )
+    parser.add_argument(
+        "--scales", type=str, default=",".join(str(x) for x in SCALES),
+        help="Comma-separated benchmark scales (default: 125,260,540,1000)",
+    )
+    parser.add_argument(
+        "--secret-fd", type=int, default=None,
+        help="File descriptor to read the blind certification secret from (drained and closed before any "
+             "submission code runs). Preferred transport; the secret never appears on argv.",
+    )
+    parser.add_argument("--secret-file", type=str, default=None, help="File holding the blind certification secret")
     parser.add_argument(
         "--secret-seed-env",
         type=str,
         default="LEADERBOARD_SECRET_SEED",
-        help="Environment variable name holding the blind secret seed (popped & scrubbed before submission import)",
+        help="Legacy: environment variable holding the blind secret seed (popped & scrubbed before use)",
+    )
+    parser.add_argument(
+        "--salt-label", type=str, default=None,
+        help="Label (e.g. '<algo_id>:<commit_sha>') for the salted concordance run; the salted table is "
+             "HMAC(secret, label)-derived, so no numeric salted seed exists anywhere.",
+    )
+    parser.add_argument(
+        "--worker-sandbox", type=str, default=None,
+        help="Command prefix used to launch the submission worker, e.g. "
+             "'unshare --user --map-root-user --net --ipc --pid --fork --mount-proc'",
+    )
+    parser.add_argument("--worker-cpu-seconds", type=int, default=None, help="RLIMIT_CPU for the worker")
+    parser.add_argument("--worker-fsize-kb", type=int, default=None, help="RLIMIT_FSIZE (KiB) for the worker")
+    parser.add_argument(
+        "--in-process", action="store_true",
+        help="Import and run the submission in THIS process (local debugging only; never with a real secret)",
     )
     parser.add_argument("--json-out", type=str, default=None)
     parser.add_argument("--md-out", type=str, default=None)
     args = parser.parse_args()
 
-    # Pop and scrub the secret seed from os.environ BEFORE importing any submission code
-    active_secret = scrub_secret_seed_env(args.secret_seed_env)
+    scales = tuple(int(x) for x in args.scales.split(",") if x.strip())
+    if len(scales) < 1:
+        parser.error("--scales must list at least one scale")
+    # Verification (stages 2-5) always uses the standard (125, 540) pair, independent of
+    # the benchmark scales, so the eps95 scaling criterion keeps its intended 4.3x span.
+    v_scales = (125, 540)
+
+    # Obtain the secret (pipe/file/env) and scrub the environment BEFORE anything else.
+    active_secret = _load_cli_secret(args)
 
     if args.mode == "demo" and args.submission is None:
         print("Running CI Verifier & Benchmark Demo on Reference Literature Baselines...\n")
@@ -1617,16 +2254,44 @@ def _cli_main() -> None:
             print()
         return
 
+    isolated: Optional[IsolatedSubmission] = None
     if args.submission is not None:
-        sub_obj, algo_name, py_path = _load_submission_from_dir(args.submission)
+        if args.in_process:
+            if active_secret:
+                print(
+                    "::warning::--in-process imports the submission into the process that holds the secret; "
+                    "use the sandbox worker for real certification.",
+                    file=sys.stderr,
+                )
+            sys.argv[:] = sys.argv[:1]
+            sub_obj, algo_name, py_path = _load_submission_from_dir(args.submission)
+        else:
+            sandbox_cmd = shlex.split(args.worker_sandbox) if args.worker_sandbox else None
+            isolated = IsolatedSubmission(
+                args.submission,
+                sandbox_cmd=sandbox_cmd,
+                cpu_seconds=args.worker_cpu_seconds,
+                fsize_kb=args.worker_fsize_kb,
+            )
+            sub_obj, algo_name, py_path = isolated, isolated.name, isolated.submission_path
     else:
         sub_obj, algo_name, py_path = ReferenceBayesianAdaptiveSubmission(), "Reference-Bayesian-Adaptive", None
 
+    try:
+        _cli_run(args, sub_obj, algo_name, py_path, scales, v_scales, active_secret, _json)
+    finally:
+        if isolated is not None:
+            isolated.close()
+
+
+def _cli_run(args: Any, sub_obj: Any, algo_name: str, py_path: Optional[str], scales: Tuple[int, ...],
+             v_scales: Tuple[int, int], active_secret: Optional[str], _json: Any) -> None:
     rep = verify_submission(
         sub_obj,
         name=algo_name,
         submission_path=py_path,
         allowed_dir=os.path.dirname(py_path) if py_path else _HERE,
+        scales=v_scales,
         secret_seed=active_secret,
     )
     print(rep.summary())
@@ -1639,6 +2304,7 @@ def _cli_main() -> None:
     bench = benchmark_submission(
         sub_obj,
         name=algo_name,
+        scales=scales,
         ntrials=args.ntrials,
         seed_band=args.seed,
         verify_first=False,
@@ -1648,21 +2314,23 @@ def _cli_main() -> None:
     md_table = format_benchmark_report(bench)
     print(md_table)
 
-    if args.salted_seed is not None:
+    if args.salt_label:
+        salted_secret = derive_salted_secret(active_secret, args.salt_label)
         salted_bench = benchmark_submission(
             sub_obj,
             name=f"{algo_name} (Salted Check)",
+            scales=scales,
             ntrials=max(500, args.ntrials // 4),
-            seed_band=args.salted_seed,
+            seed_band=args.seed,
             verify_first=False,
             submission_path=py_path,
-            secret_seed=active_secret,
+            secret_seed=salted_secret,
         )
         c95_holdout = bench["standard_prior"]["summary"]["C95_ave"]
         c95_salted = salted_bench["standard_prior"]["summary"]["C95_ave"]
         if c95_salted > 1.35 * c95_holdout + 0.5:
             print(
-                f"ERROR: Salted seed C95_ave ({c95_salted:.3f}) diverged from HOLDOUT_SEED ({c95_holdout:.3f}); "
+                f"ERROR: Salted-concordance C95_ave ({c95_salted:.3f}) diverged from the primary band ({c95_holdout:.3f}); "
                 "possible seed-table memorization!",
                 file=sys.stderr,
             )
@@ -1673,15 +2341,14 @@ def _cli_main() -> None:
             fh.write(f"```\n{rep.summary()}\n\n{md_table}\n```\n")
 
     if args.json_out:
-        import json as _json
-
         std_sum = bench["standard_prior"]["summary"]
         wide_sum = bench["wide_prior"]["summary"]
         legacy = {
             "name": algo_name,
             "verified": rep.passed,
-            "seed_band": args.seed,
+            "seed_band": "BLIND_SECRET_SEED" if active_secret else args.seed,
             "blind_secret_active": bool(active_secret),
+            "bands_verified": rep.diagnostics.get("bands_verified", ["public"]),
             "ntrials": args.ntrials,
             "headline_C68_ave": std_sum["C68_ave"],
             "headline_C95_ave": std_sum["C95_ave"],

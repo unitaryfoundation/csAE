@@ -4,10 +4,10 @@
 #
 # Architecture: Two-Tier Verification, Blind Secret-Seed Certification & Publishing
 #   - Main Branch Integrity (main-verify):
-#       Triggered on push to main. Runs the 9-test anti-cheat & secret-seed test
+#       Triggered on push to main. Runs the 14-test anti-cheat & secret-seed test
 #       suite (leaderboard/test_verifier.py) and certifies all seeded baseline
 #       submissions (leaderboard/certify_submissions.py) inside the network-isolated
-#       sandbox in ~15 seconds.
+#       sandbox.
 #   - Tier 1 (pr-verify + pr-comment):
 #       Triggered on pull_request touching submissions/**.
 #       Validates path isolation & metadata.json schema, runs AST static security
@@ -17,12 +17,14 @@
 #   - Tier 2 (certify-and-publish):
 #       Triggered on pull_request_target with label 'certify-leaderboard' or
 #       workflow_dispatch. Executes the trusted harness from main against the isolated
-#       submission directory for N=20,000 trials on an unguessable blind evaluation
-#       seed derived via HMAC-SHA256 from secrets.LEADERBOARD_SECRET_SEED (plus a
-#       per-commit salted concordance seed), scrubs the numeric seed from all public
-#       outputs so contributors cannot see or overfit to the test amplitudes, and
-#       commits certified metrics to leaderboard/data/leaderboard.json and
-#       docs/leaderboard.json (which automatically triggers GitHub Pages deployment).
+#       submission directory for N=20,000 trials on a blind trial table derived via
+#       HMAC-SHA256 from secrets.LEADERBOARD_SECRET_SEED (plus a per-(algo, commit)
+#       salted concordance table). The secret reaches the trusted parent process only
+#       through a pipe (never argv/env); the submission itself runs in a separate,
+#       argv/env-scrubbed worker inside the namespace sandbox and only sees an oracle
+#       RPC, so no process it can inspect holds any seed. Certified metrics are
+#       committed to leaderboard/data/leaderboard.json and docs/leaderboard.json
+#       (which automatically triggers GitHub Pages deployment).
 #
 # Provisioning / Rotating the Repository Secret (Maintainer One-Liner):
 #   gh secret set LEADERBOARD_SECRET_SEED --body "$(openssl rand -hex 32)"
@@ -125,7 +127,7 @@ jobs:
           fi
           pip install jsonschema
 
-      - name: Run 9-stage Anti-Cheat Verifier Test Suite & Certify All Seeded Submissions
+      - name: Run 14-test Anti-Cheat Verifier Test Suite & Certify All Seeded Submissions
         shell: bash
         run: |
           set -euo pipefail
@@ -359,27 +361,30 @@ jobs:
           # Lock down repository tree as read-only before launching untrusted code
           chmod -R a-w .
 
-          set +e
-          if unshare --user --map-root-user --net true >/dev/null 2>&1; then
-            SANDBOX_CMD=(unshare --user --map-root-user --net --ipc --pid --fork)
+          # The trusted harness (parent) runs on the host and never imports the submission.
+          # The submission runs in a separate worker process launched inside the network-,
+          # IPC- and PID-isolated sandbox with a private /proc, so it cannot read any other
+          # process's argv or environment; it only sees an oracle RPC.
+          if unshare --user --map-root-user --net --ipc --pid --fork --mount-proc true >/dev/null 2>&1; then
+            WORKER_SANDBOX="unshare --user --map-root-user --net --ipc --pid --fork --mount-proc"
+          elif unshare --user --map-root-user --net true >/dev/null 2>&1; then
+            WORKER_SANDBOX="unshare --user --map-root-user --net --ipc --pid --fork"
           else
-            SANDBOX_CMD=()
+            WORKER_SANDBOX=""
+            echo "::warning::unshare unavailable; running the submission worker without a namespace sandbox."
           fi
 
-          "${SANDBOX_CMD[@]}" bash -c "
-            ulimit -t 300
-            ulimit -f 10240
-            export OPENBLAS_NUM_THREADS=2
-            export OMP_NUM_THREADS=2
-            export MKL_NUM_THREADS=2
-            python3 leaderboard/verifier_and_runner.py \
-              --mode=verify \
-              --submission=\"${SUB_PATH}\" \
-              --ntrials=\"${SMOKE_NTRIALS}\" \
-              --seed=\"${SEARCH_SEED}\" \
-              --json-out=/tmp/leaderboard_ci/verify_report.json \
-              --md-out=/tmp/leaderboard_ci/comment_body.md
-          "
+          set +e
+          python3 leaderboard/verifier_and_runner.py \
+            --mode=verify \
+            --submission="${SUB_PATH}" \
+            --ntrials="${SMOKE_NTRIALS}" \
+            --seed="${SEARCH_SEED}" \
+            --worker-sandbox="${WORKER_SANDBOX}" \
+            --worker-cpu-seconds=300 \
+            --worker-fsize-kb=10240 \
+            --json-out=/tmp/leaderboard_ci/verify_report.json \
+            --md-out=/tmp/leaderboard_ci/comment_body.md
           EXIT_CODE=$?
           set -e
 
@@ -596,64 +601,50 @@ jobs:
           # Allow unprivileged user/net namespaces on Ubuntu 24.04 runners
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 >/dev/null 2>&1 || true
 
-          # Derive TWO unguessable evaluation seeds from secrets.LEADERBOARD_SECRET_SEED
-          # (with fallback to secrets.LEADERBOARD_SALT_SEED) inside the trusted host shell
-          # BEFORE entering the unshare sandbox:
-          #   1. BLIND_TEST_SEED: Primary blind certification seed (shared across algorithms
-          #      for fair paired comparison, but completely unknown to the public).
-          #   2. SALTED_CONCORDANCE_SEED: Per-(algo_id, commit_sha) dynamic seed to verify
-          #      statistical concordance and defeat any seed-specific behavior.
-          read -r BLIND_TEST_SEED SALTED_CONCORDANCE_SEED < <(python3 -c '
-          import hashlib, hmac, os, sys
-          raw_secret = (
-              os.environ.get("LEADERBOARD_SECRET_SEED")
-              or os.environ.get("LEADERBOARD_SALT_SEED")
-              or ""
-          ).strip()
-          if not raw_secret:
-              print("::warning::LEADERBOARD_SECRET_SEED is not configured in GitHub Secrets; falling back to HOLDOUT_SEED.", file=sys.stderr)
-              raw_secret = "fallback-unconfigured-secret-seed"
-          key = raw_secret.encode("utf-8")
-          d_primary = hmac.new(key, b"ae-leaderboard-primary-blind-test-seed-v1", hashlib.sha256).digest()
-          blind_seed = 10_000_000 + (int.from_bytes(d_primary[:8], "big") % 900_000_000)
-          msg_salt = (os.environ["ALGO_ID"] + ":" + os.environ["COMMIT_SHA"]).encode("utf-8")
-          d_salt = hmac.new(key, msg_salt, hashlib.sha256).digest()
-          salted_seed = 1_000_000_000 + (int.from_bytes(d_salt[:8], "big") % 990_000_000)
-          print(f"{blind_seed} {salted_seed}")
-          ')
-
-          # Mask both derived seeds in GitHub Actions logs and scrub raw secrets from env
-          echo "::add-mask::${BLIND_TEST_SEED}"
-          echo "::add-mask::${SALTED_CONCORDANCE_SEED}"
-          unset LEADERBOARD_SECRET_SEED
-          unset LEADERBOARD_SALT_SEED
+          # The raw repository secret is the ONLY key material. It is read into a shell
+          # variable (never exported, never on any argv), removed from the environment, and
+          # handed to the trusted harness through file descriptor 3. The harness derives the
+          # blind trial table and the per-(algo, commit) salted-concordance table with
+          # HMAC-SHA256 internally, so no numeric seed exists anywhere in this job.
+          RAW_SECRET="${LEADERBOARD_SECRET_SEED:-${LEADERBOARD_SALT_SEED:-}}"
+          unset LEADERBOARD_SECRET_SEED LEADERBOARD_SALT_SEED
+          if [[ -z "${RAW_SECRET// }" ]]; then
+            echo "::warning::LEADERBOARD_SECRET_SEED is not configured in GitHub Secrets; certification is NOT blind."
+            RAW_SECRET="fallback-unconfigured-secret-seed"
+          fi
 
           chmod -R a-w .
 
-          set +e
-          if unshare --user --map-root-user --net true >/dev/null 2>&1; then
-            SANDBOX_CMD=(unshare --user --map-root-user --net --ipc --pid --fork)
+          # The trusted harness (parent) runs on the host and never imports the submission.
+          # The submission runs in a separate worker process launched inside the network-,
+          # IPC- and PID-isolated sandbox with a private /proc, so it cannot read any other
+          # process's argv or environment; it only sees an oracle RPC.
+          if unshare --user --map-root-user --net --ipc --pid --fork --mount-proc true >/dev/null 2>&1; then
+            WORKER_SANDBOX="unshare --user --map-root-user --net --ipc --pid --fork --mount-proc"
+          elif unshare --user --map-root-user --net true >/dev/null 2>&1; then
+            WORKER_SANDBOX="unshare --user --map-root-user --net --ipc --pid --fork"
           else
-            SANDBOX_CMD=()
+            WORKER_SANDBOX=""
+            echo "::warning::unshare unavailable; running the submission worker without a namespace sandbox."
           fi
 
-          "${SANDBOX_CMD[@]}" bash -c "
-            ulimit -t 7200
-            ulimit -f 51200
-            export OPENBLAS_NUM_THREADS=2
-            export OMP_NUM_THREADS=2
-            export MKL_NUM_THREADS=2
-            python3 leaderboard/verifier_and_runner.py \
-              --mode=certify \
-              --submission=\"${SUB_PATH}\" \
-              --ntrials=\"${CERTIFY_NTRIALS}\" \
-              --seed=\"${BLIND_TEST_SEED}\" \
-              --salted-seed=\"${SALTED_CONCORDANCE_SEED}\" \
-              --json-out=/tmp/leaderboard_cert/certified_entry.json \
-              --md-out=/tmp/leaderboard_cert/certified_summary.md
-          "
+          set +e
+          python3 leaderboard/verifier_and_runner.py \
+            --mode=certify \
+            --submission="${SUB_PATH}" \
+            --ntrials="${CERTIFY_NTRIALS}" \
+            --seed="${HOLDOUT_SEED}" \
+            --secret-fd=3 \
+            --salt-label="${ALGO_ID}:${COMMIT_SHA}" \
+            --worker-sandbox="${WORKER_SANDBOX}" \
+            --worker-cpu-seconds=7200 \
+            --worker-fsize-kb=51200 \
+            --json-out=/tmp/leaderboard_cert/certified_entry.json \
+            --md-out=/tmp/leaderboard_cert/certified_summary.md \
+            3< <(printf '%s' "${RAW_SECRET}")
           EXIT_CODE=$?
           set -e
+          unset RAW_SECRET
 
           chmod -R u+w .
           if [[ $EXIT_CODE -ne 0 ]]; then
@@ -661,28 +652,19 @@ jobs:
             exit $EXIT_CODE
           fi
 
-          # Redact the numeric blind seed from the generated JSON and Markdown files
-          # so public commits and PR comments never disclose the derived integer seed!
-          python3 - "${BLIND_TEST_SEED}" "${SALTED_CONCORDANCE_SEED}" <<'PYEOF'
-          import json, os, sys
+          # Belt and braces: the harness labels the band itself ("BLIND_SECRET_SEED") and
+          # records that verification ran on both the public and the blind band.
+          python3 - <<'PYEOF'
+          import json, sys
 
-          blind_s, salted_s = sys.argv[1], sys.argv[2]
-          json_p = "/tmp/leaderboard_cert/certified_entry.json"
-          md_p = "/tmp/leaderboard_cert/certified_summary.md"
-
-          if os.path.isfile(json_p):
-              with open(json_p, "r", encoding="utf-8") as f:
-                  data = json.load(f)
-              data["seed_band"] = "BLIND_SECRET_SEED"
-              with open(json_p, "w", encoding="utf-8") as f:
-                  json.dump(data, f, indent=2)
-
-          if os.path.isfile(md_p):
-              with open(md_p, "r", encoding="utf-8") as f:
-                  text = f.read()
-              text = text.replace(blind_s, "BLIND_SECRET_SEED").replace(salted_s, "SALTED_SECRET_SEED")
-              with open(md_p, "w", encoding="utf-8") as f:
-                  f.write(text)
+          with open("/tmp/leaderboard_cert/certified_entry.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+          if data.get("seed_band") != "BLIND_SECRET_SEED" or not data.get("blind_secret_active"):
+              print("::error::certified entry is not labelled as blind-seed certified", file=sys.stderr)
+              sys.exit(1)
+          if data.get("bands_verified") != ["public", "blind"]:
+              print("::error::verification did not run on both the public and the blind band", file=sys.stderr)
+              sys.exit(1)
           PYEOF
 
       - name: Append certified entry to leaderboard/data/leaderboard.json & commit to main
